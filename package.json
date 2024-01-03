@@ -10,7 +10,8 @@
     "dev": "remix dev --manual",
     "start": "remix-serve ./build/index.js",
     "db:push": "prisma db push",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
