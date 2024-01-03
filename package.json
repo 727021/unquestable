@@ -8,26 +8,35 @@
   "scripts": {
     "build": "remix build",
     "dev": "remix dev --manual",
-    "start": "remix-serve ./build/index.js"
+    "start": "remix-serve ./build/index.js",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^5.7.1",
     "@remix-run/css-bundle": "^2.4.1",
     "@remix-run/node": "^2.4.1",
     "@remix-run/react": "^2.4.1",
     "@remix-run/serve": "^2.4.1",
     "isbot": "^3.7.1-deprecated",
+    "mongoose": "^8.0.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "remix-auth": "^3.6.0",
+    "remix-auth-google": "^2.0.0",
+    "validator": "^13.11.0"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.4.1",
     "@remix-run/eslint-config": "^2.4.1",
     "@types/react": "^18.2.46",
     "@types/react-dom": "^18.2.18",
+    "@types/validator": "^13.11.7",
     "eslint": "^8.56.0",
+    "prisma": "^5.7.1",
     "typescript": "^5.3.3"
   }
 }
