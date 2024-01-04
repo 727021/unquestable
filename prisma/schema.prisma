@@ -18,3 +18,160 @@ model User {
   email       String  @unique
   photo       String?
 }
+
+// Tables for game data
+enum SetType {
+  CAMPAIGN
+  HERO
+  VILLAIN
+}
+
+model Expansion {
+  id         Int          @id @default(autoincrement())
+  type       SetType
+  name       String
+  classes    Class[]
+  heroes     Hero[]
+  items      Item[]
+  agendas    AgendaDeck[]
+}
+
+model ClassCard {
+  id      Int     @id @default(autoincrement())
+  name    String
+  tagline String?
+  cost    Int     @default(0)
+  decks   Class[]
+}
+
+enum Side {
+  REBEL
+  IMPERIAL
+}
+
+model Class {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  side        Side
+  cards       ClassCard[]
+  expansionId Int
+  expansion   Expansion   @relation(fields: [expansionId], references: [id])
+}
+
+model Hero {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  tagline     String
+  expansionId Int
+  expansion   Expansion @relation(fields: [expansionId], references: [id])
+  mission     Mission   @relation(fields: [missionId], references: [id])
+  missionId   Int       @unique
+}
+
+model Reward {
+  id            Int             @id @default(autoincrement())
+  name          String
+  tagline       String?
+  side          Side
+  MissionReward MissionReward[]
+}
+
+model Item {
+  id          Int       @id @default(autoincrement())
+  name        String
+  tagline     String?
+  cost        Int
+  tier        Int // 1,2,3
+  expansionId Int
+  expansion   Expansion @relation(fields: [expansionId], references: [id])
+
+  @@index([name, tier])
+}
+
+model Agenda {
+  id      Int            @id @default(autoincrement())
+  name    String
+  cost    Int
+  deckId  Int
+  deck    AgendaDeck     @relation(fields: [deckId], references: [id])
+  mission AgendaMission?
+}
+
+model AgendaDeck {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  agendas     Agenda[]
+  expansionId Int
+  expansion Expansion @relation(fields: [expansionId], references: [id])
+}
+
+// If the rebels don't take an optional (unforced) imperial mission,
+// the imperial player gets the imperial reward for that mission
+model AgendaMission {
+  agendaId  Int     @unique
+  agenda    Agenda  @relation(fields: [agendaId], references: [id])
+  missionId Int     @unique
+  mission   Mission @relation(fields: [missionId], references: [id])
+  // whether this is played as a forced mission
+  forced    Boolean @default(false)
+
+  @@id([agendaId, missionId])
+}
+
+enum MissionType {
+  STORY
+  SIDE
+  IMPERIAL
+}
+
+model Mission {
+  id          Int             @id @default(autoincrement())
+  agenda      AgendaMission?
+  name        String
+  type        MissionType
+  // time range (some side missions)
+  start       Int?
+  end         Int?
+  // hero missions (referenced in Hero model)
+  hero        Hero?
+  // story missions
+  campaignId  Int
+  campaign    Campaign        @relation(fields: [campaignId], references: [id])
+  rewards     MissionReward[]
+  prevRewards MissionReward?  @relation(name: "prev-next-mission")
+}
+
+enum MissionRewardType {
+  WIN // rewards for a rebel win
+  LOSS // rewards for an imperial win
+  ALL // additional rewards
+}
+
+model MissionReward {
+  id            Int               @id @default(autoincrement())
+  type          MissionRewardType
+  missionId     Int
+  mission       Mission           @relation(fields: [missionId], references: [id])
+  xp            Int?
+  credits       Int?
+  influence     Int?
+  rewardId      Int?
+  reward        Reward?           @relation(fields: [rewardId], references: [id])
+  troopId       Int?
+  troop         Troop?            @relation(fields: [troopId], references: [id])
+  // for story missions
+  nextMissionId Int?              @unique
+  nextMission   Mission?          @relation(fields: [nextMissionId], references: [id], name: "prev-next-mission")
+
+  @@unique([missionId, type])
+}
+
+model Troop {
+  id            Int             @id @default(autoincrement())
+  MissionReward MissionReward[]
+}
+
+model Campaign {
+  id      Int       @id @default(autoincrement())
+  Mission Mission[]
+}
