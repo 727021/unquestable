@@ -1,28 +1,32 @@
 import { Authenticator } from 'remix-auth'
-import { GoogleStrategy } from 'remix-auth-google'
+import { DiscordStrategy } from 'remix-auth-discord'
 import { sessionStorage } from '~/services/session.server'
 import { User } from '~/services/db.server'
 import type { Prisma } from '@prisma/client'
 
 export const authenticator = new Authenticator<Prisma.UserGetPayload<null>>(sessionStorage)
 
-const googleStrategy = new GoogleStrategy(
+const discordStrategy = new DiscordStrategy(
   {
-    clientID: process.env.GOOGLE_CLIENT_ID!,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL ?? `https://${process.env.VERCEL_URL}/auth/google/callback`
+    clientID: process.env.DISCORD_CLIENT_ID!,
+    clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+    callbackURL: process.env.DISCORD_CALLBACK_URL!
   },
   async ({ profile }) => {
     const {
-      id: googleId,
-      emails: [{ value: email }],
-      displayName
+      id: discordId,
+      displayName,
+      __json: {
+        avatar,
+        email,
+        discriminator
+      }
     } = profile
     const user =
-      await User.findUnique({ where: { googleId } }) ??
-      await User.create({ data: { googleId, displayName, email } })
+      await User.findUnique({ where: { discordId } }) ??
+      await User.create({ data: { discordId, displayName, discriminator, email, avatar } })
     return user
   }
 )
 
-authenticator.use(googleStrategy)
+authenticator.use(discordStrategy)

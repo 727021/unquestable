@@ -12,11 +12,12 @@ datasource db {
 }
 
 model User {
-  id          Int     @id @default(autoincrement())
-  googleId    String  @unique
-  displayName String
-  email       String  @unique
-  photo       String?
+  id            Int     @id @default(autoincrement())
+  discordId     String  @unique
+  displayName   String
+  discriminator String
+  email         String? @unique
+  avatar        String?
 }
 
 // Tables for game data
@@ -27,13 +28,13 @@ enum SetType {
 }
 
 model Expansion {
-  id         Int          @id @default(autoincrement())
-  type       SetType
-  name       String
-  classes    Class[]
-  heroes     Hero[]
-  items      Item[]
-  agendas    AgendaDeck[]
+  id      Int          @id @default(autoincrement())
+  type    SetType
+  name    String
+  classes Class[]
+  heroes  Hero[]
+  items   Item[]
+  agendas AgendaDeck[]
 }
 
 model ClassCard {
@@ -98,11 +99,11 @@ model Agenda {
 }
 
 model AgendaDeck {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
   agendas     Agenda[]
   expansionId Int
-  expansion Expansion @relation(fields: [expansionId], references: [id])
+  expansion   Expansion @relation(fields: [expansionId], references: [id])
 }
 
 // If the rebels don't take an optional (unforced) imperial mission,
