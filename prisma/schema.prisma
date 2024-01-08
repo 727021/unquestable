@@ -32,17 +32,18 @@ enum SetType {
 }
 
 model Expansion {
-  id        Int          @id @default(autoincrement())
-  type      SetType
-  name      String
-  classes   Class[]
-  heroes    Hero[]
-  items     Item[]
-  agendas   AgendaDeck[]
-  missions  Mission[]
-  troops    Troop[]
-  campaigns Campaign[]
-  rewards   Reward[]
+  id           Int          @id @default(autoincrement())
+  type         SetType
+  name         String
+  classes      Class[]
+  heroes       Hero[]
+  items        Item[]
+  agendas      AgendaDeck[]
+  missions     Mission[]
+  troops       Troop[]
+  campaigns    Campaign[]
+  rewards      Reward[]
+  defaultOwned Boolean      @default(false)
 
   dependsOn  Expansion[] @relation(name: "depend")
   dependedOn Expansion[] @relation(name: "depend")

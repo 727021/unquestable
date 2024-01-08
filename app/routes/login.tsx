@@ -5,7 +5,7 @@ import { getSession } from '~/services/session.server'
 
 export const loader: LoaderFunction = async ({ request }) => {
   await authenticator.isAuthenticated(request, {
-    successRedirect: '/app'
+    successRedirect: '/home'
   })
   const session = await getSession(request.headers.get('cookie'))
   const error = session.get(authenticator.sessionErrorKey)

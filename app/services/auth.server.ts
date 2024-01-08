@@ -1,7 +1,7 @@
 import { Authenticator } from 'remix-auth'
 import { DiscordStrategy } from 'remix-auth-discord'
 import { sessionStorage } from '~/services/session.server'
-import { User } from '~/services/db.server'
+import { prisma } from '~/services/db.server'
 import type { Prisma } from '@prisma/client'
 
 export const authenticator = new Authenticator<Prisma.UserGetPayload<null>>(sessionStorage)
@@ -22,11 +22,30 @@ const discordStrategy = new DiscordStrategy(
         discriminator
       }
     } = profile
-    const user =
-      await User.findUnique({ where: { discordId } }) ??
-      await User.create({ data: { discordId, displayName, discriminator, email, avatar } })
+    let user = await prisma.user.findUnique({ where: { discordId } })
+    if (!user) {
+      const defaultCollection = await prisma.expansion.findMany({
+        where: {
+          defaultOwned: true
+        }
+      })
+      user = await prisma.user.create({
+        data: {
+          discordId,
+          displayName,
+          discriminator,
+          email,
+          avatar,
+          collection: {
+            connect: defaultCollection.map(c => ({ id: c.id }))
+          }
+        }
+      })
+    }
     return user
   }
 )
 
 authenticator.use(discordStrategy)
+
+export const getUser = (request: Request) => authenticator.isAuthenticated(request, { failureRedirect: '/login' })

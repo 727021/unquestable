@@ -11,7 +11,7 @@ export default function Index() {
   return (
     <div>
       <h1>Unquestable</h1>
-      <Link to="/app">App &rarr;</Link>
+      <Link to="/home">App &rarr;</Link>
     </div>
   )
 }
