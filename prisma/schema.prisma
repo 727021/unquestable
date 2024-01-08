@@ -13,12 +13,13 @@ datasource db {
 
 // #region User Data
 model User {
-  id            Int     @id @default(autoincrement())
-  discordId     String  @unique
+  id            Int         @id @default(autoincrement())
+  discordId     String      @unique
   displayName   String
   discriminator String
-  email         String? @unique
+  email         String?     @unique
   avatar        String?
+  collection    Expansion[]
 }
 
 // #endregion
@@ -45,6 +46,8 @@ model Expansion {
 
   dependsOn  Expansion[] @relation(name: "depend")
   dependedOn Expansion[] @relation(name: "depend")
+
+  owners User[]
 
   @@unique([name, type])
 }
