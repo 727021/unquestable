@@ -1,10 +1,17 @@
+import type { Expansion } from '@prisma/client'
 import type { ActionFunctionArgs, LoaderFunctionArgs} from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
-import { Form, useLoaderData, useNavigation } from '@remix-run/react'
+import { json } from '@remix-run/node'
+import { useLoaderData } from '@remix-run/react'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
+import CollectionItem from '~/components/CollectionItem'
 import { getUser } from '~/services/auth.server'
 import { prisma } from '~/services/db.server'
+
+type LoaderData = {
+  allExpansions: Expansion[]
+  owned: Expansion['id'][]
+}
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request)
@@ -65,30 +72,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   })
 
-  return redirect(request.url)
+  return json({
+    owned: action === 'add'
+  })
 }
 
 const Collection = () => {
-  const data = useLoaderData<typeof loader>()
-  const navigation = useNavigation()
+  const data = useLoaderData<LoaderData>()
 
   return (
     <div>
       <h1>My Collection</h1>
       <ul>
         {data.allExpansions.map(expansion => (
-          // TODO: pull this out into its own component and use a fetcher or submitter or whatever it's called
-          <li key={expansion.id}>
-            {data.owned.includes(expansion.id) ? '🟩' : '🟥'}
-            {expansion.name}
-            {!expansion.defaultOwned && (
-              <Form method="POST">
-                <input type="hidden" name="expansionId" value={expansion.id} />
-                <input type="hidden" name="action" value={data.owned.includes(expansion.id) ? 'remove' : 'add'} />
-                <button type="submit" disabled={navigation.state !== 'idle' && parseInt(navigation.formData?.get('expansionId')?.toString() ?? '-1', 10) === expansion.id}>{data.owned.includes(expansion.id) ? 'Remove' : 'Add'}</button>
-              </Form>
-            )}
-          </li>
+          <CollectionItem key={expansion.id} expansion={expansion} owned={data.owned.includes(expansion.id)} />
         ))}
       </ul>
     </div>

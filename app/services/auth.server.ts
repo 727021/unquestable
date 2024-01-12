@@ -2,9 +2,9 @@ import { Authenticator } from 'remix-auth'
 import { DiscordStrategy } from 'remix-auth-discord'
 import { sessionStorage } from '~/services/session.server'
 import { prisma } from '~/services/db.server'
-import type { Prisma } from '@prisma/client'
+import type { User } from '@prisma/client'
 
-export const authenticator = new Authenticator<Prisma.UserGetPayload<null>>(sessionStorage)
+export const authenticator = new Authenticator<User>(sessionStorage)
 
 const discordStrategy = new DiscordStrategy(
   {
