@@ -83,11 +83,11 @@ const Collection = () => {
   return (
     <div>
       <h1>My Collection</h1>
-      <ul>
+      <div className="flex flex-wrap lg:grid gap-4 grid-cols-3">
         {data.allExpansions.map(expansion => (
           <CollectionItem key={expansion.id} expansion={expansion} owned={data.owned.includes(expansion.id)} />
         ))}
-      </ul>
+      </div>
     </div>
   )
 }
