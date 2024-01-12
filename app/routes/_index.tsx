@@ -9,7 +9,7 @@ export const meta: MetaFunction = () => {
 
 export default function Index() {
   return (
-    <div>
+    <div className="prose">
       <h1>Unquestable</h1>
       <Link to="/home">App &rarr;</Link>
     </div>
