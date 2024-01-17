@@ -1,9 +1,12 @@
-import type { Expansion } from '@prisma/client'
+import type { BoxArt, Expansion } from '@prisma/client'
 import { useFetcher } from '@remix-run/react'
 import classNames from 'classnames'
 
+import coreWebp from '../../../public/img/expansion/core.webp'
+import corePng from '../../../public/img/expansion/core.png'
+
 type Props = {
-  expansion: Expansion,
+  expansion: Expansion & { boxArt: BoxArt[] },
   owned?: boolean
 }
 
@@ -15,21 +18,37 @@ const CollectionItem = ({ expansion, owned }: Props) => {
     ? fetcher.formData?.get('action') === 'add'
     : owned
 
+  const png = expansion.boxArt.find(art => art.mime === 'image/png')
+  const others = expansion.boxArt.filter(art => art.mime !== 'image/png')
+  const alt = expansion.boxArt.find(art => art.alt)?.alt ?? ''
+
   return (
-    <div className="card bg-base-100 image-full max-w-96 lg:max-w-none">
-      <figure><img src={`https://placehold.co/600x400/green/white?text=${expansion.name}`} alt="" className={classNames({ grayscale: !isOwned })} /></figure>
-      <div className="card-body">
-        <h2 className="card-title flex-grow flex items-start">{expansion.name}</h2>
-        {!expansion.defaultOwned && (
-          <fetcher.Form method="POST" className="card-actions justify-center">
-            <input type="hidden" name="expansionId" value={expansion.id} />
-            <button className={classNames('btn', 'sm:btn-wide', { 'btn-neutral': !isOwned, 'btn-ghost': isOwned })} type="submit" disabled={loading} name="action" value={isOwned ? 'remove' : 'add'}>
-              {loading ? (<span className="loading loading-spinner loading-md"></span>) : isOwned ? 'Remove' : 'Add'}
-            </button>
-          </fetcher.Form>
-        )}
-      </div>
-    </div>
+    <fetcher.Form method="POST" className="w-96 max-w-full">
+      <input type="hidden" name="expansionId" value={expansion.id} />
+      <button className="card card-compact card-bordered w-full" type="submit" disabled={loading} name="action" value={isOwned ? 'remove' : 'add'}>
+        <figure>
+          <picture className={classNames({ grayscale: !isOwned })}>
+            {png ? (
+              <>
+                {others.map(art => <source key={art.id} src={art.url} type={art.mime} />)}
+                <img src={png?.url} alt={alt} />
+              </>
+            ) : (
+              <>
+                <source src={coreWebp} type="image/webp" />
+                <img src={corePng} alt="" />
+              </>
+            )}
+          </picture>
+        </figure>
+        <div className="card-body w-full">
+          <h2 className="card-title justify-between align-center">
+            {expansion.name}
+            {loading && <span className="loading loading-spinner loading-md"></span>}
+          </h2>
+        </div>
+      </button>
+    </fetcher.Form>
   )
 }
 

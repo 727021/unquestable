@@ -49,8 +49,20 @@ model Expansion {
   dependedOn Expansion[] @relation(name: "depend")
 
   owners User[]
+  boxArt BoxArt[]
 
   @@unique([name, type])
+}
+
+model BoxArt {
+  id          Int       @id @default(autoincrement())
+  expansionId Int
+  expansion   Expansion @relation(fields: [expansionId], references: [id])
+  url         String
+  mime        String
+  alt         String?
+
+  @@unique([expansionId, mime])
 }
 
 model ClassCard {

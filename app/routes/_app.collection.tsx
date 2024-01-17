@@ -1,4 +1,4 @@
-import type { Expansion } from '@prisma/client'
+import type { BoxArt, Expansion } from '@prisma/client'
 import type { ActionFunctionArgs, LoaderFunctionArgs} from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
@@ -9,14 +9,14 @@ import { getUser } from '~/services/auth.server'
 import { prisma } from '~/services/db.server'
 
 type LoaderData = {
-  allExpansions: Expansion[]
+  allExpansions: (Expansion & { boxArt: BoxArt[] })[]
   owned: Expansion['id'][]
 }
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request)
 
-  const allExpansions = await prisma.expansion.findMany()
+  const allExpansions = await prisma.expansion.findMany({ include: { boxArt: true } })
   const owned = (await prisma.expansion.findMany({
     where: {
       owners: {
@@ -83,7 +83,7 @@ const Collection = () => {
   return (
     <div>
       <h1>My Collection</h1>
-      <div className="flex flex-wrap lg:grid gap-4 grid-cols-3">
+      <div className="flex flex-wrap justify-around gap-4 p-2">
         {data.allExpansions.map(expansion => (
           <CollectionItem key={expansion.id} expansion={expansion} owned={data.owned.includes(expansion.id)} />
         ))}
