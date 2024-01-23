@@ -9,6 +9,12 @@ export default {
   serverMinify: true,
   serverModuleFormat: "esm",
   serverPlatform: "neutral",
+  serverNodeBuiltinsPolyfill: {
+    modules: {
+      crypto: true,
+      stream: true
+    }
+  }
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",
   // publicPath: "/build/",
