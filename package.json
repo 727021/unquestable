@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@heroicons/react": "^2.1.1",
     "@prisma/client": "^5.7.1",
     "@remix-run/css-bundle": "^2.5.0",
     "@remix-run/node": "^2.4.1",
