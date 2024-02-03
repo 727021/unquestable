@@ -24,21 +24,13 @@ const discordStrategy = new DiscordStrategy(
     } = profile
     let user = await prisma.user.findUnique({ where: { discordId } })
     if (!user) {
-      const defaultCollection = await prisma.expansion.findMany({
-        where: {
-          defaultOwned: true
-        }
-      })
       user = await prisma.user.create({
         data: {
           discordId,
           displayName,
           discriminator,
           email,
-          avatar,
-          collection: {
-            connect: defaultCollection.map(c => ({ id: c.id }))
-          }
+          avatar
         }
       })
     }

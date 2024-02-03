@@ -1,6 +1,6 @@
 import type { BoxArt, Expansion } from '@prisma/client'
 import { useFetcher } from '@remix-run/react'
-import classNames from 'classnames'
+import clsx from 'clsx'
 
 import coreWebp from '../../../public/img/expansion/core.webp'
 import corePng from '../../../public/img/expansion/core.png'
@@ -22,12 +22,33 @@ const CollectionItem = ({ expansion, owned }: Props) => {
   const others = expansion.boxArt.filter(art => art.mime !== 'image/png')
   const alt = expansion.boxArt.find(art => art.alt)?.alt ?? ''
 
-  return (
+  return expansion.defaultOwned ? (
+    <div className="w-96 max-w-full card card-compact card-bordered">
+      <figure>
+        {png ? (
+          <>
+            {others.map(art => <source key={art.id} src={art.url} type={art.mime} />)}
+            <img src={png?.url} alt={alt} />
+          </>
+        ) : (
+          <>
+            <source src={coreWebp} type="image/webp" />
+            <img src={corePng} alt="" />
+          </>
+        )}
+      </figure>
+      <div className="card-body w-full">
+        <h2 className="card-title">
+          {expansion.name}
+        </h2>
+      </div>
+    </div>
+  ) : (
     <fetcher.Form method="POST" className="w-96 max-w-full">
       <input type="hidden" name="expansionId" value={expansion.id} />
-      <button className="card card-compact card-bordered w-full" type="submit" disabled={loading} name="action" value={isOwned ? 'remove' : 'add'}>
+      <button className="card card-compact card-bordered w-full" type="submit" name="action" value={isOwned ? 'remove' : 'add'}>
         <figure>
-          <picture className={classNames({ grayscale: !isOwned })}>
+          <picture className={clsx(!isOwned && 'grayscale')}>
             {png ? (
               <>
                 {others.map(art => <source key={art.id} src={art.url} type={art.mime} />)}
@@ -44,7 +65,6 @@ const CollectionItem = ({ expansion, owned }: Props) => {
         <div className="card-body w-full">
           <h2 className="card-title justify-between align-center">
             {expansion.name}
-            {loading && <span className="loading loading-spinner loading-md"></span>}
           </h2>
         </div>
       </button>
