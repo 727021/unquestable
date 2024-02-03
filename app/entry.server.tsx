@@ -92,7 +92,7 @@ function handleBrowserRequest(
   responseHeaders: Headers,
   remixContext: EntryContext
 ) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     let shellRendered = false
     const { pipe, abort } = renderToPipeableStream(
       <RemixServer

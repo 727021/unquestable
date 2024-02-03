@@ -1,4 +1,3 @@
-import type { BoxArt, Expansion } from '@prisma/client'
 import type { ActionFunctionArgs, LoaderFunctionArgs} from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
@@ -7,11 +6,6 @@ import { zfd } from 'zod-form-data'
 import CollectionItem from '~/components/CollectionItem'
 import { getUser } from '~/services/auth.server'
 import { prisma } from '~/services/db.server'
-
-type LoaderData = {
-  allExpansions: (Expansion & { boxArt: BoxArt[] })[]
-  owned: Expansion['id'][]
-}
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request)
@@ -78,7 +72,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 }
 
 const Collection = () => {
-  const data = useLoaderData<LoaderData>()
+  const data = useLoaderData<typeof loader>()
 
   return (
     <div>
