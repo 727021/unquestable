@@ -20,6 +20,7 @@ model User {
   email         String?     @unique
   avatar        String?
   collection    Expansion[]
+  games         Game[]
 }
 
 // #endregion
@@ -66,11 +67,13 @@ model BoxArt {
 }
 
 model ClassCard {
-  id      Int     @id @default(autoincrement())
-  name    String
-  tagline String?
-  cost    Int     @default(0)
-  decks   Class[]
+  id        Int              @id @default(autoincrement())
+  name      String
+  tagline   String?
+  cost      Int              @default(0)
+  decks     Class[]
+  rebels    RebelPlayer[]
+  imperials ImperialPlayer[]
 }
 
 enum Side {
@@ -80,35 +83,39 @@ enum Side {
 }
 
 model Class {
-  id          Int         @id @default(autoincrement())
-  name        String      @unique
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
   side        Side
   cards       ClassCard[]
-  heroId      Int?        @unique
-  hero        Hero?       @relation(fields: [heroId], references: [id])
+  heroId      Int?             @unique
+  hero        Hero?            @relation(fields: [heroId], references: [id])
   expansionId Int
-  expansion   Expansion   @relation(fields: [expansionId], references: [id])
+  expansion   Expansion        @relation(fields: [expansionId], references: [id])
+  imperials   ImperialPlayer[]
 }
 
 model Hero {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
   tagline     String
   expansionId Int
-  expansion   Expansion @relation(fields: [expansionId], references: [id])
-  mission     Mission   @relation(fields: [missionId], references: [id])
-  missionId   Int       @unique
+  expansion   Expansion     @relation(fields: [expansionId], references: [id])
+  mission     Mission       @relation(fields: [missionId], references: [id])
+  missionId   Int           @unique
   class       Class?
+  players     RebelPlayer[]
 }
 
 model Reward {
-  id            Int             @id @default(autoincrement())
+  id            Int              @id @default(autoincrement())
   name          String
   tagline       String?
   side          Side
   MissionReward MissionReward[]
   expansionId   Int
-  expansion     Expansion       @relation(fields: [expansionId], references: [id])
+  expansion     Expansion        @relation(fields: [expansionId], references: [id])
+  rebels        RebelPlayer[]
+  imperials     ImperialPlayer[]
 }
 
 model Item {
@@ -119,26 +126,29 @@ model Item {
   tier        Int // 1,2,3
   expansionId Int
   expansion   Expansion @relation(fields: [expansionId], references: [id])
+  games       Game[]
 
   @@index([name, tier])
 }
 
 model Agenda {
-  id      Int            @id @default(autoincrement())
-  name    String
-  tagline String?
-  cost    Int
-  deckId  Int
-  deck    AgendaDeck     @relation(fields: [deckId], references: [id])
-  mission AgendaMission?
+  id             Int              @id @default(autoincrement())
+  name           String
+  tagline        String?
+  cost           Int
+  deckId         Int
+  deck           AgendaDeck       @relation(fields: [deckId], references: [id])
+  mission        AgendaMission?
+  ImperialPlayer ImperialPlayer[]
 }
 
 model AgendaDeck {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
   agendas     Agenda[]
   expansionId Int
-  expansion   Expansion @relation(fields: [expansionId], references: [id])
+  expansion   Expansion        @relation(fields: [expansionId], references: [id])
+  imperials   ImperialPlayer[]
 }
 
 // If the rebels don't take an optional (unforced) imperial mission,
@@ -181,6 +191,8 @@ model Mission {
   rewardPlaceholders RewardPlaceholder[]
   expansionId        Int
   expansion          Expansion           @relation(fields: [expansionId], references: [id])
+  gameMissions       GameMission[]
+  games              Game[]
 
   @@unique([name, expansionId])
 }
@@ -238,17 +250,18 @@ model MissionReward {
 }
 
 model Troop {
-  id            Int             @id @default(autoincrement())
-  name          String
-  unique        Boolean         @default(false)
-  elite         Boolean         @default(false)
-  deployment    Int
-  reinforcement Int?
-  size          Int             @default(1)
-  traits        String[]
-  expansionId   Int
-  expansion     Expansion       @relation(fields: [expansionId], references: [id])
-  MissionReward MissionReward[]
+  id             Int             @id @default(autoincrement())
+  name           String
+  unique         Boolean         @default(false)
+  elite          Boolean         @default(false)
+  deployment     Int
+  reinforcement  Int?
+  size           Int             @default(1)
+  traits         String[]
+  expansionId    Int
+  expansion      Expansion       @relation(fields: [expansionId], references: [id])
+  missionRewards MissionReward[]
+  games          Game[]
 }
 
 model Campaign {
@@ -262,6 +275,7 @@ model Campaign {
   missionSlots       MissionSlot[]
   missionRewards     MissionReward[]
   rewardPlaceholders RewardPlaceholder[]
+  games              Game[]
 }
 
 enum MissionSlotType {
@@ -270,16 +284,72 @@ enum MissionSlotType {
 }
 
 model MissionSlot {
-  id         Int             @id @default(autoincrement())
-  index      Int
-  type       MissionSlotType
-  threat     Int
-  itemTiers  Int[]
-  campaignId Int
-  campaign   Campaign        @relation(fields: [campaignId], references: [id])
+  id           Int             @id @default(autoincrement())
+  index        Int
+  type         MissionSlotType
+  threat       Int
+  itemTiers    Int[]
+  campaignId   Int
+  campaign     Campaign        @relation(fields: [campaignId], references: [id])
+  gameMissions GameMission[]
 }
 
 // #endregion
 
 // #region User Game Data
+model Game {
+  id              Int             @id @default(autoincrement())
+  owner           User            @relation(fields: [userId], references: [id])
+  userId          Int
+  started         DateTime        @default(now())
+  rebelPlayers    RebelPlayer[]
+  campaign        Campaign        @relation(fields: [campaignId], references: [id])
+  campaignId      Int
+  missions        GameMission[]
+  imperialPlayer  ImperialPlayer?
+  sideMissionDeck Mission[]
+  // things shared by rebel players
+  credits         Int             @default(0)
+  items           Item[]
+  allies          Troop[]
+}
+
+model GameMission {
+  id            Int          @id @default(autoincrement())
+  game          Game         @relation(fields: [gameId], references: [id])
+  gameId        Int
+  missionSlot   MissionSlot? @relation(fields: [missionSlotId], references: [id])
+  missionSlotId Int?
+  forced        Boolean      @default(false)
+  mission       Mission      @relation(fields: [missionId], references: [id])
+  missionId     Int
+  resolved      Boolean      @default(false)
+  winner        Side?
+}
+
+model RebelPlayer {
+  id         Int         @id @default(autoincrement())
+  game       Game        @relation(fields: [gameId], references: [id])
+  gameId     Int
+  hero       Hero        @relation(fields: [heroId], references: [id])
+  heroId     Int
+  xp         Int         @default(0)
+  rewards    Reward[] // (owned)
+  classCards ClassCard[] // (owned)
+}
+
+model ImperialPlayer {
+  id          Int          @id @default(autoincrement())
+  game        Game         @relation(fields: [gameId], references: [id])
+  gameId      Int          @unique
+  xp          Int          @default(0)
+  influence   Int          @default(0)
+  rewards     Reward[] // (owned)
+  agendaDecks AgendaDeck[]
+  agendas     Agenda[] // (active/finished)
+  class       Class        @relation(fields: [classId], references: [id])
+  classId     Int
+  classCards  ClassCard[] // (bought)
+}
+
 // #endregion
