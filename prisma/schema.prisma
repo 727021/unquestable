@@ -300,8 +300,8 @@ model MissionSlot {
 model Game {
   id              Int             @id @default(autoincrement())
   owner           User            @relation(fields: [userId], references: [id])
-  name            String
   userId          Int
+  name            String
   started         DateTime        @default(now())
   rebelPlayers    RebelPlayer[]
   campaign        Campaign        @relation(fields: [campaignId], references: [id])
@@ -330,6 +330,7 @@ model GameMission {
 
 model RebelPlayer {
   id         Int         @id @default(autoincrement())
+  name       String?
   game       Game        @relation(fields: [gameId], references: [id])
   gameId     Int
   hero       Hero        @relation(fields: [heroId], references: [id])

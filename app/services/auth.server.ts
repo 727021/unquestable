@@ -4,7 +4,11 @@ import { sessionStorage } from '~/services/session.server'
 import { prisma } from '~/services/db.server'
 import type { User } from '@prisma/client'
 
-export const authenticator = new Authenticator<User>(sessionStorage)
+export const authenticator = new Authenticator<User & {
+  collection: {
+    id: number
+  }[]
+}>(sessionStorage)
 
 const discordStrategy = new DiscordStrategy(
   {
@@ -22,7 +26,16 @@ const discordStrategy = new DiscordStrategy(
         discriminator
       }
     } = profile
-    let user = await prisma.user.findUnique({ where: { discordId } })
+    let user = await prisma.user.findUnique({
+      where: { discordId },
+      include: {
+        collection: {
+          select: {
+            id: true
+          }
+        }
+      }
+    })
     if (!user) {
       user = await prisma.user.create({
         data: {
@@ -31,6 +44,13 @@ const discordStrategy = new DiscordStrategy(
           discriminator,
           email,
           avatar
+        },
+        include: {
+          collection: {
+            select: {
+              id: true
+            }
+          }
         }
       })
     }
