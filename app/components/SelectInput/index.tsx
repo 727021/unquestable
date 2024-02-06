@@ -1,19 +1,31 @@
 import clsx from 'clsx'
-import type { ChangeEventHandler, PropsWithChildren, ReactNode } from 'react'
+import type { ChangeEventHandler, ForwardedRef, PropsWithChildren, ReactNode} from 'react';
+import { forwardRef } from 'react'
 import { useField } from 'remix-validated-form'
 import RequiredIndicator from '../RequiredIndicator'
 
 type Props = PropsWithChildren<{
   name: string
-  label: ReactNode
+  label?: ReactNode
   required?: boolean
   hintLeft?: ReactNode
   hintRight?: ReactNode
   value?: string | number | readonly string[]
   onChange?: ChangeEventHandler<HTMLSelectElement>
+  multiple?: boolean
 }>
 
-const SelectInput = ({ name, label, required, hintLeft, hintRight, children, value, onChange }: Props) => {
+const SelectInput = forwardRef(({
+  name,
+  label,
+  required,
+  hintLeft,
+  hintRight,
+  children,
+  value,
+  onChange,
+  multiple
+}: Props, ref: ForwardedRef<HTMLSelectElement>) => {
   const { getInputProps, error } = useField(name)
 
   return (
@@ -24,7 +36,16 @@ const SelectInput = ({ name, label, required, hintLeft, hintRight, children, val
           {label}
         </span>
       </div>
-      <select className={clsx('select select-bordered', error && 'select-error')} {...getInputProps({ id: name, value, onChange })}>
+      <select
+        className={clsx('select select-bordered', error && 'select-error')}
+        {...getInputProps({
+          id: name,
+          value,
+          onChange,
+          multiple
+        })}
+        ref={ref}
+      >
         {children}
       </select>
       <div className="label">
@@ -41,6 +62,8 @@ const SelectInput = ({ name, label, required, hintLeft, hintRight, children, val
       </div>
     </label>
   )
-}
+})
+
+SelectInput.displayName = 'SelectInput'
 
 export default SelectInput

@@ -1,7 +1,8 @@
 import { useField } from 'remix-validated-form'
 import RequiredIndicator from '~/components/RequiredIndicator'
 import clsx from 'clsx'
-import type { ChangeEventHandler, ReactNode } from 'react'
+import { forwardRef} from 'react'
+import type { ChangeEventHandler, ReactNode, ForwardedRef } from 'react'
 
 type Props = {
   name: string
@@ -13,7 +14,15 @@ type Props = {
   onChange?: ChangeEventHandler<HTMLInputElement>
 }
 
-const TextInput = ({ name, label, required, hintLeft, hintRight, value, onChange }: Props) => {
+const TextInput = forwardRef(({
+  name,
+  label,
+  required,
+  hintLeft,
+  hintRight,
+  value,
+  onChange
+}: Props, ref: ForwardedRef<HTMLInputElement>) => {
   const { getInputProps, error } = useField(name)
 
   return (
@@ -24,7 +33,16 @@ const TextInput = ({ name, label, required, hintLeft, hintRight, value, onChange
           {label}
         </span>
       </div>
-      <input className={clsx('input input-bordered w-full max-w-xs', error && 'input-error')} {...getInputProps({ id: name, type: 'text', value, onChange })} />
+      <input
+        className={clsx('input input-bordered w-full max-w-xs', error && 'input-error')}
+        {...getInputProps({
+          id: name,
+          type: 'text',
+          value,
+          onChange
+        })}
+        ref={ref}
+      />
       <div className="label">
         {error ? (
           <>
@@ -39,6 +57,8 @@ const TextInput = ({ name, label, required, hintLeft, hintRight, value, onChange
       </div>
     </label>
   )
-}
+})
+
+TextInput.displayName = 'TextInput'
 
 export default TextInput
