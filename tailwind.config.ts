@@ -6,7 +6,7 @@ import forms from '@tailwindcss/forms'
 export default {
   content: ['./app/**/*.{js,jsx,ts,tsx}'],
   theme: {
-    extend: {},
+    extend: {}
   },
   plugins: [typography, forms, daisyui],
   daisyui: {

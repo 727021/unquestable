@@ -1,4 +1,4 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs} from '@remix-run/node'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
 import { z } from 'zod'
@@ -10,26 +10,30 @@ import { prisma } from '~/services/db.server'
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request)
 
-  const allExpansions = await prisma.expansion.findMany({ include: { boxArt: true } })
-  const owned = (await prisma.expansion.findMany({
-    where: {
-      owners: {
-        some: {
-          id: user.id
+  const allExpansions = await prisma.expansion.findMany({
+    include: { boxArt: true }
+  })
+  const owned = (
+    await prisma.expansion.findMany({
+      where: {
+        owners: {
+          some: {
+            id: user.id
+          }
         }
+      },
+      select: {
+        id: true
       }
-    },
-    select: {
-      id: true
-    }
-  })).map(({ id }) => id)
+    })
+  ).map(({ id }) => id)
 
   return json({ allExpansions, owned })
 }
 
 const addRemoveSchema = zfd.formData({
   expansionId: zfd.numeric(z.number().int().positive()),
-  action: zfd.text(z.enum(['add','remove']))
+  action: zfd.text(z.enum(['add', 'remove']))
 })
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -78,8 +82,12 @@ const Collection = () => {
     <div>
       <h1>My Collection</h1>
       <div className="flex flex-wrap justify-around gap-4 p-2">
-        {data.allExpansions.map(expansion => (
-          <CollectionItem key={expansion.id} expansion={expansion} owned={data.owned.includes(expansion.id)} />
+        {data.allExpansions.map((expansion) => (
+          <CollectionItem
+            key={expansion.id}
+            expansion={expansion}
+            owned={data.owned.includes(expansion.id)}
+          />
         ))}
       </div>
     </div>

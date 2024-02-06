@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs} from '@remix-run/node';
+import type { LoaderFunctionArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
 import { getUser } from '~/services/auth.server'
@@ -17,9 +17,7 @@ const Profile = () => {
   return (
     <div>
       <h1>Profile</h1>
-      <pre>
-        {JSON.stringify(data, null, 2)}
-      </pre>
+      <pre>{JSON.stringify(data, null, 2)}</pre>
       <picture>
         {avatarUrls.webp && <source src={avatarUrls.webp} />}
         <img src={avatarUrls.gif ?? avatarUrls.png} alt="" />

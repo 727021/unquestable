@@ -1,14 +1,17 @@
-import type { PropsWithChildren} from 'react'
+import type { PropsWithChildren } from 'react'
 import { createContext, useContext, useLayoutEffect, useState } from 'react'
 
 type ContextData = {
-  theme: string,
+  theme: string
   setTheme(newTheme: string): void
 }
 
 export const THEME_KEY = 'unquestable-theme'
 
-export const ThemeContext = createContext<ContextData>({ theme: 'dark', setTheme() {} })
+export const ThemeContext = createContext<ContextData>({
+  theme: 'dark',
+  setTheme() {}
+})
 
 export const ThemeProvider = ({ children }: PropsWithChildren) => {
   const [theme, _setTheme] = useState('dark')

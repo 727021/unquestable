@@ -22,7 +22,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         },
         where: {
           resolved: false
-        },
+        }
       }
     },
     orderBy: {
@@ -45,7 +45,9 @@ const Games = () => {
         </>
       ) : (
         <>
-          <p>There's nothing here! Start a <Link to="/games/new">New Game</Link>.</p>
+          <p>
+            There's nothing here! Start a <Link to="/games/new">New Game</Link>.
+          </p>
         </>
       )}
     </div>

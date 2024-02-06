@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs} from '@remix-run/node'
+import type { LoaderFunctionArgs } from '@remix-run/node'
 import { Link, Outlet } from '@remix-run/react'
 import { getUser } from '~/services/auth.server'
 import ThemePicker from '~/components/ThemePicker'

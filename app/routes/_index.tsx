@@ -2,9 +2,7 @@ import type { MetaFunction } from '@remix-run/node'
 import { Link } from '@remix-run/react'
 
 export const meta: MetaFunction = () => {
-  return [
-    { title: 'Unquestable' }
-  ]
+  return [{ title: 'Unquestable' }]
 }
 
 export default function Index() {

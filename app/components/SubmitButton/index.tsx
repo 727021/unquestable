@@ -5,12 +5,7 @@ const SubmitButton = ({ children, ...props }: PropsWithChildren) => {
   const isSubmitting = useIsSubmitting()
 
   return (
-    <button
-      className="btn"
-      {...props}
-      type="submit"
-      disabled={isSubmitting}
-    >
+    <button className="btn" {...props} type="submit" disabled={isSubmitting}>
       {children}
       {isSubmitting && (
         <span className="loading loading-spinner loading-md"></span>

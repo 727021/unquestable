@@ -11,7 +11,8 @@
     "start": "remix-serve ./build/index.js",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "format": "prettier . --write"
   },
   "keywords": [],
   "author": "",
@@ -43,6 +44,8 @@
     "@types/react-dom": "^18.2.18",
     "daisyui": "^4.6.0",
     "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.2.5",
     "prisma": "^5.7.1",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3"
