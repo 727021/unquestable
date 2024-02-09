@@ -12,12 +12,14 @@ import RequiredIndicator from '../RequiredIndicator'
 type Props = PropsWithChildren<{
   name: string
   label?: ReactNode
+  labelRight?: ReactNode
   required?: boolean
   hintLeft?: ReactNode
   hintRight?: ReactNode
   value?: string | number | readonly string[]
   onChange?: ChangeEventHandler<HTMLSelectElement>
   multiple?: boolean
+  disabled?: boolean
 }>
 
 const SelectInput = forwardRef(
@@ -31,7 +33,9 @@ const SelectInput = forwardRef(
       children,
       value,
       onChange,
-      multiple
+      multiple,
+      disabled,
+      labelRight
     }: Props,
     ref: ForwardedRef<HTMLSelectElement>
   ) => {
@@ -44,6 +48,9 @@ const SelectInput = forwardRef(
             {required && <RequiredIndicator />}
             {label}
           </span>
+          <span className="label-text-alt">
+            {labelRight}
+          </span>
         </div>
         <select
           className={clsx('select select-bordered', error && 'select-error')}
@@ -51,7 +58,8 @@ const SelectInput = forwardRef(
             id: name,
             value,
             onChange,
-            multiple
+            multiple,
+            disabled
           })}
           ref={ref}
         >

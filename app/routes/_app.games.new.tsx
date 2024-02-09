@@ -13,6 +13,7 @@ import { ValidatedForm, validationError } from 'remix-validated-form'
 import TextInput from '~/components/TextInput'
 import SelectInput from '~/components/SelectInput'
 import SubmitButton from '~/components/SubmitButton'
+import ChooseGrayMissions from '~/components/ChooseGrayMissions'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request)
@@ -47,7 +48,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       },
       missions: {
         where: {
-          type: 'GREEN'
+          type: {
+            in: ['GREEN', 'GRAY']
+          }
         }
       },
       classes: {
@@ -90,11 +93,21 @@ const validator = withZod(
         .min(1)
         .max(4)
     ),
-    sideMissions: zfd.repeatable(
+    greenMissions: zfd.repeatable(
       z
         .array(zfd.numeric(z.number().int().positive()))
-        .length(4, 'Choose exactly 4 side missions')
-    )
+        .length(4, 'Choose exactly 4 green side missions')
+    ),
+    grayMissions: zfd
+      // .text(z.string().regex(/^RANDOM$/, 'Choose exactly 4 gray side missions'))
+      .text(z.literal('RANDOM'))
+      .or(
+        zfd.repeatable(
+          z
+            .array(zfd.numeric(z.number().int().positive()))
+            .length(4, 'Choose exactly 4 gray side missions')
+        )
+      )
   })
 )
 
@@ -159,12 +172,20 @@ const NewGame = () => {
   )
 
   const availableMissions = useMemo(() => {
-    if (!chosenCampaign) return []
-    return sideMissions.filter(
-      (mission) =>
-        chosenCampaign.period >= (mission.start || 0) &&
-        chosenCampaign.period <= (mission.end || Infinity)
-    )
+    const green: typeof sideMissions = []
+    const gray: typeof sideMissions = []
+    if (chosenCampaign) {
+      sideMissions.forEach((mission) => {
+        if (
+          chosenCampaign.period >= (mission.start || 0) &&
+          chosenCampaign.period <= (mission.end || Infinity)
+        ) {
+          if (mission.type === 'GREEN') green.push(mission)
+          if (mission.type === 'GRAY') gray.push(mission)
+        }
+      })
+    }
+    return { green, gray }
   }, [chosenCampaign, sideMissions])
 
   return (
@@ -248,18 +269,27 @@ const NewGame = () => {
         ))}
         <h2 className="m-0">Side Mission Deck</h2>
         {chosenCampaign ? (
-          <SelectInput
-            name="sideMissions"
-            label="Green Side Missions"
-            required
-            multiple
-          >
-            {availableMissions.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </SelectInput>
+          <div className="flex gap-2">
+            <SelectInput
+              name="greenMissions"
+              label="Green Side Missions"
+              required
+              multiple
+            >
+              {availableMissions.green.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </SelectInput>
+            <ChooseGrayMissions>
+              {availableMissions.gray.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </ChooseGrayMissions>
+          </div>
         ) : (
           <button
             className="link link-hover"
