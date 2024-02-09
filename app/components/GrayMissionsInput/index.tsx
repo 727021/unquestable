@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useField } from 'remix-validated-form'
 import RequiredIndicator from '../RequiredIndicator'
 
-const ChooseGrayMissions = ({ children }: PropsWithChildren) => {
+const GrayMissionsInput = ({ children }: PropsWithChildren) => {
   const { getInputProps, error, clearError } = useField('grayMissions')
 
   const [random, setRandom] = useState(true)
@@ -57,4 +57,4 @@ const ChooseGrayMissions = ({ children }: PropsWithChildren) => {
   )
 }
 
-export default ChooseGrayMissions
+export default GrayMissionsInput

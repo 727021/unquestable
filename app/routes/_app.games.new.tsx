@@ -13,7 +13,7 @@ import { ValidatedForm, validationError } from 'remix-validated-form'
 import TextInput from '~/components/TextInput'
 import SelectInput from '~/components/SelectInput'
 import SubmitButton from '~/components/SubmitButton'
-import ChooseGrayMissions from '~/components/ChooseGrayMissions'
+import GrayMissionsInput from '~/components/GrayMissionsInput'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request)
@@ -38,7 +38,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       },
       heroes: {
         include: {
-          mission: true
+          mission: true,
+          class: {
+            include: {
+              cards: {
+                where: {
+                  cost: 0
+                }
+              }
+            }
+          }
         }
       },
       agendas: {
@@ -56,6 +65,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       classes: {
         where: {
           side: 'IMPERIAL'
+        },
+        include: {
+          cards: {
+            where: {
+              cost: 0
+            }
+          }
         }
       }
     }
@@ -99,7 +115,6 @@ const validator = withZod(
         .length(4, 'Choose exactly 4 green side missions')
     ),
     grayMissions: zfd
-      // .text(z.string().regex(/^RANDOM$/, 'Choose exactly 4 gray side missions'))
       .text(z.literal('RANDOM'))
       .or(
         zfd.repeatable(
@@ -107,7 +122,13 @@ const validator = withZod(
             .array(zfd.numeric(z.number().int().positive()))
             .length(4, 'Choose exactly 4 gray side missions')
         )
-      )
+      ),
+    imperialClass: zfd.numeric(z.number().int().positive()),
+    agendaDecks: zfd.repeatable(
+      z
+        .array(zfd.numeric(z.number().int().positive()))
+        .length(6, 'Choose exactly 6 agenda decks')
+    )
   })
 )
 
@@ -127,11 +148,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 }
 
 const NewGame = () => {
-  const { campaigns, heroes, sideMissions } = useLoaderData<typeof loader>()
+  const { campaigns, heroes, sideMissions, imperialClasses } =
+    useLoaderData<typeof loader>()
+
+  console.log(imperialClasses)
 
   const [gameName, setGameName] = useState('')
   const [campaign, setCampaign] = useState(-1)
   const [rebels, setRebels] = useState([-1])
+  const [imperialClass, setImperialClass] = useState(-1)
 
   const campaignRef = useRef<HTMLSelectElement>(null)
 
@@ -255,6 +280,8 @@ const NewGame = () => {
               }
               value={rebels[i]}
               required
+              hintLeft={heroes.find(h => h.id === rebel)?.tagline}
+              hintRight={heroes.find(h => h.id === rebel)?.class?.cards?.[0]?.name}
             >
               <option disabled value={-1}>
                 Choose a Hero
@@ -282,13 +309,13 @@ const NewGame = () => {
                 </option>
               ))}
             </SelectInput>
-            <ChooseGrayMissions>
+            <GrayMissionsInput>
               {availableMissions.gray.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name}
                 </option>
               ))}
-            </ChooseGrayMissions>
+            </GrayMissionsInput>
           </div>
         ) : (
           <button
@@ -300,6 +327,23 @@ const NewGame = () => {
           </button>
         )}
         <h2 className="m-0">Imperial Player</h2>
+        <SelectInput
+          name="imperialClass"
+          label="Imperial Class"
+          required
+          value={imperialClass}
+          onChange={e => setImperialClass(parseInt(e.target.value, 10))}
+          hintRight={imperialClasses.find(c => c.id === imperialClass)?.cards?.[0]?.name}
+        >
+          <option disabled value={-1}>
+            Choose a Class
+          </option>
+          {imperialClasses.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </SelectInput>
         <SubmitButton>Start Game</SubmitButton>
       </ValidatedForm>
     </div>
