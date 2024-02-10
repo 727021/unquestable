@@ -342,7 +342,7 @@ model RebelPlayer {
 
 model ImperialPlayer {
   id          Int          @id @default(autoincrement())
-  name        String
+  name        String?
   game        Game         @relation(fields: [gameId], references: [id])
   gameId      Int          @unique
   xp          Int          @default(0)

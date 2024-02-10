@@ -9,11 +9,52 @@ import { zfd } from 'zod-form-data'
 import { z } from 'zod'
 import { PlusIcon, MinusIcon } from '@heroicons/react/24/solid'
 import { withZod } from '@remix-validated-form/with-zod'
+import type { FieldErrors } from 'remix-validated-form'
 import { ValidatedForm, validationError } from 'remix-validated-form'
 import TextInput from '~/components/TextInput'
 import SelectInput from '~/components/SelectInput'
 import SubmitButton from '~/components/SubmitButton'
 import GrayMissionsInput from '~/components/GrayMissionsInput'
+import { randomIndex } from '~/utils/randomIndex'
+
+const validator = withZod(
+  zfd.formData({
+    gameName: zfd.text(z.string().trim().min(1)),
+    campaign: zfd.numeric(z.number().int().positive()),
+    rebels: zfd.repeatable(
+      z
+        .array(
+          z.object({
+            name: zfd.text(z.string().trim().optional()),
+            hero: zfd.numeric(z.number().int().positive())
+          })
+        )
+        .min(1)
+        .max(4)
+    ),
+    greenMissions: zfd.repeatable(
+      z
+        .array(zfd.numeric(z.number().int().positive()))
+        .length(4, 'Choose exactly 4 green side missions')
+    ),
+    grayMissions: zfd
+      .text(z.literal('RANDOM'))
+      .or(
+        zfd.repeatable(
+          z
+            .array(zfd.numeric(z.number().int().positive()))
+            .length(4, 'Choose exactly 4 gray side missions')
+        )
+      ),
+    imperialName: zfd.text(z.string().trim().optional()),
+    imperialClass: zfd.numeric(z.number().int().positive()),
+    agendaDecks: zfd.repeatable(
+      z
+        .array(zfd.numeric(z.number().int().positive()))
+        .length(6, 'Choose exactly 6 agenda decks')
+    )
+  })
+)
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request)
@@ -94,64 +135,305 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   })
 }
 
-const validator = withZod(
-  zfd.formData({
-    gameName: zfd.text(z.string().min(1)),
-    campaign: zfd.numeric(z.number().int().positive()),
-    rebels: zfd.repeatable(
-      z
-        .array(
-          z.object({
-            name: zfd.text(z.string().optional()),
-            hero: zfd.numeric(z.number().int().positive())
-          })
-        )
-        .min(1)
-        .max(4)
-    ),
-    greenMissions: zfd.repeatable(
-      z
-        .array(zfd.numeric(z.number().int().positive()))
-        .length(4, 'Choose exactly 4 green side missions')
-    ),
-    grayMissions: zfd
-      .text(z.literal('RANDOM'))
-      .or(
-        zfd.repeatable(
-          z
-            .array(zfd.numeric(z.number().int().positive()))
-            .length(4, 'Choose exactly 4 gray side missions')
-        )
-      ),
-    imperialClass: zfd.numeric(z.number().int().positive()),
-    agendaDecks: zfd.repeatable(
-      z
-        .array(zfd.numeric(z.number().int().positive()))
-        .length(6, 'Choose exactly 6 agenda decks')
-    )
-  })
-)
-
 export const action = async ({ request }: ActionFunctionArgs) => {
   const user = await getUser(request)
 
-  const result = await validator.validate(await request.formData())
+  const { data, error } = await validator.validate(await request.formData())
 
-  if (result.error) {
-    return validationError(result.error)
+  if (error) {
+    return validationError(error)
   }
 
-  console.log(result.data)
+  const campaign = await prisma.campaign.findUnique({
+    where: {
+      id: data.campaign,
+      expansion: {
+        OR: [
+          {
+            defaultOwned: true
+          },
+          {
+            id: {
+              in: user.collection?.map(({ id }) => id) ?? []
+            }
+          }
+        ]
+      }
+    },
+    include: {
+      missionSlots: {
+        where: {
+          index: 0
+        }
+      }
+    }
+  })
+
+  if (!campaign) {
+    return validationError({
+      fieldErrors: {
+        campaign: 'Invalid'
+      }
+    })
+  }
+
+  if (data.grayMissions === 'RANDOM') {
+    const grayMissions = await prisma.mission.findMany({
+      where: {
+        type: 'GRAY',
+        expansion: {
+          OR: [
+            {
+              defaultOwned: true
+            },
+            {
+              id: {
+                in: user.collection?.map(({ id }) => id) ?? []
+              }
+            }
+          ]
+        },
+        AND: [
+          {
+            OR: [
+              {
+                start: null
+              },
+              {
+                start: {
+                  lte: campaign.period
+                }
+              }
+            ]
+          },
+          {
+            OR: [
+              {
+                end: null
+              },
+              {
+                end: {
+                  gte: campaign.period
+                }
+              }
+            ]
+          }
+        ]
+      },
+      select: {
+        id: true
+      }
+    })
+
+    data.grayMissions = new Array(4)
+      .fill(0)
+      .map(() => grayMissions.splice(randomIndex(grayMissions), 1)[0].id)
+  }
+
+  // validate heroes
+  const heroes = await prisma.hero.findMany({
+    where: {
+      id: {
+        in: data.rebels.map((r) => r.hero)
+      }
+    },
+    select: {
+      id: true,
+      missionId: true
+    }
+  })
+
+  if (heroes.length !== data.rebels.length) {
+    const fieldErrors: FieldErrors = {}
+    data.rebels.forEach((rebel, i) => {
+      if (!heroes.some((h) => h.id === rebel.hero)) {
+        fieldErrors[`rebels[${i}].hero`] = 'Invalid'
+      }
+    })
+    return validationError({
+      fieldErrors
+    })
+  }
+
+  // validate side missions
+  const sideMissions = await prisma.mission.findMany({
+    where: {
+      type: {
+        in: ['GRAY', 'GREEN']
+      },
+      id: {
+        in: [...data.grayMissions, ...data.greenMissions]
+      },
+      expansion: {
+        OR: [
+          {
+            defaultOwned: true
+          },
+          {
+            id: {
+              in: user.collection?.map(({ id }) => id) ?? []
+            }
+          }
+        ]
+      },
+      AND: [
+        {
+          OR: [
+            {
+              start: null
+            },
+            {
+              start: {
+                lte: campaign.period
+              }
+            }
+          ]
+        },
+        {
+          OR: [
+            {
+              end: null
+            },
+            {
+              end: {
+                gte: campaign.period
+              }
+            }
+          ]
+        }
+      ]
+    },
+    select: {
+      id: true,
+      type: true
+    }
+  })
+
+  let hasSideMissionErrors = false
+  const sideMissionErrors: FieldErrors = {}
+  if (sideMissions.filter((m) => m.type === 'GRAY').length !== 4) {
+    sideMissionErrors.grayMissions = 'Choose exactly 4 gray side missions'
+    hasSideMissionErrors = true
+  }
+  if (sideMissions.filter((m) => m.type === 'GREEN').length !== 4) {
+    sideMissionErrors.greenMissions = 'Choose exactly 4 green side missions'
+    hasSideMissionErrors = true
+  }
+  if (hasSideMissionErrors) {
+    return validationError({
+      fieldErrors: sideMissionErrors
+    })
+  }
+
+  // validate imperial class
+  const imperialClass = await prisma.class.findFirst({
+    where: {
+      id: data.imperialClass,
+      expansion: {
+        OR: [
+          {
+            defaultOwned: true
+          },
+          {
+            id: {
+              in: user.collection?.map(({ id }) => id) ?? []
+            }
+          }
+        ]
+      },
+      side: 'IMPERIAL'
+    },
+    select: {
+      id: true
+    }
+  })
+  if (!imperialClass) {
+    return validationError({
+      fieldErrors: {
+        imperialClass: 'Invalid'
+      }
+    })
+  }
+
+  // validate agenda decks
+  const agendaDecks = await prisma.agendaDeck.findMany({
+    where: {
+      id: {
+        in: data.agendaDecks
+      },
+      expansion: {
+        OR: [
+          {
+            defaultOwned: true
+          },
+          {
+            id: {
+              in: user.collection?.map(({ id }) => id) ?? []
+            }
+          }
+        ]
+      }
+    }
+  })
+  if (agendaDecks.length !== 6) {
+    return validationError({
+      fieldErrors: {
+        agendaDecks: 'Choose exactly 6 agenda decks'
+      }
+    })
+  }
+
+  // create!
+  const newGame = await prisma.game.create({
+    data: {
+      userId: user.id,
+      name: data.gameName,
+      rebelPlayers: {
+        createMany: {
+          data: data.rebels.map((rebel) => ({
+            name: rebel.name,
+            heroId: rebel.hero
+          }))
+        }
+      },
+      campaignId: data.campaign,
+      missions: {
+        // put starting mission into play
+        create: {
+          missionId: campaign.startId,
+          missionSlotId: campaign.missionSlots[0].id
+        }
+      },
+      imperialPlayer: {
+        create: {
+          name: data.imperialName,
+          agendaDecks: {
+            connect: data.agendaDecks.map((id) => ({ id }))
+          },
+          classId: data.imperialClass
+        }
+      },
+      sideMissionDeck: {
+        connect: [
+          // red side missions
+          ...heroes.map(({ missionId }) => ({ id: missionId })),
+          // gray and green side missions
+          ...sideMissions.map(({ id }) => ({ id }))
+        ]
+      }
+    }
+  })
+
+  console.log(newGame)
 
   // TODO: redirect to new game
-  return json({})
+  // return redirect(`/games/${newGame.id}`)
+  return redirect('/games')
 }
 
 const NewGame = () => {
-  const { campaigns, heroes, sideMissions, imperialClasses } =
+  const { campaigns, heroes, sideMissions, imperialClasses, agendas } =
     useLoaderData<typeof loader>()
-
-  console.log(imperialClasses)
 
   const [gameName, setGameName] = useState('')
   const [campaign, setCampaign] = useState(-1)
@@ -215,10 +497,10 @@ const NewGame = () => {
 
   return (
     <div className="prose">
-      <h1 className="prose-h1">New Game</h1>
-      <ValidatedForm validator={validator} method="POST">
+      <h1 className="m-0">New Game</h1>
+      <ValidatedForm validator={validator} method="POST" noValidate>
         <h2 className="m-0">Campaign Info</h2>
-        <div className="flex flex-row gap-3">
+        <div className="flex flex-row gap-2">
           <TextInput
             name="gameName"
             label="Game Name"
@@ -266,7 +548,7 @@ const NewGame = () => {
           </button>
         </div>
         {rebels.map((rebel, i) => (
-          <div key={i} className="flex flex-row gap-3">
+          <div key={i} className="flex flex-row gap-2">
             <TextInput
               name={`rebels[${i}].name`}
               label={`Rebel ${i + 1} Name`}
@@ -274,14 +556,15 @@ const NewGame = () => {
             <SelectInput
               name={`rebels[${i}].hero`}
               label={`Rebel ${i + 1} Hero`}
-              // onChange={e => setHero(i, parseInt(e.target.value, 10))}
               onChange={(e) =>
                 setAtIndex(i, parseInt(e.target.value, 10), setRebels)
               }
               value={rebels[i]}
               required
-              hintLeft={heroes.find(h => h.id === rebel)?.tagline}
-              hintRight={heroes.find(h => h.id === rebel)?.class?.cards?.[0]?.name}
+              hintLeft={heroes.find((h) => h.id === rebel)?.tagline}
+              hintRight={
+                heroes.find((h) => h.id === rebel)?.class?.cards?.[0]?.name
+              }
             >
               <option disabled value={-1}>
                 Choose a Hero
@@ -327,23 +610,43 @@ const NewGame = () => {
           </button>
         )}
         <h2 className="m-0">Imperial Player</h2>
-        <SelectInput
-          name="imperialClass"
-          label="Imperial Class"
-          required
-          value={imperialClass}
-          onChange={e => setImperialClass(parseInt(e.target.value, 10))}
-          hintRight={imperialClasses.find(c => c.id === imperialClass)?.cards?.[0]?.name}
-        >
-          <option disabled value={-1}>
-            Choose a Class
-          </option>
-          {imperialClasses.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </SelectInput>
+        <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
+            <TextInput name="imperialName" label="Imperial Name" />
+            <SelectInput
+              name="imperialClass"
+              label="Imperial Class"
+              required
+              value={imperialClass}
+              onChange={(e) => setImperialClass(parseInt(e.target.value, 10))}
+              hintRight={
+                imperialClasses.find((c) => c.id === imperialClass)?.cards?.[0]
+                  ?.name
+              }
+            >
+              <option disabled value={-1}>
+                Choose a Class
+              </option>
+              {imperialClasses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </SelectInput>
+          </div>
+          <SelectInput
+            name="agendaDecks"
+            label="Agenda Decks"
+            required
+            multiple
+          >
+            {agendas.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </SelectInput>
+        </div>
         <SubmitButton>Start Game</SubmitButton>
       </ValidatedForm>
     </div>
