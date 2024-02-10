@@ -424,11 +424,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   })
 
-  console.log(newGame)
-
-  // TODO: redirect to new game
-  // return redirect(`/games/${newGame.id}`)
-  return redirect('/games')
+  return redirect(`/games/${newGame.id}`)
 }
 
 const NewGame = () => {

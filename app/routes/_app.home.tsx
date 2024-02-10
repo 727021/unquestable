@@ -13,8 +13,8 @@ const Index = () => {
 
   return (
     <div>
-      <Link to="">My Games</Link>
-      <Link to="">My Collection</Link>
+      <Link to="/games">My Games</Link>
+      <Link to="/collection">My Collection</Link>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 const Footer = () => {
   return (
-    <footer>
+    <footer className="footer p-10 bg-base-300 text-base-content">
       {/* Disclaimer copied from https://cards.boardwars.eu/ */}
       This website is not produced, endorsed, supported, or affiliated with
       Fantasy Flight Games. The copyrightable portions of Star Wars: Imperial
