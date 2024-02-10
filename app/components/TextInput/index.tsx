@@ -22,7 +22,7 @@ const TextInput = forwardRef(
     const { getInputProps, error } = useField(name)
 
     return (
-      <label className="form-control w-full max-w-xs">
+      <label className="form-control max-w-full w-96">
         <div className="label">
           <span className="label-text">
             {required && <RequiredIndicator />}
@@ -31,7 +31,7 @@ const TextInput = forwardRef(
         </div>
         <input
           className={clsx(
-            'input input-bordered w-full max-w-xs',
+            'input input-bordered w-full',
             error && 'input-error'
           )}
           {...getInputProps({

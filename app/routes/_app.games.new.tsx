@@ -496,11 +496,15 @@ const NewGame = () => {
   }, [chosenCampaign, sideMissions])
 
   return (
-    <div className="prose">
+    <div className="prose max-w-full">
       <h1 className="m-0">New Game</h1>
-      <ValidatedForm validator={validator} method="POST" noValidate>
+      <ValidatedForm
+        validator={validator}
+        method="POST"
+        className="max-w-full p-3"
+      >
         <h2 className="m-0">Campaign Info</h2>
-        <div className="flex flex-row gap-2">
+        <div className="flex flex-row gap-x-2 flex-wrap">
           <TextInput
             name="gameName"
             label="Game Name"
@@ -548,7 +552,7 @@ const NewGame = () => {
           </button>
         </div>
         {rebels.map((rebel, i) => (
-          <div key={i} className="flex flex-row gap-2">
+          <div key={i} className="flex gap-x-2 flex-wrap">
             <TextInput
               name={`rebels[${i}].name`}
               label={`Rebel ${i + 1} Name`}
@@ -579,7 +583,7 @@ const NewGame = () => {
         ))}
         <h2 className="m-0">Side Mission Deck</h2>
         {chosenCampaign ? (
-          <div className="flex gap-2">
+          <div className="flex gap-x-2 flex-wrap">
             <SelectInput
               name="greenMissions"
               label="Green Side Missions"
@@ -610,8 +614,8 @@ const NewGame = () => {
           </button>
         )}
         <h2 className="m-0">Imperial Player</h2>
-        <div className="flex gap-2">
-          <div className="flex flex-col gap-2">
+        <div className="flex gap-x-2 flex-wrap">
+          <div className="flex flex-col gap-x-2 max-w-full">
             <TextInput name="imperialName" label="Imperial Name" />
             <SelectInput
               name="imperialClass"

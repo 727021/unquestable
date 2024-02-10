@@ -42,7 +42,7 @@ const SelectInput = forwardRef(
     const { getInputProps, error } = useField(name)
 
     return (
-      <label className="form-control w-full max-w-xs">
+      <label className="form-control max-w-full w-96">
         <div className="label">
           <span className="label-text">
             {required && <RequiredIndicator />}
@@ -53,7 +53,7 @@ const SelectInput = forwardRef(
           </span>
         </div>
         <select
-          className={clsx('select select-bordered', error && 'select-error')}
+          className={clsx('select select-bordered grow', error && 'select-error')}
           {...getInputProps({
             id: name,
             value,
