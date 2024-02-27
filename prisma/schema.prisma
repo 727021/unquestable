@@ -322,6 +322,7 @@ model GameMission {
   missionSlot   MissionSlot? @relation(fields: [missionSlotId], references: [id])
   missionSlotId Int?
   forced        Boolean      @default(false)
+  threat        Int? // threat level for forced missions
   mission       Mission      @relation(fields: [missionId], references: [id])
   missionId     Int
   resolved      Boolean      @default(false)
