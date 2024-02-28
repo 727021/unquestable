@@ -8,7 +8,14 @@ import {
 import type { LoaderData } from './_app.games.$game'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { prisma } from '~/services/db.server'
-import { ElementRef, useEffect, useRef, useState } from 'react'
+import {
+  ChangeEvent,
+  ElementRef,
+  useEffect,
+  useReducer,
+  useRef,
+  useState
+} from 'react'
 import { Side } from '@prisma/client'
 import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
@@ -16,6 +23,7 @@ import { z } from 'zod'
 import { validationError, ValidatedForm } from 'remix-validated-form'
 import TextInput from '~/components/TextInput'
 import ButtonBar from '~/components/ButtonBar'
+import { calculateRewards } from '~/utils/missionRewards'
 
 const validator = withZod(
   zfd.formData({
@@ -117,8 +125,28 @@ const Resolve = () => {
   const data = useLoaderData<typeof loader>()
   console.log(data)
 
-  const [win, setWin] = useState<boolean | null>(null)
+  const [winner, setWinner] = useState<Side | null>(null)
   const [crates, setCrates] = useState(0)
+  const [placeholderValues, setPlaceholderValue] = useReducer(
+    (
+      state: { [key: string]: any },
+      action: ChangeEvent<ElementRef<'input'>>
+    ) => ({
+      ...state,
+      [action.target.name]:
+        action.target.type === 'number'
+          ? action.target.valueAsNumber
+          : action.target.value
+    }),
+    {}
+  )
+
+  const rewards = calculateRewards({
+    ...data.mission,
+    winner,
+    crates,
+    placeholderValues
+  })
 
   return (
     <>
@@ -126,12 +154,16 @@ const Resolve = () => {
         Resolving <em>{data.mission.name}</em>
       </h2>
       <div className="flex w-full flex-wrap max-w-full">
-        <ValidatedForm validator={validator} method="POST" className="flex-1 whitespace-nowrap">
+        <ValidatedForm
+          validator={validator}
+          method="POST"
+          className="flex-1 whitespace-nowrap"
+        >
           <ButtonBar
             name="win"
             label="Winner"
             required
-            onChange={val => setWin(val === Side.REBEL)}
+            onChange={val => setWinner(val as Side)}
             options={[
               {
                 label: 'Rebels',
@@ -154,7 +186,9 @@ const Resolve = () => {
             required
           />
           {/* TODO: Reward placeholder inputs */}
-          <button type="submit" className="btn">Resolve Mission</button>
+          <button type="submit" className="btn">
+            Resolve Mission
+          </button>
         </ValidatedForm>
         <div className="flex-1 whitespace-nowrap">
           {/* TODO: Rewards preview */}
