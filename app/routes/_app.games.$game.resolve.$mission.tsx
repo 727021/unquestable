@@ -8,14 +8,8 @@ import {
 import type { LoaderData } from './_app.games.$game'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { prisma } from '~/services/db.server'
-import {
-  ChangeEvent,
-  ElementRef,
-  useEffect,
-  useReducer,
-  useRef,
-  useState
-} from 'react'
+import type { ChangeEvent, ElementRef } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import { Side } from '@prisma/client'
 import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
@@ -121,7 +115,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 const Resolve = () => {
   const params = useParams()
-  // const data = useOutletContext<LoaderData>()
+  const ctx = useOutletContext<LoaderData>()
   const data = useLoaderData<typeof loader>()
   console.log(data)
 
@@ -145,7 +139,8 @@ const Resolve = () => {
     ...data.mission,
     winner,
     crates,
-    placeholderValues
+    placeholderValues,
+    rebels: ctx.game.rebelPlayers
   })
 
   return (
@@ -163,7 +158,7 @@ const Resolve = () => {
             name="win"
             label="Winner"
             required
-            onChange={val => setWinner(val as Side)}
+            onChange={(val) => setWinner(val as Side)}
             options={[
               {
                 label: 'Rebels',

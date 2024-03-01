@@ -1,6 +1,9 @@
 import { MissionRewardType, Side } from '@prisma/client'
 import type { useLoaderData } from '@remix-run/react'
 import type { loader as resolveMissionLoader } from '~/routes/_app.games.$game.resolve.$mission'
+import type { LoaderData as GameData } from '~/routes/_app.games.$game'
+
+const CRATE_VALUE = 50
 
 type RewardsOptions = ReturnType<
   typeof useLoaderData<typeof resolveMissionLoader>
@@ -10,7 +13,7 @@ type RewardsOptions = ReturnType<
   placeholderValues?: {
     [key: string]: any
   }
-  heroes?: number | null
+  rebels: GameData['game']['rebelPlayers']
 }
 
 type CheckCondition = Pick<
@@ -54,7 +57,10 @@ const checkCondition = ({
   for (const placeholder of rewardPlaceholders) {
     const value = getPlaceholderValue({ placeholder, placeholderValues })
     if (value !== undefined) {
-      condition = condition?.replaceAll(`{{${placeholder.name}}}`, JSON.stringify(value))
+      condition = condition?.replaceAll(
+        `{{${placeholder.name}}}`,
+        JSON.stringify(value)
+      )
     }
   }
   // eslint-disable-next-line no-eval
@@ -73,7 +79,10 @@ const checkMultiplier = ({
   for (const placeholder of rewardPlaceholders) {
     const value = getPlaceholderValue({ placeholder, placeholderValues })
     if (value !== undefined) {
-      multiplier = multiplier?.replaceAll(`{{${placeholder.name}}}`, JSON.stringify(value))
+      multiplier = multiplier?.replaceAll(
+        `{{${placeholder.name}}}`,
+        JSON.stringify(value)
+      )
     }
   }
   // eslint-disable-next-line no-eval
@@ -82,55 +91,89 @@ const checkMultiplier = ({
   return 0
 }
 
+const isRebel = (side: Side) => side === Side.ALL || side === Side.REBEL
+const isEmpire = (side: Side) => side === Side.ALL || side === Side.IMPERIAL
+
 export const calculateRewards = ({
-  hero,
   rewardPlaceholders,
   rewards,
   winner,
-  crates = 0,
+  crates,
   placeholderValues = {},
-  heroes
+  rebels
 }: RewardsOptions) => {
   const relevantRewards = rewards.filter(
     (r) =>
       r.type === MissionRewardType.ALL ||
-      r.type === (Side.REBEL ? MissionRewardType.WIN : MissionRewardType.LOSS)
+      r.type ===
+        (winner === Side.REBEL ? MissionRewardType.WIN : MissionRewardType.LOSS)
   )
   const relevantPlaceholders = rewardPlaceholders.filter(
     (r) =>
       r.type === MissionRewardType.ALL ||
-      r.type === (Side.REBEL ? MissionRewardType.WIN : MissionRewardType.LOSS)
+      r.type ===
+        (winner === Side.REBEL ? MissionRewardType.WIN : MissionRewardType.LOSS)
   )
 
   let rebelXp = 0
   let credits = 0
-  let allies: NonNullable<RewardsOptions['rewards'][0]['troop']>[] = []
-  let rebelRewards: NonNullable<RewardsOptions['rewards'][0]['reward']>[] = []
+  let ally: NonNullable<RewardsOptions['rewards'][0]['troop']> | null = null
+  let rebelReward: NonNullable<RewardsOptions['rewards'][0]['reward']> | null =
+    null
 
   let imperialXp = 0
   let influence = 0
-  let villains: NonNullable<RewardsOptions['rewards'][0]['troop']>[] = []
-  let imperialRewards: NonNullable<RewardsOptions['rewards'][0]['reward']>[] = []
+  let villain: NonNullable<RewardsOptions['rewards'][0]['troop']> | null = null
+  let imperialReward: NonNullable<
+    RewardsOptions['rewards'][0]['reward']
+  > | null = null
 
   let forcedMission = null
   let nextMission = null
 
+  credits += (crates ?? 0) * CRATE_VALUE
+
   for (const reward of relevantRewards) {
-    const condition = checkCondition({ reward, rewardPlaceholders: relevantPlaceholders, placeholderValues })
-    const multiplier = checkMultiplier({ reward, rewardPlaceholders: relevantPlaceholders, placeholderValues })
+    const condition = checkCondition({
+      reward,
+      rewardPlaceholders: relevantPlaceholders,
+      placeholderValues
+    })
+    const multiplier = checkMultiplier({
+      reward,
+      rewardPlaceholders: relevantPlaceholders,
+      placeholderValues
+    })
 
     if (!condition) continue
+
+    if (isRebel(reward.side)) {
+      rebelXp += (reward.xp ?? 0) * multiplier
+      credits += (reward.credits ?? 0) * multiplier * rebels.length
+      ally ??= reward.troop
+      rebelReward ??= reward.reward
+    }
+
+    if (isEmpire(reward.side)) {
+      imperialXp += (reward.xp ?? 0) * multiplier
+      influence += (reward.influence ?? 0) * multiplier
+      villain ??= reward.troop
+      imperialReward ??= reward.reward
+    }
+
+    forcedMission ??= reward.forcedMission
+    nextMission ??= reward.nextMission
   }
 
   return {
     credits,
     rebelXp,
-    allies,
-    rebelRewards,
+    ally,
+    rebelReward,
     imperialXp,
     influence,
-    villains,
-    imperialRewards,
+    villain,
+    imperialReward,
     forcedMission,
     nextMission
   }

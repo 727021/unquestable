@@ -96,7 +96,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           xp: true,
           hero: {
             select: {
-              name: true
+              name: true,
+              id: true
             }
           }
         }
