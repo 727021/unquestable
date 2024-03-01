@@ -10,15 +10,27 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { prisma } from '~/services/db.server'
 import type { ChangeEvent, ElementRef } from 'react'
 import { useReducer, useState } from 'react'
-import { MissionRewardType, Side } from '@prisma/client'
+import {
+  GameMission,
+  MissionRewardType,
+  MissionType,
+  Prisma,
+  Side
+} from '@prisma/client'
 import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
-import { validationError, ValidatedForm } from 'remix-validated-form'
+import {
+  validationError,
+  ValidatedForm,
+  ValidatorError,
+  FieldErrors
+} from 'remix-validated-form'
 import TextInput from '~/components/TextInput'
 import ButtonBar from '~/components/ButtonBar'
 import { calculateRewards } from '~/utils/missionRewards'
 import PlaceholderInput from '~/components/PlaceholderInput'
+import { getUser } from '~/services/auth.server'
 
 const validator = withZod(
   zfd.formData({
@@ -116,14 +128,365 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 }
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const user = await getUser(request)
+
   const { data, error } = await validator.validate(await request.formData())
 
   if (error) {
     return validationError(error)
   }
 
-  // TODO: resolve mission and grant rewards
-  return json({})
+  if (!params.game) {
+    return redirect('/games')
+  }
+  const gameId = parseInt(params.game, 10)
+  if (isNaN(gameId)) {
+    return redirect('/games')
+  }
+
+  const game = await prisma.game.findUnique({
+    where: {
+      id: gameId,
+      userId: user.id
+    },
+    select: {
+      rebelPlayers: {
+        select: {
+          id: true,
+          name: true,
+          xp: true,
+          hero: {
+            select: {
+              name: true,
+              id: true
+            }
+          }
+        }
+      },
+      campaign: {
+        select: {
+          missionSlots: {
+            select: {
+              id: true,
+              index: true,
+              type: true,
+              gameMissions: {
+                where: {
+                  gameId
+                },
+                take: 1
+              }
+            },
+            orderBy: {
+              index: 'asc'
+            }
+          }
+        }
+      }
+    }
+  })
+
+  if (!game) {
+    return redirect('/games')
+  }
+
+  const mission = await prisma.gameMission.findUnique({
+    where: {
+      id: parseInt(params.mission!, 10),
+      resolved: false
+    },
+    select: {
+      id: true,
+      threat: true,
+      mission: {
+        select: {
+          rewardPlaceholders: {
+            select: {
+              id: true,
+              label: true,
+              name: true,
+              validation: true,
+              status: true,
+              type: true
+            }
+          },
+          rewards: {
+            select: {
+              type: true,
+              side: true,
+              condition: true,
+              credits: true,
+              id: true,
+              influence: true,
+              multiplier: true,
+              reward: {
+                select: {
+                  id: true,
+                  name: true,
+                  tagline: true
+                }
+              },
+              xp: true,
+              troop: {
+                select: {
+                  id: true,
+                  name: true,
+                  traits: true
+                }
+              },
+              forcedMission: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              },
+              nextMission: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
+            }
+          },
+          name: true,
+          hero: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      }
+    }
+  })
+
+  if (!mission) {
+    return redirect(`/games/${params.game}`)
+  }
+
+  // parse placeholder values
+  const placeholderValues = data.placeholders?.reduce<{
+    [key: string]: any
+    errors: FieldErrors
+  }>(
+    (acc, p, i) => {
+      const placeholder = mission.mission.rewardPlaceholders.find(
+        (pl) => pl.id === p.id
+      )
+
+      if (!placeholder) return acc
+
+      // convert value to correct type
+      const value =
+        placeholder.type === 'number'
+          ? parseInt(p.value, 10)
+          : placeholder.type === 'boolean'
+            ? p.value === 'true'
+            : p.value
+
+      const name = p.name
+
+      // validate placeholder values
+      if (
+        placeholder.validation &&
+        typeof placeholder.validation === 'object' &&
+        !Array.isArray(placeholder.validation)
+      ) {
+        if (
+          typeof placeholder.validation.min === 'number' &&
+          typeof value === 'number' &&
+          value < placeholder.validation.min
+        ) {
+          acc.errors[`placeholders[${i}].value`] =
+            `Must be at least ${placeholder.validation.min}`
+        } else if (
+          typeof placeholder.validation.max === 'number' &&
+          typeof value === 'number' &&
+          value > placeholder.validation.max
+        ) {
+          acc.errors[`placeholders[${i}].value`] =
+            `Must be at most ${placeholder.validation.max}`
+        } else if (
+          typeof placeholder.validation.step === 'number' &&
+          typeof value === 'number' &&
+          value % placeholder.validation.step !== 0
+        ) {
+          acc.errors[`placeholders[${i}].value`] =
+            `Must be a multiple of ${placeholder.validation.step}`
+        }
+      }
+
+      acc[name] = value
+
+      return acc
+    },
+    { errors: {} }
+  )
+
+  // validate placeholder values
+  if (
+    placeholderValues?.errors &&
+    Object.keys(placeholderValues.errors).length
+  ) {
+    return validationError({
+      fieldErrors: placeholderValues.errors
+    })
+  }
+
+  const {
+    credits,
+    rebelXp,
+    ally,
+    rebelReward,
+    imperialXp,
+    influence,
+    villain,
+    imperialReward,
+    forcedMission,
+    nextMission
+  } = calculateRewards({
+    ...mission.mission,
+    placeholderValues,
+    rebels: game.rebelPlayers,
+    winner: data.win,
+    crates: data.crates
+  })
+
+  const foundNextMission = nextMission
+    ? await prisma.mission.findUnique({
+        where: {
+          id: nextMission.id
+        }
+      })
+    : null
+  const nextStorySlot = nextMission
+    ? game.campaign.missionSlots.find(
+        (slot) =>
+          slot.type === MissionType.STORY && slot.gameMissions.length === 0
+      )
+    : null
+
+  await prisma.game.update({
+    where: {
+      id: gameId
+    },
+    data: {
+      credits: {
+        increment: credits
+      },
+      ...(ally
+        ? {
+            allies: {
+              connect: {
+                id: ally?.id
+              }
+            }
+          }
+        : {}),
+      ...(forcedMission || nextMission
+        ? {
+            missions: {
+              createMany: {
+                data: [
+                  ...(forcedMission
+                    ? [
+                        {
+                          missionId: forcedMission.id,
+                          forced: true,
+                          threat: mission.threat
+                        }
+                      ]
+                    : []),
+                  ...(nextMission
+                    ? [
+                        {
+                          missionId: nextMission.id,
+                          missionSlotId:
+                            foundNextMission?.type === MissionType.STORY
+                              ? nextStorySlot?.id
+                              : null
+                        }
+                      ]
+                    : [])
+                ]
+              },
+              update: {
+                where: {
+                  id: parseInt(params.mission!, 10)
+                },
+                data: {
+                  resolved: true,
+                  winner: data.win
+                }
+              }
+            }
+          }
+        : {}),
+      imperialPlayer: {
+        update: {
+          xp: {
+            increment: imperialXp
+          },
+          influence: {
+            increment: influence
+          },
+          ...(villain
+            ? {
+                villains: {
+                  connect: {
+                    id: villain?.id
+                  }
+                }
+              }
+            : {}),
+          ...(imperialReward
+            ? {
+                rewards: {
+                  connect: {
+                    id: imperialReward?.id
+                  }
+                }
+              }
+            : {})
+        }
+      },
+      rebelPlayers: {
+        updateMany: [
+          {
+            where: {
+              gameId
+            },
+            data: {
+              xp: {
+                increment: rebelXp
+              }
+            }
+          }
+        ],
+        ...(rebelReward
+          ? {
+              update: {
+                where: {
+                  id:
+                    game.rebelPlayers.find(
+                      (r) => r.hero.id === mission.mission.hero?.id
+                    )?.id ?? 0
+                },
+                data: {
+                  rewards: {
+                    connect: {
+                      id: rebelReward?.id ?? 0
+                    }
+                  }
+                }
+              }
+            }
+          : {})
+      }
+    }
+  })
+
+  return redirect(`/games/${gameId}`)
 }
 
 const Resolve = () => {

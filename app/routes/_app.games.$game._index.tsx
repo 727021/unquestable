@@ -29,7 +29,7 @@ const Game = () => {
                 <tr
                   key={slot.index}
                   className={clsx(
-                    !slot.gameMissions?.[0] &&
+                    i !== 0 &&
                       !arr[i - 1]?.gameMissions?.[0]?.resolved
                       ? 'bg-base-300'
                       : 'hover'
@@ -59,7 +59,7 @@ const Game = () => {
                     </td>
                   )}
                   <td className="text-center">{slot.threat}</td>
-                  {slot.gameMissions[0] ? (
+                  {(slot.gameMissions[0] && (i === 0 || arr[i - 1]?.gameMissions?.[0]?.resolved)) ? (
                     slot.gameMissions[0].resolved ? (
                       <td>
                         {slot.gameMissions[0].winner === 'IMPERIAL'

@@ -1,7 +1,7 @@
 import { useField } from 'remix-validated-form'
 import RequiredIndicator from '~/components/RequiredIndicator'
 import clsx from 'clsx'
-import type { ChangeEventHandler, ElementRef } from 'react'
+import { useState, type ChangeEventHandler, type ElementRef } from 'react'
 import type { loader as resolveLoader } from '~/routes/_app.games.$game.resolve.$mission'
 import type { useLoaderData } from '@remix-run/react'
 import type { JsonObject } from '@prisma/client/runtime/library'
@@ -18,13 +18,29 @@ type Props = {
 
 const PlaceholderInput = ({ index, placeholder, onChange }: Props) => {
   const { getInputProps, error } = useField(`placeholders[${index}].value`)
+  const [value, setValue] = useState(false)
 
   if (placeholder.type === 'boolean') {
     return (
       <label className="form-control max-w-full w-96">
+        <div className="label">
+          <RequiredIndicator />
+          <span className="label-text">{placeholder.label}</span>
+        </div>
         <input
           className={clsx('checkbox', error && 'checkbox-error')}
-          {...getInputProps({ onChange, type: 'checkbox' })}
+          type="checkbox"
+          checked={value}
+          onChange={(e) => {
+            setValue(e.target.checked)
+            onChange?.(e)
+          }}
+        />
+        <input
+          {...getInputProps({
+            type: 'hidden',
+            value: value ? 'true' : 'false'
+          })}
         />
         <input
           type="hidden"
@@ -36,10 +52,6 @@ const PlaceholderInput = ({ index, placeholder, onChange }: Props) => {
           name={`placeholders[${index}].name`}
           value={placeholder.name}
         />
-        <div className="label">
-          <RequiredIndicator />
-          <span className="label-text">{placeholder.label}</span>
-        </div>
       </label>
     )
   }

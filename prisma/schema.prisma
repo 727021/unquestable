@@ -250,18 +250,19 @@ model MissionReward {
 }
 
 model Troop {
-  id             Int             @id @default(autoincrement())
-  name           String
-  unique         Boolean         @default(false)
-  elite          Boolean         @default(false)
-  deployment     Int
-  reinforcement  Int?
-  size           Int             @default(1)
-  traits         String[]
-  expansionId    Int
-  expansion      Expansion       @relation(fields: [expansionId], references: [id])
-  missionRewards MissionReward[]
-  games          Game[]
+  id              Int              @id @default(autoincrement())
+  name            String
+  unique          Boolean          @default(false)
+  elite           Boolean          @default(false)
+  deployment      Int
+  reinforcement   Int?
+  size            Int              @default(1)
+  traits          String[]
+  expansionId     Int
+  expansion       Expansion        @relation(fields: [expansionId], references: [id])
+  missionRewards  MissionReward[]
+  games           Game[]
+  imperialPlayers ImperialPlayer[]
 }
 
 model Campaign {
@@ -354,6 +355,7 @@ model ImperialPlayer {
   class       Class        @relation(fields: [classId], references: [id])
   classId     Int
   classCards  ClassCard[] // (bought)
+  villains    Troop[]
 }
 
 // #endregion
