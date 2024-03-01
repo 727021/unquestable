@@ -2,35 +2,25 @@ import {
   json,
   redirect,
   useLoaderData,
-  useOutletContext,
-  useParams
+  useOutletContext
 } from '@remix-run/react'
 import type { LoaderData } from './_app.games.$game'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { prisma } from '~/services/db.server'
 import type { ChangeEvent, ElementRef } from 'react'
 import { useReducer, useState } from 'react'
-import {
-  GameMission,
-  MissionRewardType,
-  MissionType,
-  Prisma,
-  Side
-} from '@prisma/client'
+import { MissionRewardType, MissionType, Side } from '@prisma/client'
 import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
-import {
-  validationError,
-  ValidatedForm,
-  ValidatorError,
-  FieldErrors
-} from 'remix-validated-form'
+import type { FieldErrors } from 'remix-validated-form'
+import { validationError, ValidatedForm } from 'remix-validated-form'
 import TextInput from '~/components/TextInput'
 import ButtonBar from '~/components/ButtonBar'
 import { calculateRewards } from '~/utils/missionRewards'
 import PlaceholderInput from '~/components/PlaceholderInput'
 import { getUser } from '~/services/auth.server'
+import SubmitButton from '~/components/SubmitButton'
 
 const validator = withZod(
   zfd.formData({
@@ -490,7 +480,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 }
 
 const Resolve = () => {
-  const params = useParams()
   const ctx = useOutletContext<LoaderData>()
   const data = useLoaderData<typeof loader>()
 
@@ -584,9 +573,7 @@ const Resolve = () => {
               }}
             />
           ))}
-          <button type="submit" className="btn">
-            Resolve Mission
-          </button>
+          <SubmitButton>Resolve Mission</SubmitButton>
         </ValidatedForm>
         <div className="flex flex-col gap-2 flex-1 whitespace-nowrap">
           {!!winner && (

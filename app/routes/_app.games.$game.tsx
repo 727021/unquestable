@@ -33,6 +33,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           name: true,
           missionSlots: {
             select: {
+              id: true,
               index: true,
               threat: true,
               type: true,
@@ -63,11 +64,13 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       },
       missions: {
         select: {
+          id: true,
           forced: true,
           resolved: true,
           winner: true,
           mission: {
             select: {
+              id: true,
               name: true,
               type: true
             }
@@ -102,7 +105,21 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           }
         }
       },
-      credits: true
+      credits: true,
+      sideMissionDeck: {
+        select: {
+          type: true,
+          id: true,
+          name: true
+        },
+        where: {
+          gameMissions: {
+            every: {
+              id: undefined
+            }
+          }
+        }
+      }
     }
   })
 
