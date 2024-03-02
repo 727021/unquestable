@@ -7,11 +7,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const mission = await prisma.gameMission.findUnique({
     where: {
       id: parseInt(params.mission!, 10),
-      imperialBuyComplete: false
+      imperialBuyComplete: false,
+      // Forced missions don't get their own buy stage
+      forced: false
     },
     select: {
       id: true,
-      forced: true,
       mission: {
         select: {
           id: true,
@@ -43,11 +44,22 @@ const BuyStage = () => {
   // buy class cards
   // buy agendas
 
+  // list of checkboxes for buy and sell?
+  // disable if not selected and not affordable
+
   return (
     <>
       <h2 className="m-0">
         Resolving <em>{data.mission.name}</em>
       </h2>
+      <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col flex-1">
+          <h3 className="m-0">Rebels</h3>
+        </div>
+        <div className="flex flex-col flex-1">
+          <h3 className="m-0">Empire</h3>
+        </div>
+      </div>
     </>
   )
 }

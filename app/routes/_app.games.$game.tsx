@@ -92,7 +92,14 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           class: {
             select: {
               id: true,
-              name: true
+              name: true,
+              cards: {
+                select: {
+                  id: true,
+                  name: true,
+                  cost: true
+                }
+              }
             }
           },
           agendaDecks: {

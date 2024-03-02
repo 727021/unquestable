@@ -82,6 +82,10 @@ const Game = () => {
 
   const availableSideMissions = data.game.sideMissionDeck
 
+  // Forced missions are resolved BETWEEN campaign stages. They do not get their own buy stages.
+  // If there is an active forced mission, the players cannot resolve another mission or buy stage.
+  const hasActiveForcedMission = data.game.missions.some(m => m.forced && !m.resolved)
+
   return (
     <>
       <div className="flex gap-2 flex-wrap">
@@ -131,6 +135,7 @@ const Game = () => {
                               type="button"
                               className="btn btn-sm"
                               onClick={() => setChoosing(slot.id)}
+                              disabled={hasActiveForcedMission}
                             >
                               Choose Mission
                             </button>
@@ -239,21 +244,27 @@ const Game = () => {
                           // For now, they are on the same page.
                           <Link
                             to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy`}
-                            className="btn btn-sm btn-primary"
+                            className={clsx('btn btn-sm btn-primary', hasActiveForcedMission && 'disabled')}
+                            onClick={e => hasActiveForcedMission && e.preventDefault()}
+                            aria-disabled={hasActiveForcedMission}
                           >
                             Buy
                           </Link>
                         ) : slot.gameMissions[0].resolved ? (
                           <Link
                             to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy`}
-                            className="btn btn-sm btn-primary"
+                            className={clsx('btn btn-sm btn-primary', hasActiveForcedMission && 'disabled')}
+                            onClick={e => hasActiveForcedMission && e.preventDefault()}
+                            aria-disabled={hasActiveForcedMission}
                           >
                             Buy
                           </Link>
                         ) : (
                           <Link
                             to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}`}
-                            className="btn btn-sm btn-primary"
+                            className={clsx('btn btn-sm btn-primary', hasActiveForcedMission && 'disabled')}
+                            onClick={e => hasActiveForcedMission && e.preventDefault()}
+                            aria-disabled={hasActiveForcedMission}
                           >
                             Resolve
                           </Link>
