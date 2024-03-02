@@ -235,6 +235,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     select: {
       id: true,
       threat: true,
+      forced: true,
       mission: {
         select: {
           id: true,
@@ -405,15 +406,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       )
     : null
 
-  // If the rebels choose not to resolve an unforced imperial mission,
-  // they lose that mission and the loss rewards are given out.
+  // If an agenda mission (IMPERIAL side mission) is in play and the rebels choose
+  // to resolve a different side mission, give the imperial player the rewards from
+  // that agenda mission
   const skippedMission =
-    mission.mission.type === 'IMPERIAL'
-      ? null
-      : game.missions.find(
+    !mission.forced &&
+    (mission.mission.type === MissionType.GRAY ||
+      mission.mission.type === MissionType.GREEN ||
+      mission.mission.type === MissionType.RED)
+      ? game.missions.find(
           (m) =>
             !m.resolved && !m.forced && m.mission.type === MissionType.IMPERIAL
         )
+      : null
   const skippedMissionReward = await prisma.missionReward.findFirst({
     where: {
       missionId: skippedMission?.id ?? 0,
@@ -472,15 +477,29 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                     : [])
                 ]
               },
-              update: {
-                where: {
-                  id: parseInt(params.mission!, 10)
+              update: [
+                {
+                  where: {
+                    id: parseInt(params.mission!, 10)
+                  },
+                  data: {
+                    resolved: true,
+                    winner: data.win
+                  }
                 },
-                data: {
-                  resolved: true,
-                  winner: data.win
-                }
-              }
+                ...(skippedMission ? [
+                  {
+                    where: {
+                      id: skippedMission.id
+                    },
+                    data: {
+                      resolved: true,
+                      rebelBuyComplete: true,
+                      imperialBuyComplete: true
+                    }
+                  }
+                ] : [])
+              ]
             }
           }
         : {}),
