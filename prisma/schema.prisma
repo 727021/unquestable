@@ -111,7 +111,7 @@ model Reward {
   name          String
   tagline       String?
   side          Side
-  MissionReward MissionReward[]
+  missionReward MissionReward[]
   expansionId   Int
   expansion     Expansion        @relation(fields: [expansionId], references: [id])
   rebels        RebelPlayer[]

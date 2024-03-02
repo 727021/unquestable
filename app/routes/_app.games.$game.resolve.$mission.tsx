@@ -8,7 +8,7 @@ import type { LoaderData } from './_app.games.$game'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { prisma } from '~/services/db.server'
 import type { ChangeEvent, ElementRef } from 'react'
-import { useReducer, useState } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 import { MissionRewardType, MissionType, Side } from '@prisma/client'
 import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
@@ -21,6 +21,7 @@ import { calculateRewards } from '~/utils/missionRewards'
 import PlaceholderInput from '~/components/PlaceholderInput'
 import { getUser } from '~/services/auth.server'
 import SubmitButton from '~/components/SubmitButton'
+import SelectInput from '~/components/SelectInput'
 
 const validator = withZod(
   zfd.formData({
@@ -36,7 +37,8 @@ const validator = withZod(
           })
         )
       )
-      .optional()
+      .optional(),
+    rewardedRebel: zfd.numeric(z.number().int().positive()).optional()
   })
 )
 
@@ -48,8 +50,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     },
     select: {
       id: true,
+      forced: true,
       mission: {
         select: {
+          id: true,
+          type: true,
           rewardPlaceholders: {
             select: {
               id: true,
@@ -140,6 +145,24 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       userId: user.id
     },
     select: {
+      missions: {
+        select: {
+          id: true,
+          forced: true,
+          resolved: true,
+          winner: true,
+          mission: {
+            select: {
+              id: true,
+              name: true,
+              type: true
+            }
+          }
+        },
+        where: {
+          missionSlot: null
+        }
+      },
       rebelPlayers: {
         select: {
           id: true,
@@ -190,6 +213,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       threat: true,
       mission: {
         select: {
+          id: true,
+          type: true,
           rewardPlaceholders: {
             select: {
               id: true,
@@ -356,6 +381,29 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       )
     : null
 
+  // If the rebels choose not to resolve an unforced imperial mission,
+  // they lose that mission and the loss rewards are given out.
+  const skippedMission =
+    mission.mission.type === 'IMPERIAL'
+      ? null
+      : game.missions.find(
+          (m) =>
+            !m.resolved && !m.forced && m.mission.type === MissionType.IMPERIAL
+        )
+  const skippedMissionReward = await prisma.missionReward.findFirst({
+    where: {
+      missionId: skippedMission?.id ?? 0,
+      type: MissionRewardType.LOSS
+    },
+    select: {
+      troopId: true,
+      rewardId: true
+    }
+  })
+
+  const imperialRewardId = imperialReward?.id ?? skippedMissionReward?.rewardId
+  const villainId = villain?.id ?? skippedMissionReward?.troopId
+
   await prisma.game.update({
     where: {
       id: gameId
@@ -420,20 +468,20 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           influence: {
             increment: influence
           },
-          ...(villain
+          ...(villainId
             ? {
                 villains: {
                   connect: {
-                    id: villain?.id
+                    id: villainId
                   }
                 }
               }
             : {}),
-          ...(imperialReward
+          ...(imperialRewardId
             ? {
                 rewards: {
                   connect: {
-                    id: imperialReward?.id
+                    id: imperialRewardId
                   }
                 }
               }
@@ -460,7 +508,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                   id:
                     game.rebelPlayers.find(
                       (r) => r.hero.id === mission.mission.hero?.id
-                    )?.id ?? 0
+                    )?.id ??
+                    data.rewardedRebel ??
+                    0
                 },
                 data: {
                   rewards: {
@@ -504,6 +554,7 @@ const Resolve = () => {
     }),
     {}
   )
+  const [chosenHero, setChosenHero] = useState(-1)
 
   const placeholders = data.mission.rewardPlaceholders.filter(
     (p) =>
@@ -521,6 +572,12 @@ const Resolve = () => {
     placeholderValues,
     rebels: ctx.game.rebelPlayers
   })
+
+  useEffect(() => {
+    if (!rewards.rebelReward || data.mission.hero) {
+      setChosenHero(-1)
+    }
+  }, [data.mission.hero, rewards.rebelReward])
 
   return (
     <>
@@ -559,6 +616,29 @@ const Resolve = () => {
             onChange={(e) => setCrates(e.target.valueAsNumber)}
             required
           />
+          {rewards.rebelReward && !data.mission.hero && (
+            <SelectInput
+              name="rewardedRebel"
+              label={
+                <>
+                  Hero to Recieve <em>{rewards.rebelReward.name}</em>
+                </>
+              }
+              required
+              value={chosenHero}
+              onChange={(e) => setChosenHero(parseInt(e.target.value, 10))}
+            >
+              <option value={-1} disabled>
+                Choose a Hero
+              </option>
+              {ctx.game.rebelPlayers.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.hero.name}
+                  {p.name && ` (${p.name})`}
+                </option>
+              ))}
+            </SelectInput>
+          )}
           {placeholders.map((placeholder, i) => (
             <PlaceholderInput
               key={placeholder.id}
@@ -601,9 +681,7 @@ const Resolve = () => {
                     <tr>
                       <th>Hero</th>
                       <th>XP</th>
-                      {data.mission.hero && rewards.rebelReward && (
-                        <th>Reward</th>
-                      )}
+                      {rewards.rebelReward && <th>Reward</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -614,9 +692,10 @@ const Resolve = () => {
                           {rebel.name && <span>({rebel.name})</span>}
                         </td>
                         <td>{rewards.rebelXp}</td>
-                        {data.mission.hero && rewards.rebelReward && (
+                        {rewards.rebelReward && (
                           <td>
-                            {data.mission.hero.id === rebel.hero.id &&
+                            {(data.mission.hero?.id === rebel.hero.id ||
+                              chosenHero === rebel.id) &&
                               rewards.rebelReward.name}
                           </td>
                         )}
