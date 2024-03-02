@@ -1,6 +1,6 @@
 import { MissionRewardType, Side } from '@prisma/client'
 import type { useLoaderData } from '@remix-run/react'
-import type { loader as resolveMissionLoader } from '~/routes/_app.games.$game.resolve.$mission'
+import type { loader as resolveMissionLoader } from '~/routes/_app.games.$game.resolve.$mission._index'
 import type { LoaderData as GameData } from '~/routes/_app.games.$game'
 
 const CRATE_VALUE = 50

@@ -45,6 +45,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                   id: true,
                   forced: true,
                   resolved: true,
+                  rebelBuyComplete: true,
+                  imperialBuyComplete: true,
                   winner: true,
                   mission: {
                     select: {
@@ -67,6 +69,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           id: true,
           forced: true,
           resolved: true,
+          rebelBuyComplete: true,
+          imperialBuyComplete: true,
           winner: true,
           mission: {
             select: {
@@ -87,6 +91,39 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           influence: true,
           class: {
             select: {
+              id: true,
+              name: true
+            }
+          },
+          agendaDecks: {
+            select: {
+              name: true,
+              agendas: {
+                select: {
+                  id: true,
+                  name: true,
+                  cost: true,
+                }
+              }
+            }
+          },
+          agendas: {
+            select: {
+              id: true,
+              name: true,
+              cost: true
+            }
+          },
+          classCards: {
+            select: {
+              id: true,
+              name: true,
+              cost: true
+            }
+          },
+          rewards: {
+            select: {
+              id: true,
               name: true
             }
           }
@@ -100,12 +137,44 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           hero: {
             select: {
               name: true,
-              id: true
+              id: true,
+              class: {
+                select: {
+                  cards: {
+                    select: {
+                      id: true,
+                      name: true,
+                      cost: true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          classCards: {
+            select: {
+              id: true,
+              name: true,
+              cost: true
+            }
+          },
+          rewards: {
+            select: {
+              id: true,
+              name: true
             }
           }
         }
       },
       credits: true,
+      items: {
+        select: {
+          id: true,
+          name: true,
+          tier: true,
+          cost: true
+        }
+      },
       sideMissionDeck: {
         select: {
           type: true,

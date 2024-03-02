@@ -421,8 +421,105 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           ...sideMissions.map(({ id }) => ({ id }))
         ]
       }
+    },
+    select: {
+      id: true,
+      imperialPlayer: {
+        select: {
+          id: true,
+          classId: true
+        }
+      },
+      rebelPlayers: {
+        select: {
+          id: true,
+          hero: {
+            select: {
+              class: {
+                select: {
+                  id: true
+                }
+              }
+            }
+          }
+        }
+      }
     }
   })
+
+  const imperialCard = await prisma.classCard.findFirst({
+    where: {
+      cost: 0,
+      decks: {
+        some: {
+          id: newGame.imperialPlayer?.classId
+        }
+      }
+    },
+    select: {
+      id: true
+    }
+  })
+
+  await prisma.classCard.update({
+    data: {
+      imperials: {
+        connect: {
+          id: newGame.imperialPlayer?.id
+        }
+      }
+    },
+    where: {
+      id: imperialCard?.id
+    }
+  })
+
+  const rebelCards = await prisma.classCard.findMany({
+    where: {
+      cost: 0,
+      decks: {
+        some: {
+          id: {
+            in: newGame.rebelPlayers.map(r => r.hero.class?.id ?? 0)
+          }
+        }
+      }
+    },
+    select: {
+      id: true,
+      decks: {
+        select: {
+          hero: {
+            select: {
+              players: {
+                select: {
+                  id: true
+                },
+                where: {
+                  id: {
+                    in: newGame.rebelPlayers.map(r => r.id)
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  await Promise.all(rebelCards.map(card => prisma.classCard.update({
+    data: {
+      rebels: {
+        connect: {
+          id: card.decks[0].hero?.players[0].id
+        }
+      }
+    },
+    where: {
+      id: card.id
+    }
+  })))
 
   return redirect(`/games/${newGame.id}`)
 }

@@ -14,11 +14,17 @@ import type { ActionFunctionArgs } from '@remix-run/node'
 import { getUser } from '~/services/auth.server'
 import SideMissionsInput from '~/components/SideMissionsInput'
 
-const drawValidator = withZod(zfd.formData({
-  missions: zfd.text(z.literal('RANDOM')).or(zfd.repeatable(
-    z.array(zfd.numeric(z.number().int().positive())).min(1).max(2)
-  ))
-}))
+const drawValidator = withZod(
+  zfd.formData({
+    missions: zfd
+      .text(z.literal('RANDOM'))
+      .or(
+        zfd.repeatable(
+          z.array(zfd.numeric(z.number().int().positive())).min(1).max(2)
+        )
+      )
+  })
+)
 const chooseValidator = withZod(zfd.formData({}))
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -42,7 +48,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // add chosen missions to game
 
     // return json data
-
   } else {
     const { data, error } = await chooseValidator.validate(formData)
 
@@ -88,7 +93,7 @@ const Game = () => {
                 <td></td>
                 <td>Mission</td>
                 <td className="text-center">Threat Level</td>
-                <td>Result</td>
+                <td className="text-center">Result</td>
               </tr>
             </thead>
             <tbody>
@@ -96,7 +101,8 @@ const Game = () => {
                 <tr
                   key={slot.index}
                   className={clsx(
-                    i !== 0 && !arr[i - 1]?.gameMissions?.[0]?.resolved
+                    i !== 0 &&
+                      !arr[i - 1]?.gameMissions?.[0]?.imperialBuyComplete
                       ? 'bg-base-300'
                       : 'hover'
                   )}
@@ -115,7 +121,8 @@ const Game = () => {
                   ) : (
                     <td>
                       {slot.type === MissionSlotType.SIDE &&
-                        (i === 0 || arr[i - 1]?.gameMissions?.[0]?.resolved) &&
+                        (i === 0 ||
+                          arr[i - 1]?.gameMissions?.[0]?.imperialBuyComplete) &&
                         !data.game.missions.some(
                           (m) => m.forced && !m.resolved
                         ) && (
@@ -143,13 +150,23 @@ const Game = () => {
                                       name="action"
                                       value="draw"
                                     />
-                                    <SideMissionsInput name="missions" count={2 - activeSideMissions.length}>
-                                      {availableSideMissions.map(mission => (
-                                        <option key={mission.id} value={mission.id}>{mission.name}</option>
+                                    <SideMissionsInput
+                                      name="missions"
+                                      count={2 - activeSideMissions.length}
+                                    >
+                                      {availableSideMissions.map((mission) => (
+                                        <option
+                                          key={mission.id}
+                                          value={mission.id}
+                                        >
+                                          {mission.name}
+                                        </option>
                                       ))}
                                     </SideMissionsInput>
                                     <div className="flex gap-2">
-                                      <SubmitButton>Choose Mission</SubmitButton>
+                                      <SubmitButton>
+                                        Choose Mission
+                                      </SubmitButton>
                                       <button
                                         type="button"
                                         className="btn"
@@ -205,24 +222,42 @@ const Game = () => {
                   <td className="text-center">{slot.threat}</td>
                   {slot.gameMissions[0] &&
                   (i === 0 ||
-                    (arr[i - 1]?.gameMissions?.[0]?.resolved &&
+                    (arr[i - 1]?.gameMissions?.[0]?.imperialBuyComplete &&
                       !data.game.missions.some(
-                        (m) => m.forced && !m.resolved
+                        (m) => m.forced && !m.imperialBuyComplete
                       ))) ? (
-                    slot.gameMissions[0].resolved ? (
-                      <td>
+                    slot.gameMissions[0].imperialBuyComplete ? (
+                      <td className="text-center">
                         {slot.gameMissions[0].winner === 'IMPERIAL'
                           ? 'Empire'
                           : 'Rebels'}
                       </td>
                     ) : (
-                      <td>
-                        <Link
-                          to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}`}
-                          className="btn btn-sm btn-primary"
-                        >
-                          Resolve
-                        </Link>
+                      <td className="text-center">
+                        {slot.gameMissions[0].rebelBuyComplete ? (
+                          // Might separate rebel and imperial buy stages later.
+                          // For now, they are on the same page.
+                          <Link
+                            to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy`}
+                            className="btn btn-sm btn-primary"
+                          >
+                            Buy
+                          </Link>
+                        ) : slot.gameMissions[0].resolved ? (
+                          <Link
+                            to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy`}
+                            className="btn btn-sm btn-primary"
+                          >
+                            Buy
+                          </Link>
+                        ) : (
+                          <Link
+                            to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}`}
+                            className="btn btn-sm btn-primary"
+                          >
+                            Resolve
+                          </Link>
+                        )}
                       </td>
                     )
                   ) : (
