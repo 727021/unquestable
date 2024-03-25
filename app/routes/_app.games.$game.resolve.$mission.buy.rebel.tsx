@@ -1,9 +1,29 @@
 import { MissionStage } from '@prisma/client'
-import type { LoaderFunctionArgs } from '@remix-run/node'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import { useLoaderData, useOutletContext } from '@remix-run/react'
 import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
+import { ValidatedForm } from 'remix-validated-form'
+import { withZod } from '@remix-validated-form/with-zod'
+import { zfd } from 'zod-form-data'
+import BuyClassCard from '~/components/BuyClassCard'
+import { Fragment } from 'react'
+import SubmitButton from '~/components/SubmitButton'
+import { z } from 'zod'
+
+const validator = withZod(
+  zfd.formData({
+    rebels: zfd.repeatable(
+      z.array(
+        z.object({
+          id: zfd.numeric(z.number().positive()),
+          cards: zfd.repeatable(z.array(zfd.numeric(z.number().positive())))
+        })
+      )
+    )
+  })
+)
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const forcedMission = await prisma.gameMission.findFirst({
@@ -51,6 +71,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return json(mission)
 }
 
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { data, error } = await validator.validate(await request.formData())
+  console.log(data)
+
+  return json({ data, error })
+}
+
 const BuyStage = () => {
   const data = useLoaderData<typeof loader>()
   const ctx = useOutletContext<GameLoaderData>()
@@ -69,6 +96,24 @@ const BuyStage = () => {
       <h2 className="m-0">
         Rebel Buy for <em>{data.mission.name}</em>
       </h2>
+      <ValidatedForm validator={validator} method="POST">
+        <div className="flex flex-wrap gap-3">
+          {ctx.game.rebelPlayers.map((rebel, i) => (
+            <>
+              <BuyClassCard
+                bank={rebel.xp}
+                cards={rebel.hero.class!.cards.filter(
+                  (c) => !rebel.classCards.some((cc) => cc.id === c.id)
+                )}
+                label={rebel.hero.name}
+                name={`rebels[${i}].cards`}
+              />
+              <input type="hidden" name={`rebels[${i}].id`} value={rebel.id} />
+            </>
+          ))}
+        </div>
+        <SubmitButton>Buy</SubmitButton>
+      </ValidatedForm>
     </>
   )
 }

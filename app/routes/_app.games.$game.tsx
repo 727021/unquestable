@@ -89,13 +89,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
             select: {
               id: true,
               name: true,
-              cards: {
-                select: {
-                  id: true,
-                  name: true,
-                  cost: true
-                }
-              }
+              cards: true
             }
           },
           agendaDecks: {
@@ -143,13 +137,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
               id: true,
               class: {
                 select: {
-                  cards: {
-                    select: {
-                      id: true,
-                      name: true,
-                      cost: true
-                    }
-                  }
+                  cards: true
                 }
               }
             }
