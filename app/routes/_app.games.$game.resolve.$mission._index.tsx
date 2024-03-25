@@ -9,7 +9,12 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { prisma } from '~/services/db.server'
 import type { ChangeEvent, ElementRef } from 'react'
 import { useEffect, useReducer, useState } from 'react'
-import { MissionRewardType, MissionStage, MissionType, Side } from '@prisma/client'
+import {
+  MissionRewardType,
+  MissionStage,
+  MissionType,
+  Side
+} from '@prisma/client'
 import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
@@ -311,7 +316,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   // parse placeholder values
-  const placeholderValues = data.placeholders?.reduce<{
+  const placeholderValues = (data.placeholders ?? []).reduce<{
     [key: string]: any
     errors: FieldErrors
   }>(
@@ -369,11 +374,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     { errors: {} }
   )
 
+  // validate crates
+  if (data.crates > mission.mission.crates) {
+    placeholderValues.errors['crates'] =
+      `Max ${mission.mission.crates} crates for this mission`
+  }
+
   // validate placeholder values
-  if (
-    placeholderValues?.errors &&
-    Object.keys(placeholderValues.errors).length
-  ) {
+  if (Object.keys(placeholderValues.errors).length) {
     return validationError({
       fieldErrors: placeholderValues.errors
     })
@@ -490,20 +498,24 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                   },
                   data: {
                     // Forced missions don't have their own buy stages
-                    stage: mission.forced ? MissionStage.RESOLVED : MissionStage.REBEL_BUY,
+                    stage: mission.forced
+                      ? MissionStage.RESOLVED
+                      : MissionStage.REBEL_BUY,
                     winner: data.win
                   }
                 },
-                ...(skippedMission ? [
-                  {
-                    where: {
-                      id: skippedMission.id
-                    },
-                    data: {
-                      stage: MissionStage.RESOLVED
-                    }
-                  }
-                ] : [])
+                ...(skippedMission
+                  ? [
+                      {
+                        where: {
+                          id: skippedMission.id
+                        },
+                        data: {
+                          stage: MissionStage.RESOLVED
+                        }
+                      }
+                    ]
+                  : [])
               ]
             }
           }
