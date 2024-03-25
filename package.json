@@ -14,7 +14,8 @@
     "db:open": "prisma studio",
     "db:seed": "node ./prisma/seed.js",
     "postinstall": "prisma generate",
-    "format": "prettier . --write"
+    "format": "prettier . --write",
+    "env:dev": "vercel env pull .env --environment=development --yes"
   },
   "prisma": {
     "seed": "npm run db:seed"
