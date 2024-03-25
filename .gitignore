@@ -6,3 +6,5 @@ node_modules
 .env
 
 /prisma/seed
+.vercel
+.env*.local

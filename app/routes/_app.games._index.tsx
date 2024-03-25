@@ -16,14 +16,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
           hero: true
         }
       },
-      missions: {
-        include: {
-          mission: true
-        },
-        where: {
-          resolved: false
-        }
-      },
       imperialPlayer: true
     },
     orderBy: {

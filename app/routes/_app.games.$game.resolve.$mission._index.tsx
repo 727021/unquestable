@@ -9,7 +9,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { prisma } from '~/services/db.server'
 import type { ChangeEvent, ElementRef } from 'react'
 import { useEffect, useReducer, useState } from 'react'
-import { MissionRewardType, MissionType, Side } from '@prisma/client'
+import { MissionRewardType, MissionStage, MissionType, Side } from '@prisma/client'
 import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
@@ -46,7 +46,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const mission = await prisma.gameMission.findUnique({
     where: {
       id: parseInt(params.mission!, 10),
-      resolved: false
+      stage: {
+        equals: undefined
+      }
     },
     select: {
       id: true,
@@ -109,7 +111,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
               id: true,
               name: true
             }
-          }
+          },
+          crates: true
         }
       }
     }
@@ -149,7 +152,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         select: {
           id: true,
           forced: true,
-          resolved: true,
+          stage: true,
           winner: true,
           mission: {
             select: {
@@ -230,7 +233,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const mission = await prisma.gameMission.findUnique({
     where: {
       id: parseInt(params.mission!, 10),
-      resolved: false
+      stage: {
+        equals: undefined
+      }
     },
     select: {
       id: true,
@@ -294,7 +299,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
               id: true,
               name: true
             }
-          }
+          },
+          crates: true
         }
       }
     }
@@ -416,7 +422,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       mission.mission.type === MissionType.RED)
       ? game.missions.find(
           (m) =>
-            !m.resolved && !m.forced && m.mission.type === MissionType.IMPERIAL
+            !m.stage && !m.forced && m.mission.type === MissionType.IMPERIAL
         )
       : null
   const skippedMissionReward = await prisma.missionReward.findFirst({
@@ -483,7 +489,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                     id: parseInt(params.mission!, 10)
                   },
                   data: {
-                    resolved: true,
+                    // Forced missions don't have their own buy stages
+                    stage: mission.forced ? MissionStage.RESOLVED : MissionStage.REBEL_BUY,
                     winner: data.win
                   }
                 },
@@ -493,9 +500,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                       id: skippedMission.id
                     },
                     data: {
-                      resolved: true,
-                      rebelBuyComplete: true,
-                      imperialBuyComplete: true
+                      stage: MissionStage.RESOLVED
                     }
                   }
                 ] : [])
@@ -655,9 +660,11 @@ const Resolve = () => {
             type="number"
             min="0"
             step="1"
+            max={data.mission.crates}
             value={crates}
             onChange={(e) => setCrates(e.target.valueAsNumber)}
             required
+            disabled={!data.mission.crates}
           />
           {rewards.rebelReward && !data.mission.hero && (
             <SelectInput

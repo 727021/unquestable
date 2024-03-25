@@ -182,6 +182,7 @@ model Mission {
   // time range (some side missions)
   start              Int?
   end                Int?
+  crates             Int                 @default(0)
   // hero missions (referenced in Hero model)
   hero               Hero?
   rewards            MissionReward[]
@@ -316,20 +317,24 @@ model Game {
   allies          Troop[]
 }
 
+enum MissionStage {
+  REBEL_BUY
+  IMPERIAL_BUY
+  RESOLVED
+}
+
 model GameMission {
-  id                  Int          @id @default(autoincrement())
-  game                Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameId              Int
-  missionSlot         MissionSlot? @relation(fields: [missionSlotId], references: [id], onDelete: SetNull)
-  missionSlotId       Int?
-  forced              Boolean      @default(false)
-  threat              Int? // threat level for forced missions
-  mission             Mission      @relation(fields: [missionId], references: [id])
-  missionId           Int
-  resolved            Boolean      @default(false)
-  rebelBuyComplete    Boolean      @default(false)
-  imperialBuyComplete Boolean      @default(false)
-  winner              Side?
+  id            Int           @id @default(autoincrement())
+  game          Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId        Int
+  missionSlot   MissionSlot?  @relation(fields: [missionSlotId], references: [id], onDelete: SetNull)
+  missionSlotId Int?
+  forced        Boolean       @default(false)
+  threat        Int? // threat level for forced missions
+  mission       Mission       @relation(fields: [missionId], references: [id])
+  missionId     Int
+  stage         MissionStage?
+  winner        Side?
 }
 
 model RebelPlayer {

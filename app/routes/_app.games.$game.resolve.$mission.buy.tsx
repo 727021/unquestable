@@ -1,3 +1,4 @@
+import { MissionStage } from '@prisma/client'
 import type { LoaderFunctionArgs } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import { useLoaderData, useOutletContext } from '@remix-run/react'
@@ -7,7 +8,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const mission = await prisma.gameMission.findUnique({
     where: {
       id: parseInt(params.mission!, 10),
-      imperialBuyComplete: false,
+      stage: {
+        in: [MissionStage.REBEL_BUY, MissionStage.IMPERIAL_BUY]
+      },
       // Forced missions don't get their own buy stage
       forced: false
     },

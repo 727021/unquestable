@@ -44,9 +44,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
                 select: {
                   id: true,
                   forced: true,
-                  resolved: true,
-                  rebelBuyComplete: true,
-                  imperialBuyComplete: true,
+                  stage: true,
                   winner: true,
                   mission: {
                     select: {
@@ -68,9 +66,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         select: {
           id: true,
           forced: true,
-          resolved: true,
-          rebelBuyComplete: true,
-          imperialBuyComplete: true,
+          stage: true,
           winner: true,
           mission: {
             select: {

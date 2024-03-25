@@ -11,8 +11,13 @@
     "start": "remix-serve ./build/index.js",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
+    "db:open": "prisma studio",
+    "db:seed": "node ./prisma/seed.js",
     "postinstall": "prisma generate",
     "format": "prettier . --write"
+  },
+  "prisma": {
+    "seed": "npm run db:seed"
   },
   "keywords": [],
   "author": "",
@@ -48,6 +53,7 @@
     "prettier": "^3.2.5",
     "prisma": "^5.7.1",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vercel": "^33.6.1"
   }
 }

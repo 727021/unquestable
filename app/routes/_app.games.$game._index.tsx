@@ -1,7 +1,7 @@
 import { Link, json, useOutletContext, useParams } from '@remix-run/react'
 import clsx from 'clsx'
 import type { LoaderData } from './_app.games.$game'
-import { MissionSlotType, MissionType } from '@prisma/client'
+import { MissionSlotType, MissionStage, MissionType } from '@prisma/client'
 import { useState } from 'react'
 import Modal from '~/components/Modal'
 import { ValidatedForm, validationError } from 'remix-validated-form'
@@ -74,7 +74,7 @@ const Game = () => {
   const activeSideMissions = data.game.missions.filter(
     (m) =>
       !m.forced &&
-      !m.resolved &&
+      !m.stage &&
       (m.mission.type === MissionType.GRAY ||
         m.mission.type === MissionType.GREEN ||
         m.mission.type === MissionType.RED)
@@ -84,7 +84,9 @@ const Game = () => {
 
   // Forced missions are resolved BETWEEN campaign stages. They do not get their own buy stages.
   // If there is an active forced mission, the players cannot resolve another mission or buy stage.
-  const hasActiveForcedMission = data.game.missions.some(m => m.forced && !m.resolved)
+  const hasActiveForcedMission = data.game.missions.some(
+    (m) => m.forced && !m.stage
+  )
 
   return (
     <>
@@ -106,7 +108,8 @@ const Game = () => {
                   key={slot.index}
                   className={clsx(
                     i !== 0 &&
-                      !arr[i - 1]?.gameMissions?.[0]?.imperialBuyComplete
+                      arr[i - 1]?.gameMissions?.[0]?.stage !==
+                        MissionStage.RESOLVED
                       ? 'bg-base-300'
                       : 'hover'
                   )}
@@ -126,9 +129,10 @@ const Game = () => {
                     <td>
                       {slot.type === MissionSlotType.SIDE &&
                         (i === 0 ||
-                          arr[i - 1]?.gameMissions?.[0]?.imperialBuyComplete) &&
+                          arr[i - 1]?.gameMissions?.[0]?.stage ===
+                            MissionStage.RESOLVED) &&
                         !data.game.missions.some(
-                          (m) => m.forced && !m.resolved
+                          (m) => m.forced && !m.stage
                         ) && (
                           <>
                             <button
@@ -227,11 +231,12 @@ const Game = () => {
                   <td className="text-center">{slot.threat}</td>
                   {slot.gameMissions[0] &&
                   (i === 0 ||
-                    (arr[i - 1]?.gameMissions?.[0]?.imperialBuyComplete &&
+                    (arr[i - 1]?.gameMissions?.[0]?.stage ===
+                      MissionStage.RESOLVED &&
                       !data.game.missions.some(
-                        (m) => m.forced && !m.imperialBuyComplete
+                        (m) => m.forced && !m.stage
                       ))) ? (
-                    slot.gameMissions[0].imperialBuyComplete ? (
+                    slot.gameMissions[0].stage === MissionStage.RESOLVED ? (
                       <td className="text-center">
                         {slot.gameMissions[0].winner === 'IMPERIAL'
                           ? 'Empire'
@@ -239,22 +244,34 @@ const Game = () => {
                       </td>
                     ) : (
                       <td className="text-center">
-                        {slot.gameMissions[0].rebelBuyComplete ? (
+                        {slot.gameMissions[0].stage ===
+                        MissionStage.REBEL_BUY ? (
                           // Might separate rebel and imperial buy stages later.
                           // For now, they are on the same page.
                           <Link
                             to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy`}
-                            className={clsx('btn btn-sm btn-primary', hasActiveForcedMission && 'disabled')}
-                            onClick={e => hasActiveForcedMission && e.preventDefault()}
+                            className={clsx(
+                              'btn btn-sm btn-primary',
+                              hasActiveForcedMission && 'disabled'
+                            )}
+                            onClick={(e) =>
+                              hasActiveForcedMission && e.preventDefault()
+                            }
                             aria-disabled={hasActiveForcedMission}
                           >
                             Buy
                           </Link>
-                        ) : slot.gameMissions[0].resolved ? (
+                        ) : slot.gameMissions[0].stage ===
+                          MissionStage.IMPERIAL_BUY ? (
                           <Link
                             to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy`}
-                            className={clsx('btn btn-sm btn-primary', hasActiveForcedMission && 'disabled')}
-                            onClick={e => hasActiveForcedMission && e.preventDefault()}
+                            className={clsx(
+                              'btn btn-sm btn-primary',
+                              hasActiveForcedMission && 'disabled'
+                            )}
+                            onClick={(e) =>
+                              hasActiveForcedMission && e.preventDefault()
+                            }
                             aria-disabled={hasActiveForcedMission}
                           >
                             Buy
@@ -262,8 +279,13 @@ const Game = () => {
                         ) : (
                           <Link
                             to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}`}
-                            className={clsx('btn btn-sm btn-primary', hasActiveForcedMission && 'disabled')}
-                            onClick={e => hasActiveForcedMission && e.preventDefault()}
+                            className={clsx(
+                              'btn btn-sm btn-primary',
+                              hasActiveForcedMission && 'disabled'
+                            )}
+                            onClick={(e) =>
+                              hasActiveForcedMission && e.preventDefault()
+                            }
                             aria-disabled={hasActiveForcedMission}
                           >
                             Resolve
