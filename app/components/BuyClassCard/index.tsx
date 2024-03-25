@@ -1,17 +1,17 @@
-import type { ClassCard, Item } from '@prisma/client'
+import type { ClassCard } from '@prisma/client'
 import clsx from 'clsx'
 import type { ChangeEvent, ElementRef, ReactNode } from 'react'
 import { useState } from 'react'
 import { useField } from 'remix-validated-form'
 
 type Props = {
-  cards: (ClassCard | Item)[]
-  bank: number
+  cards: ClassCard[]
+  xp: number
   name: string
   label: ReactNode
 }
 
-const BuyClassCard = ({ cards, bank, name, label }: Props) => {
+const BuyClassCard = ({ cards, xp, name, label }: Props) => {
   const [checked, setChecked] = useState<number[]>([])
   const { getInputProps, error } = useField(name)
 
@@ -27,7 +27,7 @@ const BuyClassCard = ({ cards, bank, name, label }: Props) => {
   const balance = cards
     .filter((c) => checked.includes(c.id))
     .map((c) => c.cost)
-    .reduce((acc, cur) => acc - cur, bank)
+    .reduce((acc, cur) => acc - cur, xp)
 
   return (
     <div className="form-control items-start w-fit border px-2 py-0 rounded">

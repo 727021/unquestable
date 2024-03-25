@@ -101,7 +101,7 @@ const BuyStage = () => {
           {ctx.game.rebelPlayers.map((rebel, i) => (
             <>
               <BuyClassCard
-                bank={rebel.xp}
+                xp={rebel.xp}
                 cards={rebel.hero.class!.cards.filter(
                   (c) => !rebel.classCards.some((cc) => cc.id === c.id)
                 )}
