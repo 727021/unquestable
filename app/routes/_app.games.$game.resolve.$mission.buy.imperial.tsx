@@ -3,8 +3,26 @@ import type { LoaderFunctionArgs } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import { useLoaderData, useOutletContext } from '@remix-run/react'
 import { prisma } from '~/services/db.server'
+import type { LoaderData as GameLoaderData } from './_app.games.$game'
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
+  const forcedMission = await prisma.gameMission.findFirst({
+    where: {
+      gameId: parseInt(params.game!, 10),
+      stage: {
+        equals: undefined
+      },
+      forced: true
+    },
+    select: {
+      id: true
+    }
+  })
+
+  if (forcedMission) {
+    return redirect(`/games/${params.game}`)
+  }
+
   const mission = await prisma.gameMission.findUnique({
     where: {
       id: parseInt(params.mission!, 10),
@@ -35,13 +53,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 const BuyStage = () => {
   const data = useLoaderData<typeof loader>()
-  const ctx = useOutletContext()
+  const ctx = useOutletContext<GameLoaderData>()
   console.log(ctx)
-
-  // REBEL
-  // buy class cards
-  // buy items
-  // sell items
 
   // EMPIRE
   // buy class cards
@@ -53,16 +66,8 @@ const BuyStage = () => {
   return (
     <>
       <h2 className="m-0">
-        Resolving <em>{data.mission.name}</em>
+        Imperial Buy for <em>{data.mission.name}</em>
       </h2>
-      <div className="flex flex-wrap gap-2">
-        <div className="flex flex-col flex-1">
-          <h3 className="m-0">Rebels</h3>
-        </div>
-        <div className="flex flex-col flex-1">
-          <h3 className="m-0">Empire</h3>
-        </div>
-      </div>
     </>
   )
 }

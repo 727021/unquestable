@@ -15,7 +15,8 @@ console.log('Seeding data for core game')
 const core = await prisma.expansion.create({
   data: {
     name: 'Core',
-    type: SetType.CAMPAIGN
+    type: SetType.CAMPAIGN,
+    defaultOwned: true
   },
   select: {
     id: true

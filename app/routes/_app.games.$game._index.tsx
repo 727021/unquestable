@@ -246,10 +246,8 @@ const Game = () => {
                       <td className="text-center">
                         {slot.gameMissions[0].stage ===
                         MissionStage.REBEL_BUY ? (
-                          // Might separate rebel and imperial buy stages later.
-                          // For now, they are on the same page.
                           <Link
-                            to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy`}
+                            to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy/rebel`}
                             className={clsx(
                               'btn btn-sm btn-primary',
                               hasActiveForcedMission && 'disabled'
@@ -259,12 +257,12 @@ const Game = () => {
                             }
                             aria-disabled={hasActiveForcedMission}
                           >
-                            Buy
+                            Rebel Buy
                           </Link>
                         ) : slot.gameMissions[0].stage ===
                           MissionStage.IMPERIAL_BUY ? (
                           <Link
-                            to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy`}
+                            to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy/imperial`}
                             className={clsx(
                               'btn btn-sm btn-primary',
                               hasActiveForcedMission && 'disabled'
@@ -274,7 +272,7 @@ const Game = () => {
                             }
                             aria-disabled={hasActiveForcedMission}
                           >
-                            Buy
+                            Imperial Buy
                           </Link>
                         ) : (
                           <Link

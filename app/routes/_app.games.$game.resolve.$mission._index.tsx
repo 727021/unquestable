@@ -586,7 +586,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
   })
 
-  return redirect(`/games/${gameId}/resolve/${params.mission}/buy`)
+  if (forcedMission) {
+    return redirect(`/games/${gameId}`)
+  }
+
+  return redirect(`/games/${gameId}/resolve/${params.mission}/buy/rebel`)
 }
 
 const Resolve = () => {
