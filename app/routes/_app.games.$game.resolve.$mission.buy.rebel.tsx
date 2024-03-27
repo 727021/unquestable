@@ -4,13 +4,16 @@ import { json, redirect } from '@remix-run/node'
 import { useLoaderData, useOutletContext } from '@remix-run/react'
 import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
-import { ValidatedForm } from 'remix-validated-form'
+import { ValidatedForm, validationError } from 'remix-validated-form'
 import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
 import BuyClassCard from '~/components/BuyClassCard'
 import { Fragment } from 'react'
 import SubmitButton from '~/components/SubmitButton'
 import { z } from 'zod'
+import BuyItemCard from '~/components/BuyItemCard'
+import { getUser } from '~/services/auth.server'
+import { getSellPrice } from '~/utils/sellPrice'
 
 const validator = withZod(
   zfd.formData({
@@ -21,11 +24,26 @@ const validator = withZod(
           cards: zfd.repeatable(z.array(zfd.numeric(z.number().positive())))
         })
       )
-    )
+    ),
+    items: z
+      .object({
+        bought: zfd
+          .repeatableOfType(zfd.numeric(z.number().positive()))
+          .optional()
+          .default([]),
+        sold: zfd
+          .repeatableOfType(zfd.numeric(z.number().positive()))
+          .optional()
+          .default([])
+      })
+      .optional()
+      .default({})
   })
 )
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+  const user = await getUser(request)
+
   const forcedMission = await prisma.gameMission.findFirst({
     where: {
       gameId: parseInt(params.game!, 10),
@@ -46,9 +64,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   const mission = await prisma.gameMission.findUnique({
     where: {
       id: parseInt(params.mission!, 10),
-      stage: {
-        in: [MissionStage.REBEL_BUY, MissionStage.IMPERIAL_BUY]
-      },
+      stage: MissionStage.REBEL_BUY,
       // Forced missions don't get their own buy stage
       forced: false
     },
@@ -60,6 +76,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
           type: true,
           name: true
         }
+      },
+      missionSlot: {
+        select: {
+          itemTiers: true
+        }
       }
     }
   })
@@ -68,50 +89,150 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     return redirect(`/games/${params.game}`)
   }
 
-  return json(mission)
+  const items = await prisma.item.findMany({
+    where: {
+      tier: {
+        in: mission.missionSlot?.itemTiers ?? []
+      },
+      OR: [
+        {
+          expansionId: {
+            in: user.collection.map(({ id }) => id)
+          }
+        },
+        {
+          expansion: {
+            defaultOwned: true
+          }
+        }
+      ],
+      games: {
+        none: {
+          id: parseInt(params.game!, 10)
+        }
+      }
+    }
+  })
+
+  return json({ mission, items })
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, params }: ActionFunctionArgs) => {
   const { data, error } = await validator.validate(await request.formData())
-  console.log(data)
 
-  return json({ data, error })
+  if (error) {
+    return validationError(error)
+  }
+
+  const boughtItems = await prisma.item.findMany({
+    where: {
+      id: {
+        in: data.items.bought
+      }
+    }
+  })
+
+  const soldItems = await prisma.item.findMany({
+    where: {
+      id: {
+        in: data.items.sold
+      }
+    }
+  })
+
+  const classCardCosts = await Promise.all(
+    data.rebels.map((r) =>
+      prisma.classCard
+        .aggregate({
+          _sum: {
+            cost: true
+          },
+          where: {
+            id: {
+              in: r.cards
+            }
+          }
+        })
+        .then((res) => res._sum.cost ?? 0)
+    )
+  )
+
+  await prisma.gameMission.update({
+    where: {
+      id: parseInt(params.mission!, 10)
+    },
+    data: {
+      stage: MissionStage.IMPERIAL_BUY,
+      game: {
+        update: {
+          credits: {
+            decrement:
+              boughtItems.reduce((acc, cur) => acc + cur.cost, 0) -
+              soldItems.reduce((acc, cur) => acc + getSellPrice(cur.cost), 0)
+          },
+          items: {
+            connect: boughtItems.map((b) => ({ id: b.id })),
+            disconnect: soldItems.map((s) => ({ id: s.id }))
+          },
+          rebelPlayers: {
+            update: data.rebels.map((r, i) => ({
+              where: {
+                id: r.id
+              },
+              data: {
+                classCards: {
+                  connect: r.cards.map((id) => ({ id }))
+                },
+                xp: {
+                  decrement: classCardCosts[i]
+                }
+              }
+            }))
+          }
+        }
+      }
+    }
+  })
+
+  return redirect(`/games/${params.game}/resolve/${params.mission}/buy/imperial`)
 }
 
 const BuyStage = () => {
   const data = useLoaderData<typeof loader>()
   const ctx = useOutletContext<GameLoaderData>()
-  console.log(ctx)
-
-  // REBEL
-  // buy class cards
-  // buy items
-  // sell items
-
-  // list of checkboxes for buy and sell?
-  // disable if not selected and not affordable
 
   return (
     <>
       <h2 className="m-0">
-        Rebel Buy for <em>{data.mission.name}</em>
+        Rebel Buy for <em>{data.mission.mission.name}</em>
       </h2>
-      <ValidatedForm validator={validator} method="POST">
+      <ValidatedForm
+        validator={validator}
+        method="POST"
+        className="flex flex-col gap-3 w-fit"
+      >
         <div className="flex flex-wrap gap-3">
           {ctx.game.rebelPlayers.map((rebel, i) => (
-            <>
+            <Fragment key={rebel.id}>
               <BuyClassCard
                 xp={rebel.xp}
-                cards={rebel.hero.class!.cards.filter(
-                  (c) => !rebel.classCards.some((cc) => cc.id === c.id)
-                )}
+                cards={rebel.hero.class!.cards}
                 label={rebel.hero.name}
                 name={`rebels[${i}].cards`}
+                owned={rebel.classCards}
               />
               <input type="hidden" name={`rebels[${i}].id`} value={rebel.id} />
-            </>
+            </Fragment>
           ))}
         </div>
+        <BuyItemCard
+          nameBought="items.bought"
+          nameSold="items.sold"
+          label="Item Cards"
+          credits={ctx.game.credits}
+          owned={ctx.game.items}
+          cards={data.items}
+        />
         <SubmitButton>Buy</SubmitButton>
       </ValidatedForm>
     </>

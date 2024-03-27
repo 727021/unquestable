@@ -142,13 +142,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
               }
             }
           },
-          classCards: {
-            select: {
-              id: true,
-              name: true,
-              cost: true
-            }
-          },
+          classCards: true,
           rewards: {
             select: {
               id: true,
@@ -158,14 +152,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         }
       },
       credits: true,
-      items: {
-        select: {
-          id: true,
-          name: true,
-          tier: true,
-          cost: true
-        }
-      },
+      items: true,
       sideMissionDeck: {
         select: {
           type: true,

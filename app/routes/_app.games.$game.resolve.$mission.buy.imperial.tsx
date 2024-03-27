@@ -54,7 +54,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 const BuyStage = () => {
   const data = useLoaderData<typeof loader>()
   const ctx = useOutletContext<GameLoaderData>()
-  console.log(ctx)
 
   // EMPIRE
   // buy class cards

@@ -9,9 +9,10 @@ type Props = {
   xp: number
   name: string
   label: ReactNode
+  owned: ClassCard[]
 }
 
-const BuyClassCard = ({ cards, xp, name, label }: Props) => {
+const BuyClassCard = ({ cards, xp, name, label, owned }: Props) => {
   const [checked, setChecked] = useState<number[]>([])
   const { getInputProps, error } = useField(name)
 
@@ -44,17 +45,26 @@ const BuyClassCard = ({ cards, xp, name, label }: Props) => {
           key={card.id}
           data-tip={card.tagline}
         >
-          <input
-            {...getInputProps({
-              type: 'checkbox',
-              className: 'checkbox checkbox-sm',
-              value: card.id,
-              checked: checked.includes(card.id),
-              onChange: handleCheck,
-              disabled: !checked.includes(card.id) && card.cost > balance
-            })}
-            data-cost={card.cost}
-          />
+          {owned.some((o) => o.id === card.id) ? (
+            <input
+              type="checkbox"
+              className="checkbox checkbox-sm"
+              checked={true}
+              onChange={(e) => e.preventDefault()}
+            />
+          ) : (
+            <input
+              {...getInputProps({
+                type: 'checkbox',
+                className: 'checkbox checkbox-sm checkbox-primary border-neutral hover:border-neutral',
+                value: card.id,
+                checked: checked.includes(card.id),
+                onChange: handleCheck,
+                disabled: !checked.includes(card.id) && card.cost > balance
+              })}
+              data-cost={card.cost}
+            />
+          )}
           <span className="label-text">
             {card.cost} XP - {card.name}
           </span>

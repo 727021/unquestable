@@ -63,8 +63,9 @@ const checkCondition = ({
       )
     }
   }
+  // https://esbuild.github.io/content-types/#direct-eval
   // eslint-disable-next-line no-eval
-  const result = eval(condition)
+  const result = (0, eval)(condition)
   if (typeof result === 'boolean') return result
   return false
 }
@@ -85,8 +86,9 @@ const checkMultiplier = ({
       )
     }
   }
+  // https://esbuild.github.io/content-types/#direct-eval
   // eslint-disable-next-line no-eval
-  const result = eval(multiplier)
+  const result = (0, eval)(multiplier)
   if (typeof result === 'number') return result
   return 0
 }

@@ -23,8 +23,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
   })
 
-  console.log(games)
-
   return json({ games })
 }
 

@@ -8,7 +8,12 @@ const SubmitButton = ({ children, disabled, className, ...props }: Props) => {
   const isSubmitting = useIsSubmitting()
 
   return (
-    <button className={clsx('btn', className)} {...props} type="submit" disabled={disabled || isSubmitting}>
+    <button
+      className={clsx('btn', className)}
+      {...props}
+      type="submit"
+      disabled={disabled || isSubmitting}
+    >
       {children}
       {isSubmitting && (
         <span className="loading loading-spinner loading-md"></span>
