@@ -25,6 +25,8 @@ const BuyClassCard = ({ cards, xp, name, label, owned }: Props) => {
     }
   }
 
+  const buyable = cards.filter((c) => !owned.some((o) => o.id === c.id))
+
   const balance = cards
     .filter((c) => checked.includes(c.id))
     .map((c) => c.cost)
@@ -36,7 +38,7 @@ const BuyClassCard = ({ cards, xp, name, label, owned }: Props) => {
         <span className="label-text">{label}</span>
         <span className="label-text-alt">Available XP: {balance}</span>
       </div>
-      {cards.map((card) => (
+      {owned.map((card) => (
         <label
           className={clsx(
             // card.tagline && 'tooltip before:whitespace-break-spaces',
@@ -45,26 +47,39 @@ const BuyClassCard = ({ cards, xp, name, label, owned }: Props) => {
           key={card.id}
           data-tip={card.tagline}
         >
-          {owned.some((o) => o.id === card.id) ? (
-            <input
-              type="checkbox"
-              className="checkbox checkbox-sm"
-              checked={true}
-              onChange={(e) => e.preventDefault()}
-            />
-          ) : (
-            <input
-              {...getInputProps({
-                type: 'checkbox',
-                className: 'checkbox checkbox-sm checkbox-primary border-neutral hover:border-neutral',
-                value: card.id,
-                checked: checked.includes(card.id),
-                onChange: handleCheck,
-                disabled: !checked.includes(card.id) && card.cost > balance
-              })}
-              data-cost={card.cost}
-            />
+          <input
+            type="checkbox"
+            className="checkbox checkbox-sm"
+            checked={true}
+            onChange={(e) => e.preventDefault()}
+          />
+          <span className="label-text">
+            {card.cost} XP - {card.name}
+          </span>
+        </label>
+      ))}
+      <div className="divider m-0"></div>
+      {buyable.map((card) => (
+        <label
+          className={clsx(
+            // card.tagline && 'tooltip before:whitespace-break-spaces',
+            'label cursor-pointer gap-1 flex py-1'
           )}
+          key={card.id}
+          data-tip={card.tagline}
+        >
+          <input
+            {...getInputProps({
+              type: 'checkbox',
+              className:
+                'checkbox checkbox-sm checkbox-primary border-neutral hover:border-neutral',
+              value: card.id,
+              checked: checked.includes(card.id),
+              onChange: handleCheck,
+              disabled: !checked.includes(card.id) && card.cost > balance
+            })}
+            data-cost={card.cost}
+          />
           <span className="label-text">
             {card.cost} XP - {card.name}
           </span>

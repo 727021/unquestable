@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { TrashIcon } from '@heroicons/react/24/outline'
 import { getSellPrice } from '~/utils/sellPrice'
+import { sortItems } from '~/utils/sortItems'
 
 type Props = {
   cards: Item[]
@@ -24,8 +25,12 @@ const BuyItemCard = ({
   const [bought, setBought] = useState<Item[]>([])
   const [sold, setSold] = useState<Item[]>([])
 
-  const canBuy = cards.filter((c) => !bought.some((b) => b.id === c.id))
-  const canSell = owned.filter((o) => !sold.some((s) => s.id === o.id))
+  const canBuy = sortItems(
+    cards.filter((c) => !bought.some((b) => b.id === c.id))
+  )
+  const canSell = sortItems(
+    owned.filter((o) => !sold.some((s) => s.id === o.id))
+  )
 
   const [buying, setBuying] = useState(-1)
   const [selling, setSelling] = useState(-1)
@@ -105,7 +110,7 @@ const BuyItemCard = ({
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            {bought.map((b) => (
+            {sortItems(bought).map((b) => (
               <div className="inline-flex gap-1 items-center" key={b.id}>
                 <button
                   type="button"
@@ -155,7 +160,7 @@ const BuyItemCard = ({
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            {sold.map((s) => (
+            {sortItems(sold).map((s) => (
               <div className="inline-flex gap-1 items-center" key={s.id}>
                 <button
                   type="button"

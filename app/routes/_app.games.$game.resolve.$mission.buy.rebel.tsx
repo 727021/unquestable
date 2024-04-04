@@ -194,7 +194,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
   })
 
-  return redirect(`/games/${params.game}/resolve/${params.mission}/buy/imperial`)
+  return redirect(
+    `/games/${params.game}/resolve/${params.mission}/buy/imperial`
+  )
 }
 
 const BuyStage = () => {
@@ -233,7 +235,7 @@ const BuyStage = () => {
           owned={ctx.game.items}
           cards={data.items}
         />
-        <SubmitButton>Buy</SubmitButton>
+        <SubmitButton className="w-fit">Buy</SubmitButton>
       </ValidatedForm>
     </>
   )
