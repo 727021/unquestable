@@ -23,19 +23,21 @@ const PlaceholderInput = ({ index, placeholder, onChange }: Props) => {
   if (placeholder.type === 'boolean') {
     return (
       <label className="form-control max-w-full w-96">
-        <div className="label">
-          <RequiredIndicator />
-          <span className="label-text">{placeholder.label}</span>
+        <div className="label justify-start gap-1">
+          <input
+            className={clsx('checkbox', error && 'checkbox-error')}
+            type="checkbox"
+            checked={value}
+            onChange={(e) => {
+              setValue(e.target.checked)
+              onChange?.(e)
+            }}
+          />
+          <span className="label-text">
+            <RequiredIndicator />
+            {placeholder.label}
+          </span>
         </div>
-        <input
-          className={clsx('checkbox', error && 'checkbox-error')}
-          type="checkbox"
-          checked={value}
-          onChange={(e) => {
-            setValue(e.target.checked)
-            onChange?.(e)
-          }}
-        />
         <input
           {...getInputProps({
             type: 'hidden',

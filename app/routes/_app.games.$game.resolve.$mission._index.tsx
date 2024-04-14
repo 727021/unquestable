@@ -52,7 +52,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     where: {
       id: parseInt(params.mission!, 10),
       stage: {
-        equals: undefined
+        equals: null
       }
     },
     select: {
@@ -118,6 +118,28 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
             }
           },
           crates: true
+        }
+      },
+      missionSlot: {
+        select: {
+          index: true
+        }
+      },
+      game: {
+        select: {
+          campaign: {
+            select: {
+              missionSlots: {
+                select: {
+                  index: true
+                },
+                orderBy: {
+                  index: 'desc'
+                },
+                take: 1
+              }
+            }
+          }
         }
       }
     }
@@ -198,6 +220,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       },
       campaign: {
         select: {
+          id: true,
           missionSlots: {
             select: {
               id: true,
@@ -227,7 +250,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     where: {
       id: parseInt(params.mission!, 10),
       stage: {
-        equals: undefined
+        equals: null
       }
     },
     select: {
@@ -295,6 +318,29 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           },
           crates: true
         }
+      },
+      missionSlot: {
+        select: {
+          threat: true,
+          index: true
+        }
+      },
+      game: {
+        select: {
+          campaign: {
+            select: {
+              missionSlots: {
+                select: {
+                  index: true
+                },
+                orderBy: {
+                  index: 'desc'
+                },
+                take: 1
+              }
+            }
+          }
+        }
       }
     }
   })
@@ -302,6 +348,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   if (!mission) {
     return redirect(`/games/${params.game}`)
   }
+
+  const isFinale =
+    mission.missionSlot?.index &&
+    mission.missionSlot.index === mission.game.campaign.missionSlots[0].index
 
   // parse placeholder values
   const placeholderValues = (data.placeholders ?? []).reduce<{
@@ -431,8 +481,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       : null
   const skippedMissionReward = await prisma.missionReward.findFirst({
     where: {
-      missionId: skippedMission?.id ?? 0,
-      type: MissionRewardType.LOSS
+      campaignId: game.campaign.id,
+      missionId: skippedMission?.mission?.id ?? 0,
+      type: MissionRewardType.LOSS,
+      side: Side.IMPERIAL
     },
     select: {
       troopId: true,
@@ -470,7 +522,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                         {
                           missionId: forcedMission.id,
                           forced: true,
-                          threat: mission.threat
+                          threat: mission.threat || mission.missionSlot?.threat
                         }
                       ]
                     : []),
@@ -524,9 +576,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                   },
                   data: {
                     // Forced missions don't have their own buy stages
-                    stage: mission.forced
-                      ? MissionStage.RESOLVED
-                      : MissionStage.REBEL_BUY,
+                    stage:
+                      mission.forced || isFinale
+                        ? MissionStage.RESOLVED
+                        : MissionStage.REBEL_BUY,
                     winner: data.win
                   }
                 },
@@ -645,14 +698,16 @@ const Resolve = () => {
   )
   const [chosenHero, setChosenHero] = useState(-1)
 
-  const placeholders = data.mission.rewardPlaceholders.filter(
-    (p) =>
-      p.type === MissionRewardType.ALL ||
-      (!!winner &&
-        (winner === Side.REBEL
-          ? MissionRewardType.WIN
-          : MissionRewardType.LOSS))
-  )
+  const placeholders = !winner
+    ? []
+    : data.mission.rewardPlaceholders.filter(
+        (p) =>
+          p.status === MissionRewardType.ALL ||
+          p.status ===
+            (winner === Side.REBEL
+              ? MissionRewardType.WIN
+              : MissionRewardType.LOSS)
+      )
 
   const rewards = calculateRewards({
     ...data.mission,
@@ -667,6 +722,10 @@ const Resolve = () => {
       setChosenHero(-1)
     }
   }, [data.mission.hero, rewards.rebelReward])
+
+  const isFinale =
+    data.missionSlot?.index &&
+    data.missionSlot.index === data.game.campaign.missionSlots[0].index
 
   return (
     <>
@@ -695,123 +754,141 @@ const Resolve = () => {
               }
             ]}
           />
-          <TextInput
-            name="crates"
-            label="Crates Collected"
-            type="number"
-            min="0"
-            step="1"
-            max={data.mission.crates}
-            value={crates}
-            onChange={(e) => setCrates(e.target.valueAsNumber)}
-            required
-            disabled={!data.mission.crates}
-          />
-          {rewards.rebelReward && !data.mission.hero && (
-            <SelectInput
-              name="rewardedRebel"
-              label={
-                <>
-                  Hero to Recieve <em>{rewards.rebelReward.name}</em>
-                </>
-              }
-              required
-              value={chosenHero}
-              onChange={(e) => setChosenHero(parseInt(e.target.value, 10))}
-            >
-              <option value={-1} disabled>
-                Choose a Hero
-              </option>
-              {ctx.game.rebelPlayers.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.hero.name}
-                  {p.name && ` (${p.name})`}
-                </option>
-              ))}
-            </SelectInput>
-          )}
-          {placeholders.map((placeholder, i) => (
-            <PlaceholderInput
-              key={placeholder.id}
-              index={i}
-              placeholder={placeholder}
-              onChange={(event) => {
-                setPlaceholderValue({
-                  event,
-                  name: placeholder.name,
-                  type: placeholder.type
-                })
-              }}
+          {!isFinale && (
+            <TextInput
+              name="crates"
+              label="Crates Collected"
+              type="number"
+              min="0"
+              step="1"
+              max={data.mission.crates}
+              value={crates}
+              onChange={(e) => setCrates(e.target.valueAsNumber)}
+              required={!!data.mission.crates}
+              disabled={!data.mission.crates}
             />
-          ))}
+          )}
+          {(!data.mission.crates || isFinale) && (
+            <input type="hidden" name="crates" value="0" />
+          )}
+          {!isFinale && (
+            <>
+              {rewards.rebelReward && !data.mission.hero && (
+                <SelectInput
+                  name="rewardedRebel"
+                  label={
+                    <>
+                      Hero to Recieve <em>{rewards.rebelReward.name}</em>
+                    </>
+                  }
+                  required
+                  value={chosenHero}
+                  onChange={(e) => setChosenHero(parseInt(e.target.value, 10))}
+                >
+                  <option value={-1} disabled>
+                    Choose a Hero
+                  </option>
+                  {ctx.game.rebelPlayers.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.hero.name}
+                      {p.name && ` (${p.name})`}
+                    </option>
+                  ))}
+                </SelectInput>
+              )}
+              {placeholders.map((placeholder, i) => (
+                <PlaceholderInput
+                  key={placeholder.id}
+                  index={i}
+                  placeholder={placeholder}
+                  onChange={(event) => {
+                    setPlaceholderValue({
+                      event,
+                      name: placeholder.name,
+                      type: placeholder.type
+                    })
+                  }}
+                />
+              ))}
+            </>
+          )}
           <SubmitButton>Resolve Mission</SubmitButton>
         </ValidatedForm>
         <div className="flex flex-col gap-2 flex-1 whitespace-nowrap">
-          {!!winner && (
-            <>
+          {!!winner &&
+            (isFinale ? (
               <div className="w-full">
-                <div className="flex gap-5 items-baseline">
-                  <h2 className="m-0">Empire</h2>
-                  {ctx.game.imperialPlayer?.name && (
-                    <span>({ctx.game.imperialPlayer.name})</span>
+                <h2 className="m-0 mx-auto">
+                  {winner === Side.REBEL
+                    ? 'The Rebels win the campaign!'
+                    : 'The Empire wins the campaign!'}
+                </h2>
+              </div>
+            ) : (
+              <>
+                <div className="w-full">
+                  <div className="flex gap-5 items-baseline">
+                    <h2 className="m-0">Empire</h2>
+                    {ctx.game.imperialPlayer?.name && (
+                      <span>({ctx.game.imperialPlayer.name})</span>
+                    )}
+                  </div>
+                  <p className="m-0">XP: {rewards.imperialXp}</p>
+                  <p className="m-0">Influence: {rewards.influence}</p>
+                  {rewards.villain && (
+                    <p className="m-0">Villain: {rewards.villain.name}</p>
+                  )}
+                  {rewards.imperialReward && (
+                    <p className="m-0">Reward: {rewards.imperialReward.name}</p>
                   )}
                 </div>
-                <p className="m-0">XP: {rewards.imperialXp}</p>
-                <p className="m-0">Influence: {rewards.influence}</p>
-                {rewards.villain && (
-                  <p className="m-0">Villain: {rewards.villain.name}</p>
-                )}
-                {rewards.imperialReward && (
-                  <p className="m-0">Reward: {rewards.imperialReward.name}</p>
-                )}
-              </div>
-              <div className="w-full">
-                <h2 className="m-0">Rebels</h2>
-                <table className="table table-sm m-0">
-                  <thead>
-                    <tr>
-                      <th>Hero</th>
-                      <th>XP</th>
-                      {rewards.rebelReward && <th>Reward</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ctx.game.rebelPlayers.map((rebel) => (
-                      <tr key={rebel.id}>
-                        <td className="flex gap-5 items-baseline">
-                          <p className="m-0">{rebel.hero.name}</p>
-                          {rebel.name && <span>({rebel.name})</span>}
-                        </td>
-                        <td>{rewards.rebelXp}</td>
-                        {rewards.rebelReward && (
-                          <td>
-                            {(data.mission.hero?.id === rebel.hero.id ||
-                              chosenHero === rebel.id) &&
-                              rewards.rebelReward.name}
-                          </td>
-                        )}
+                <div className="w-full">
+                  <h2 className="m-0">Rebels</h2>
+                  <table className="table table-sm m-0">
+                    <thead>
+                      <tr>
+                        <th>Hero</th>
+                        <th>XP</th>
+                        {rewards.rebelReward && <th>Reward</th>}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <p className="m-0">Credits: {rewards.credits}</p>
-                {rewards.ally && (
-                  <p className="m-0">Ally: {rewards.ally.name}</p>
+                    </thead>
+                    <tbody>
+                      {ctx.game.rebelPlayers.map((rebel) => (
+                        <tr key={rebel.id}>
+                          <td className="flex gap-5 items-baseline">
+                            <p className="m-0">{rebel.hero.name}</p>
+                            {rebel.name && <span>({rebel.name})</span>}
+                          </td>
+                          <td>{rewards.rebelXp}</td>
+                          {rewards.rebelReward && (
+                            <td>
+                              {(data.mission.hero?.id === rebel.hero.id ||
+                                chosenHero === rebel.id) &&
+                                rewards.rebelReward.name}
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="m-0">Credits: {rewards.credits}</p>
+                  {rewards.ally && (
+                    <p className="m-0">Ally: {rewards.ally.name}</p>
+                  )}
+                  {rewards.rebelReward && !data.mission.hero && (
+                    <p className="m-0">Reward: {rewards.rebelReward.name}</p>
+                  )}
+                </div>
+                {rewards.nextMission && (
+                  <p className="m-0">Mission: {rewards.nextMission.name}</p>
                 )}
-                {rewards.rebelReward && !data.mission.hero && (
-                  <p className="m-0">Reward: {rewards.rebelReward.name}</p>
+                {rewards.forcedMission && (
+                  <p className="m-0">
+                    Forced Mission: {rewards.forcedMission.name}
+                  </p>
                 )}
-              </div>
-              {rewards.nextMission && (
-                <p className="m-0">Mission: {rewards.nextMission.name}</p>
-              )}
-              {rewards.forcedMission && (
-                <p className="m-0">
-                  Forced Mission: {rewards.forcedMission.name}
-                </p>
-              )}
-            </>
-          )}
+              </>
+            ))}
         </div>
       </div>
     </>

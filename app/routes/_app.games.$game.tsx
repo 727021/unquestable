@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from '@remix-run/node'
+import { json, redirect, type LoaderFunctionArgs } from '@remix-run/node'
 import {
   Link,
   Outlet,
@@ -14,11 +14,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUser(request)
 
   if (!params.game) {
-    throw new Response(null, { status: 404 })
+    return redirect('/games')
   }
   const gameId = parseInt(params.game, 10)
   if (isNaN(gameId)) {
-    throw new Response(null, { status: 404 })
+    return redirect('/games')
   }
 
   const game = await prisma.game.findUnique({
@@ -68,6 +68,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
           forced: true,
           stage: true,
           winner: true,
+          threat: true,
           mission: {
             select: {
               id: true,
@@ -143,9 +144,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         },
         where: {
           gameMissions: {
-            every: {
-              id: undefined
-            }
+            none: {}
           }
         }
       }
@@ -153,7 +152,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   })
 
   if (!game) {
-    throw new Response(null, { status: 404 })
+    return redirect('/games')
   }
 
   return json({ game })

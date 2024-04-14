@@ -27,7 +27,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     where: {
       gameId: parseInt(params.game!, 10),
       stage: {
-        equals: undefined
+        equals: null
       },
       forced: true
     },
@@ -152,6 +152,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
               },
               xp: {
                 decrement: classCardCost._sum.cost ?? 0
+              },
+              classCards: {
+                connect: data.classCards.map(c => ({ id: c }))
               }
             }
           }

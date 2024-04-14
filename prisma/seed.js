@@ -1734,6 +1734,14 @@ await prisma.rewardPlaceholder.createMany({
   data: [
     {
       campaignId: campaign.id,
+      name: 'terminals',
+      label: 'All Terminals Investigated Before End of Round 5',
+      status: MissionRewardType.ALL,
+      type: 'boolean',
+      missionId: aNewThreat.id
+    },
+    {
+      campaignId: campaign.id,
       name: 'claimed',
       label: 'Claimed Mission Tokens',
       status: MissionRewardType.ALL,

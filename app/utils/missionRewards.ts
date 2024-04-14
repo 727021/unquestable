@@ -36,14 +36,18 @@ const getPlaceholderValue = ({
     case 'boolean':
       if (rawValue === 'true' || rawValue === true) return true
       if (rawValue === 'false' || rawValue === false) return false
-      return
+      return false
     case 'number':
       if (typeof rawValue === 'number') return rawValue
       if (typeof rawValue === 'string') return parseInt(rawValue, 10)
-      return
+      return (
+        ((placeholder.validation as { [key: string]: any })?.min as
+          | number
+          | undefined) ?? 0
+      )
     default:
       if (typeof rawValue === 'string') return rawValue
-      return
+      return ''
   }
 }
 
@@ -104,6 +108,7 @@ export const calculateRewards = ({
   placeholderValues = {},
   rebels
 }: RewardsOptions) => {
+  if (!winner) return {}
   const relevantRewards = rewards.filter(
     (r) =>
       r.type === MissionRewardType.ALL ||
@@ -112,8 +117,8 @@ export const calculateRewards = ({
   )
   const relevantPlaceholders = rewardPlaceholders.filter(
     (r) =>
-      r.type === MissionRewardType.ALL ||
-      r.type ===
+      r.status === MissionRewardType.ALL ||
+      r.status ===
         (winner === Side.REBEL ? MissionRewardType.WIN : MissionRewardType.LOSS)
   )
 

@@ -48,17 +48,13 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     where: {
       gameId: parseInt(params.game!, 10),
       stage: {
-        equals: undefined
+        equals: null
       },
       forced: true
-    },
-    select: {
-      id: true
     }
   })
 
   if (forcedMission) {
-    console.log('forcedMission', forcedMission)
     return redirect(`/games/${params.game}`)
   }
 
@@ -87,7 +83,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   })
 
   if (!mission) {
-    console.log('No mission', params.mission)
     return redirect(`/games/${params.game}`)
   }
 

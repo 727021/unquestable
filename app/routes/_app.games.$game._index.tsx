@@ -1,12 +1,12 @@
-import {
-  Link,
-  redirect,
-  useOutletContext,
-  useParams
-} from '@remix-run/react'
+import { Link, redirect, useOutletContext, useParams } from '@remix-run/react'
 import clsx from 'clsx'
 import type { LoaderData } from './_app.games.$game'
-import { MissionSlotType, MissionStage, MissionType } from '@prisma/client'
+import {
+  MissionSlotType,
+  MissionStage,
+  MissionType,
+  Side
+} from '@prisma/client'
 import { useState } from 'react'
 import Modal from '~/components/Modal'
 import { ValidatedForm, validationError } from 'remix-validated-form'
@@ -84,14 +84,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
     // determine how many missions need to be drawn
     const activeSideMissions = game.missions.filter(
-      (m) =>
-        !m.forced &&
-        !m.stage &&
-        (m.mission.type === MissionType.GRAY ||
-          m.mission.type === MissionType.GREEN ||
-          m.mission.type === MissionType.RED)
+      (m) => !m.forced && !m.stage && m.mission.type !== MissionType.STORY
     )
-    const missionsNeeded = 2 - activeSideMissions.length
+    const rebelSideMissions = activeSideMissions.filter(
+      (m) => m.mission.type !== MissionType.IMPERIAL
+    )
+    const missionsNeeded = 2 - rebelSideMissions.length
 
     // validate drawn missions (or randomize missions)
     let chosenMissions: number[] = []
@@ -179,21 +177,20 @@ const Game = () => {
   const [choosing, setChoosing] = useState<number | null>(null)
 
   const activeSideMissions = data.game.missions.filter(
-    (m) =>
-      !m.forced &&
-      !m.stage &&
-      (m.mission.type === MissionType.GRAY ||
-        m.mission.type === MissionType.GREEN ||
-        m.mission.type === MissionType.RED)
+    (m) => !m.forced && !m.stage && m.mission.type !== MissionType.STORY
+  )
+  const rebelSideMissions = activeSideMissions.filter(
+    (m) => m.mission.type !== MissionType.IMPERIAL
   )
 
   const availableSideMissions = data.game.sideMissionDeck
 
   // Forced missions are resolved BETWEEN campaign stages. They do not get their own buy stages.
   // If there is an active forced mission, the players cannot resolve another mission or buy stage.
-  const hasActiveForcedMission = data.game.missions.some(
-    (m) => m.forced && !m.stage
-  )
+  const forcedMissions = data.game.missions
+    .filter((m) => m.forced)
+    .toSorted((a, b) => +!!b.stage - +!!a.stage)
+  const hasActiveForcedMission = forcedMissions.some((m) => !m.stage)
 
   return (
     <>
@@ -254,7 +251,7 @@ const Game = () => {
                               open={choosing !== null}
                               onClose={() => setChoosing(null)}
                             >
-                              {activeSideMissions.length < 2 ? (
+                              {rebelSideMissions.length < 2 ? (
                                 <>
                                   <h2 className="m-0">Draw Side Missions</h2>
                                   <ValidatedForm
@@ -268,7 +265,7 @@ const Game = () => {
                                     />
                                     <SideMissionsInput
                                       name="missions"
-                                      count={2 - activeSideMissions.length}
+                                      count={2 - rebelSideMissions.length}
                                     >
                                       {availableSideMissions.map((mission) => (
                                         <option
@@ -282,7 +279,7 @@ const Game = () => {
                                     <div className="flex gap-2">
                                       <SubmitButton>
                                         Draw Mission
-                                        {activeSideMissions.length ? '' : 's'}
+                                        {rebelSideMissions.length ? '' : 's'}
                                       </SubmitButton>
                                       <button
                                         type="button"
@@ -347,14 +344,11 @@ const Game = () => {
                   <td className="text-center">{slot.threat}</td>
                   {slot.gameMissions[0] &&
                   (i === 0 ||
-                    (arr[i - 1]?.gameMissions?.[0]?.stage ===
-                      MissionStage.RESOLVED &&
-                      !data.game.missions.some(
-                        (m) => m.forced && !m.stage
-                      ))) ? (
+                    arr[i - 1]?.gameMissions?.[0]?.stage ===
+                      MissionStage.RESOLVED) ? (
                     slot.gameMissions[0].stage === MissionStage.RESOLVED ? (
                       <td className="text-center">
-                        {slot.gameMissions[0].winner === 'IMPERIAL'
+                        {slot.gameMissions[0].winner === Side.IMPERIAL
                           ? 'Empire'
                           : 'Rebels'}
                       </td>
@@ -366,7 +360,7 @@ const Game = () => {
                             to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy/rebel`}
                             className={clsx(
                               'btn btn-sm btn-primary',
-                              hasActiveForcedMission && 'disabled'
+                              hasActiveForcedMission && 'btn-disabled'
                             )}
                             onClick={(e) =>
                               hasActiveForcedMission && e.preventDefault()
@@ -381,7 +375,7 @@ const Game = () => {
                             to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy/imperial`}
                             className={clsx(
                               'btn btn-sm btn-primary',
-                              hasActiveForcedMission && 'disabled'
+                              hasActiveForcedMission && 'btn-disabled'
                             )}
                             onClick={(e) =>
                               hasActiveForcedMission && e.preventDefault()
@@ -395,7 +389,7 @@ const Game = () => {
                             to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}`}
                             className={clsx(
                               'btn btn-sm btn-primary',
-                              hasActiveForcedMission && 'disabled'
+                              hasActiveForcedMission && 'btn-disabled'
                             )}
                             onClick={(e) =>
                               hasActiveForcedMission && e.preventDefault()
@@ -414,7 +408,44 @@ const Game = () => {
               ))}
             </tbody>
           </table>
-          {/* TODO: Display forced missions */}
+          {!!forcedMissions.length && (
+            <>
+              <div className="divider mb-0">Forced Missions</div>
+              <table className="table m-0">
+                <thead>
+                  <tr>
+                    <td>Mission</td>
+                    <td className="text-center">Threat Level</td>
+                    <td className="text-center">Result</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {forcedMissions.map((m) => (
+                    <tr key={m.id} className="hover">
+                      <td>{m.mission.name}</td>
+                      <td className="text-center">{m.threat}</td>
+                      <td className="text-center">
+                        {m.stage === MissionStage.RESOLVED ? (
+                          m.winner === Side.IMPERIAL ? (
+                            'Empire'
+                          ) : (
+                            'Rebels'
+                          )
+                        ) : (
+                          <Link
+                            to={`/games/${params.game}/resolve/${m.id}`}
+                            className="btn btn-sm btn-primary"
+                          >
+                            Resolve
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
         </div>
         <div className="flex flex-col gap-2 flex-1">
           <Link
