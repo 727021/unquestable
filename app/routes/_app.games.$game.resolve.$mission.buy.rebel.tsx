@@ -58,6 +58,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   })
 
   if (forcedMission) {
+    console.log('forcedMission', forcedMission)
     return redirect(`/games/${params.game}`)
   }
 
@@ -86,6 +87,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   })
 
   if (!mission) {
+    console.log('No mission', params.mission)
     return redirect(`/games/${params.game}`)
   }
 

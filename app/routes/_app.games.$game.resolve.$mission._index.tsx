@@ -394,6 +394,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     crates: data.crates
   })
 
+  if (rebelReward && !data.rewardedRebel && !mission.mission.hero) {
+    return validationError({
+      fieldErrors: {
+        rewardedRebel: 'Required'
+      }
+    })
+  }
+
   const foundNextMission = nextMission
     ? await prisma.mission.findUnique({
         where: {
@@ -507,7 +515,36 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
               ]
             }
           }
-        : {}),
+        : {
+            missions: {
+              update: [
+                {
+                  where: {
+                    id: parseInt(params.mission!, 10)
+                  },
+                  data: {
+                    // Forced missions don't have their own buy stages
+                    stage: mission.forced
+                      ? MissionStage.RESOLVED
+                      : MissionStage.REBEL_BUY,
+                    winner: data.win
+                  }
+                },
+                ...(skippedMission
+                  ? [
+                      {
+                        where: {
+                          id: skippedMission.id
+                        },
+                        data: {
+                          stage: MissionStage.RESOLVED
+                        }
+                      }
+                    ]
+                  : [])
+              ]
+            }
+          }),
       imperialPlayer: {
         update: {
           xp: {

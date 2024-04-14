@@ -1,8 +1,6 @@
 import {
   Link,
-  json,
   redirect,
-  useActionData,
   useOutletContext,
   useParams
 } from '@remix-run/react'
@@ -18,8 +16,9 @@ import { z } from 'zod'
 import { withZod } from '@remix-validated-form/with-zod'
 import SelectInput from '~/components/SelectInput'
 import type { ActionFunctionArgs } from '@remix-run/node'
-import { getUser } from '~/services/auth.server'
 import SideMissionsInput from '~/components/SideMissionsInput'
+import { randomIndex } from '~/utils/randomIndex'
+import { prisma } from '~/services/db.server'
 
 const drawValidator = withZod(
   zfd.formData({
@@ -40,11 +39,41 @@ const chooseValidator = withZod(
 )
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const user = await getUser(request)
-
   const formData = await request.formData()
 
   const action = formData.get('action')?.toString()
+
+  const game = await prisma.game.findUnique({
+    where: {
+      id: parseInt(params.game!, 10)
+    },
+    select: {
+      id: true,
+      sideMissionDeck: {
+        where: {
+          gameMissions: {
+            every: {
+              id: undefined
+            }
+          }
+        }
+      },
+      missions: {
+        include: {
+          mission: true
+        }
+      },
+      campaign: {
+        select: {
+          missionSlots: true
+        }
+      }
+    }
+  })
+
+  if (!game) {
+    return redirect('/games')
+  }
 
   if (action === 'draw') {
     const { data, error } = await drawValidator.validate(formData)
@@ -54,10 +83,38 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
 
     // determine how many missions need to be drawn
+    const activeSideMissions = game.missions.filter(
+      (m) =>
+        !m.forced &&
+        !m.stage &&
+        (m.mission.type === MissionType.GRAY ||
+          m.mission.type === MissionType.GREEN ||
+          m.mission.type === MissionType.RED)
+    )
+    const missionsNeeded = 2 - activeSideMissions.length
 
     // validate drawn missions (or randomize missions)
+    let chosenMissions: number[] = []
+    if (data.missions === 'RANDOM') {
+      chosenMissions = new Array(missionsNeeded)
+        .fill(0)
+        .map(
+          () =>
+            game.sideMissionDeck.splice(randomIndex(game.sideMissionDeck), 1)[0]
+              .id
+        )
+    } else {
+      chosenMissions = data.missions
+      // TODO: Validate chosen mission ids
+    }
 
     // add drawn missions to game
+    await prisma.gameMission.createMany({
+      data: chosenMissions.map((m) => ({
+        gameId: game.id,
+        missionId: m
+      }))
+    })
 
     // return success response
     return new Response(undefined, { status: 204 })
@@ -69,8 +126,44 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
 
     // validate chosen mission and campaign mission slot
+    const gameMission = game.missions.find(
+      (m) =>
+        m.id === data.mission &&
+        !m.forced &&
+        !m.stage &&
+        !m.missionSlotId &&
+        (m.mission.type === MissionType.GRAY ||
+          m.mission.type === MissionType.GREEN ||
+          m.mission.type === MissionType.RED)
+    )
+    if (!gameMission) {
+      return validationError({
+        fieldErrors: {
+          mission: 'Required'
+        }
+      })
+    }
+    const slot = game.campaign.missionSlots.find(
+      (s) =>
+        s.id === data.slot &&
+        s.type === MissionSlotType.SIDE &&
+        !game.missions.some((m) => m.missionSlotId === s.id)
+    )
+    if (!slot) {
+      // Something went wrong, reload the page to close the mission modal
+      return redirect(`/games/${params.game}`)
+    }
 
     // add game mission to campaing mission slot
+    await prisma.gameMission.update({
+      where: {
+        id: gameMission.id
+      },
+      data: {
+        missionSlotId: slot.id,
+        threat: slot.threat
+      }
+    })
 
     // redirect to current page to reload data and close modal
     return redirect(`/games/${params.game}`)
