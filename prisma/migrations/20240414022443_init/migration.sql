@@ -486,7 +486,7 @@ ALTER TABLE "Agenda" ADD CONSTRAINT "Agenda_missionId_fkey" FOREIGN KEY ("missio
 ALTER TABLE "Agenda" ADD CONSTRAINT "Agenda_forcedMissionId_fkey" FOREIGN KEY ("forcedMissionId") REFERENCES "Mission"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "OwnedAgenda" ADD CONSTRAINT "OwnedAgenda_imperialId_fkey" FOREIGN KEY ("imperialId") REFERENCES "ImperialPlayer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "OwnedAgenda" ADD CONSTRAINT "OwnedAgenda_imperialId_fkey" FOREIGN KEY ("imperialId") REFERENCES "ImperialPlayer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "OwnedAgenda" ADD CONSTRAINT "OwnedAgenda_agendaId_fkey" FOREIGN KEY ("agendaId") REFERENCES "Agenda"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

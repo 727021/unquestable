@@ -1,5 +1,5 @@
 import { MissionStage } from '@prisma/client'
-import type { LoaderFunctionArgs } from '@remix-run/node'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { json, redirect } from '@remix-run/node'
 import { useLoaderData, useOutletContext } from '@remix-run/react'
 import { prisma } from '~/services/db.server'
@@ -7,7 +7,7 @@ import type { LoaderData as GameLoaderData } from './_app.games.$game'
 import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
-import { ValidatedForm } from 'remix-validated-form'
+import { ValidatedForm, validationError } from 'remix-validated-form'
 import SubmitButton from '~/components/SubmitButton'
 import BuyClassCard from '~/components/BuyClassCard'
 import BuyAgendaCard from '~/components/BuyAgendaCard'
@@ -66,6 +66,101 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   }
 
   return json(mission)
+}
+
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const { data, error } = await validator.validate(await request.formData())
+
+  if (error) {
+    return validationError(error)
+  }
+
+  // const game = ...
+
+  const mission = await prisma.gameMission.findUnique({
+    where: {
+      id: parseInt(params.mission!, 10),
+      stage: MissionStage.IMPERIAL_BUY
+    },
+    select: {
+      id: true,
+      threat: true
+    }
+  })
+
+  if (!mission) {
+    return redirect(`/games/${params.game}`)
+  }
+
+  const agendas = await prisma.agenda.findMany({
+    where: {
+      id: {
+        in: data.agendas
+      }
+    }
+  })
+  const agendasCost = agendas.reduce((cost, a) => cost + a.cost, 0)
+
+  const classCardCost = await prisma.classCard.aggregate({
+    _sum: {
+      cost: true
+    },
+    where: {
+      id: {
+        in: data.classCards
+      }
+    }
+  })
+
+  // TODO: Validate player can afford agendas and class cards
+
+  for (const agenda of agendas) {
+    if (agenda.missionId) {
+      await prisma.gameMission.create({
+        data: {
+          gameId: parseInt(params.game!, 10),
+          missionId: agenda.missionId
+        }
+      })
+    } else if (agenda.forcedMissionId) {
+      await prisma.gameMission.create({
+        data: {
+          gameId: parseInt(params.game!, 10),
+          missionId: agenda.forcedMissionId,
+          forced: true,
+          threat: mission.threat
+        }
+      })
+    }
+  }
+
+  await prisma.gameMission.update({
+    where: {
+      id: parseInt(params.mission!, 10)
+    },
+    data: {
+      stage: MissionStage.RESOLVED,
+      game: {
+        update: {
+          imperialPlayer: {
+            update: {
+              agendas: {
+                create: agendas.map(a => ({ agendaId: a.id }))
+              },
+              influence: {
+                decrement: agendasCost
+              },
+              xp: {
+                decrement: classCardCost._sum.cost ?? 0
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  return redirect(`/games/${params.game}`)
 }
 
 const BuyStage = () => {

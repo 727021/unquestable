@@ -157,6 +157,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     )
   )
 
+  // TODO: Validate players can afford items and class cards
+
   await prisma.gameMission.update({
     where: {
       id: parseInt(params.mission!, 10)

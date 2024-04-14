@@ -146,16 +146,6 @@ model Agenda {
   owners          OwnedAgenda[]
 }
 
-model OwnedAgenda {
-  imperialId       Int
-  imperial         ImperialPlayer @relation(fields: [imperialId], references: [id])
-  agendaId         Int
-  agenda           Agenda         @relation(fields: [agendaId], references: [id])
-  discarded        Boolean        @default(false)
-
-  @@id([imperialId, agendaId])
-}
-
 model AgendaDeck {
   id          Int              @id @default(autoincrement())
   name        String           @unique
@@ -365,6 +355,16 @@ model ImperialPlayer {
   classId     Int
   classCards  ClassCard[] // (bought)
   villains    Troop[]
+}
+
+model OwnedAgenda {
+  imperialId       Int
+  imperial         ImperialPlayer @relation(fields: [imperialId], references: [id], onDelete: Cascade)
+  agendaId         Int
+  agenda           Agenda         @relation(fields: [agendaId], references: [id])
+  discarded        Boolean        @default(false)
+
+  @@id([imperialId, agendaId])
 }
 
 // #endregion
