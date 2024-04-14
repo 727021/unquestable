@@ -176,26 +176,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           id: true,
           name: true,
           xp: true,
-          classCards: {
-            select: {
-              id: true,
-              name: true,
-              cost: true
-            }
-          },
+          classCards: true,
           hero: {
             select: {
               name: true,
               id: true,
               class: {
                 select: {
-                  cards: {
-                    select: {
-                      id: true,
-                      name: true,
-                      cost: true
-                    }
-                  }
+                  cards: true
                 }
               }
             }

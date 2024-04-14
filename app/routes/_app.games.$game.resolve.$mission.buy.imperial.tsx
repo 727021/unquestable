@@ -77,7 +77,7 @@ const BuyStage = () => {
   const unownedAgendas = imperialPlayer.agendaDecks
     .map((d) => d.agendas)
     .flat()
-    .filter((a) => !imperialPlayer.agendas.some((o) => o.id === a.id))
+    .filter((a) => !imperialPlayer.agendas.some((o) => o.agendaId === a.id))
 
   return (
     <>

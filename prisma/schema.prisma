@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-1.0.x"]
 }
 
@@ -133,14 +133,27 @@ model Item {
 }
 
 model Agenda {
-  id             Int              @id @default(autoincrement())
-  name           String
-  tagline        String?
-  cost           Int
-  deckId         Int
-  deck           AgendaDeck       @relation(fields: [deckId], references: [id])
-  mission        AgendaMission?
-  ImperialPlayer ImperialPlayer[]
+  id              Int           @id @default(autoincrement())
+  name            String
+  tagline         String?
+  cost            Int
+  deckId          Int
+  deck            AgendaDeck    @relation(fields: [deckId], references: [id])
+  missionId       Int?
+  mission         Mission?      @relation(fields: [missionId], references: [id], name: "agenda-mission")
+  forcedMissionId Int?
+  forecdMission   Mission?      @relation(fields: [forcedMissionId], references: [id], name: "agenda-forced-mission")
+  owners          OwnedAgenda[]
+}
+
+model OwnedAgenda {
+  imperialId       Int
+  imperial         ImperialPlayer @relation(fields: [imperialId], references: [id])
+  agendaId         Int
+  agenda           Agenda         @relation(fields: [agendaId], references: [id])
+  discarded        Boolean        @default(false)
+
+  @@id([imperialId, agendaId])
 }
 
 model AgendaDeck {
@@ -150,19 +163,6 @@ model AgendaDeck {
   expansionId Int
   expansion   Expansion        @relation(fields: [expansionId], references: [id])
   imperials   ImperialPlayer[]
-}
-
-// If the rebels don't take an optional (unforced) imperial mission,
-// the rebels lose that mission and the loss rewards are given out
-model AgendaMission {
-  agendaId  Int     @unique
-  agenda    Agenda  @relation(fields: [agendaId], references: [id])
-  missionId Int     @unique
-  mission   Mission @relation(fields: [missionId], references: [id])
-  // whether this is played as a forced mission
-  forced    Boolean @default(false)
-
-  @@id([agendaId, missionId])
 }
 
 enum MissionType {
@@ -177,7 +177,6 @@ enum MissionType {
 
 model Mission {
   id                 Int                 @id @default(autoincrement())
-  agenda             AgendaMission?
   name               String
   type               MissionType
   // time range (some side missions)
@@ -195,6 +194,8 @@ model Mission {
   expansion          Expansion           @relation(fields: [expansionId], references: [id])
   gameMissions       GameMission[]
   games              Game[]
+  agendas            Agenda[]            @relation(name: "agenda-mission")
+  forcedByAgendas    Agenda[]            @relation(name: "agenda-forced-mission")
 
   @@unique([name, expansionId])
 }
@@ -351,16 +352,16 @@ model RebelPlayer {
 }
 
 model ImperialPlayer {
-  id          Int          @id @default(autoincrement())
+  id          Int           @id @default(autoincrement())
   name        String?
-  game        Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  gameId      Int          @unique
-  xp          Int          @default(0)
-  influence   Int          @default(0)
+  game        Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId      Int           @unique
+  xp          Int           @default(0)
+  influence   Int           @default(0)
   rewards     Reward[] // (owned)
   agendaDecks AgendaDeck[]
-  agendas     Agenda[] // (active/finished)
-  class       Class        @relation(fields: [classId], references: [id])
+  agendas     OwnedAgenda[]
+  class       Class         @relation(fields: [classId], references: [id])
   classId     Int
   classCards  ClassCard[] // (bought)
   villains    Troop[]

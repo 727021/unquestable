@@ -111,8 +111,19 @@ CREATE TABLE "Agenda" (
     "tagline" TEXT,
     "cost" INTEGER NOT NULL,
     "deckId" INTEGER NOT NULL,
+    "missionId" INTEGER,
+    "forcedMissionId" INTEGER,
 
     CONSTRAINT "Agenda_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "OwnedAgenda" (
+    "imperialId" INTEGER NOT NULL,
+    "agendaId" INTEGER NOT NULL,
+    "discarded" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "OwnedAgenda_pkey" PRIMARY KEY ("imperialId","agendaId")
 );
 
 -- CreateTable
@@ -122,15 +133,6 @@ CREATE TABLE "AgendaDeck" (
     "expansionId" INTEGER NOT NULL,
 
     CONSTRAINT "AgendaDeck_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "AgendaMission" (
-    "agendaId" INTEGER NOT NULL,
-    "missionId" INTEGER NOT NULL,
-    "forced" BOOLEAN NOT NULL DEFAULT false,
-
-    CONSTRAINT "AgendaMission_pkey" PRIMARY KEY ("agendaId","missionId")
 );
 
 -- CreateTable
@@ -298,12 +300,6 @@ CREATE TABLE "_ClassToClassCard" (
 );
 
 -- CreateTable
-CREATE TABLE "_AgendaToImperialPlayer" (
-    "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL
-);
-
--- CreateTable
 CREATE TABLE "_AgendaDeckToImperialPlayer" (
     "A" INTEGER NOT NULL,
     "B" INTEGER NOT NULL
@@ -376,12 +372,6 @@ CREATE INDEX "Item_name_tier_idx" ON "Item"("name", "tier");
 CREATE UNIQUE INDEX "AgendaDeck_name_key" ON "AgendaDeck"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "AgendaMission_agendaId_key" ON "AgendaMission"("agendaId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "AgendaMission_missionId_key" ON "AgendaMission"("missionId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Mission_name_expansionId_key" ON "Mission"("name", "expansionId");
 
 -- CreateIndex
@@ -422,12 +412,6 @@ CREATE UNIQUE INDEX "_ClassToClassCard_AB_unique" ON "_ClassToClassCard"("A", "B
 
 -- CreateIndex
 CREATE INDEX "_ClassToClassCard_B_index" ON "_ClassToClassCard"("B");
-
--- CreateIndex
-CREATE UNIQUE INDEX "_AgendaToImperialPlayer_AB_unique" ON "_AgendaToImperialPlayer"("A", "B");
-
--- CreateIndex
-CREATE INDEX "_AgendaToImperialPlayer_B_index" ON "_AgendaToImperialPlayer"("B");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "_AgendaDeckToImperialPlayer_AB_unique" ON "_AgendaDeckToImperialPlayer"("A", "B");
@@ -496,13 +480,19 @@ ALTER TABLE "Item" ADD CONSTRAINT "Item_expansionId_fkey" FOREIGN KEY ("expansio
 ALTER TABLE "Agenda" ADD CONSTRAINT "Agenda_deckId_fkey" FOREIGN KEY ("deckId") REFERENCES "AgendaDeck"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "Agenda" ADD CONSTRAINT "Agenda_missionId_fkey" FOREIGN KEY ("missionId") REFERENCES "Mission"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Agenda" ADD CONSTRAINT "Agenda_forcedMissionId_fkey" FOREIGN KEY ("forcedMissionId") REFERENCES "Mission"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OwnedAgenda" ADD CONSTRAINT "OwnedAgenda_imperialId_fkey" FOREIGN KEY ("imperialId") REFERENCES "ImperialPlayer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "OwnedAgenda" ADD CONSTRAINT "OwnedAgenda_agendaId_fkey" FOREIGN KEY ("agendaId") REFERENCES "Agenda"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "AgendaDeck" ADD CONSTRAINT "AgendaDeck_expansionId_fkey" FOREIGN KEY ("expansionId") REFERENCES "Expansion"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "AgendaMission" ADD CONSTRAINT "AgendaMission_agendaId_fkey" FOREIGN KEY ("agendaId") REFERENCES "Agenda"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "AgendaMission" ADD CONSTRAINT "AgendaMission_missionId_fkey" FOREIGN KEY ("missionId") REFERENCES "Mission"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Mission" ADD CONSTRAINT "Mission_expansionId_fkey" FOREIGN KEY ("expansionId") REFERENCES "Expansion"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -599,12 +589,6 @@ ALTER TABLE "_ClassToClassCard" ADD CONSTRAINT "_ClassToClassCard_A_fkey" FOREIG
 
 -- AddForeignKey
 ALTER TABLE "_ClassToClassCard" ADD CONSTRAINT "_ClassToClassCard_B_fkey" FOREIGN KEY ("B") REFERENCES "ClassCard"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_AgendaToImperialPlayer" ADD CONSTRAINT "_AgendaToImperialPlayer_A_fkey" FOREIGN KEY ("A") REFERENCES "Agenda"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_AgendaToImperialPlayer" ADD CONSTRAINT "_AgendaToImperialPlayer_B_fkey" FOREIGN KEY ("B") REFERENCES "ImperialPlayer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_AgendaDeckToImperialPlayer" ADD CONSTRAINT "_AgendaDeckToImperialPlayer_A_fkey" FOREIGN KEY ("A") REFERENCES "AgendaDeck"("id") ON DELETE CASCADE ON UPDATE CASCADE;

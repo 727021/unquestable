@@ -1476,11 +1476,7 @@ await prisma.agendaDeck.create({
           tagline:
             'An Imperial testing facility has made a recent breakthrough. With support, their deadly innovations could be put to work very soon.',
           cost: 3,
-          mission: {
-            create: {
-              missionId: meansOfProduction.id
-            }
-          }
+          missionId: meansOfProduction.id
         },
         {
           name: 'Interrogation Protocol',
@@ -1515,11 +1511,7 @@ await prisma.agendaDeck.create({
           tagline:
             "Imperial operatives conduct surgical strikes to destroy the Rebellion's vital supplies. Weaken them, and their surrender is all but assured.",
           cost: 3,
-          mission: {
-            create: {
-              missionId: breakingPoint.id
-            }
-          }
+          missionId: breakingPoint.id
         }
       ]
     }
@@ -1563,12 +1555,7 @@ await prisma.agendaDeck.create({
           tagline:
             "The vessel has proper authorization, but its crew are known Rebel sympathizers. Interrogating them and stripping their ship's data files could provide important intelligence.\nThese are dangerous criminals, not to be underestimated. With a few measures of subtlety, perhaps the information could be gained without direct conflict...",
           cost: 4,
-          mission: {
-            create: {
-              forced: true,
-              missionId: impounded.id
-            }
-          }
+          forcedMissionId: impounded.id
         },
         {
           name: 'Tracking Beacon',
@@ -1603,12 +1590,7 @@ await prisma.agendaDeck.create({
           tagline:
             "Rebel operatives are proving to be a thorn in the Empire's side. Working with mercenaries can be distasteful, but a sizable bounty could place considerable pressure upon them.\nThese Rebels are dangerous foes. Advise the hunter to create a tactical advantage before confronting them directly.",
           cost: 4,
-          mission: {
-            create: {
-              forced: true,
-              missionId: wanted.id
-            }
-          }
+          forcedMissionId: wanted.id
         },
         {
           name: 'Hired Help',
@@ -1642,11 +1624,7 @@ await prisma.agendaDeck.create({
           name: 'Dark Obsession',
           tagline: 'Darth Vader',
           cost: 3,
-          mission: {
-            create: {
-              missionId: darkObsession.id
-            }
-          }
+          missionId: darkObsession.id
         }
       ]
     }
