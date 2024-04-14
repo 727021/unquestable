@@ -58,7 +58,7 @@ const SideMissionsInput = ({ name, count = 1, children }: Props) => {
         {children}
       </select>
       <div className="label">
-        {error && <span className="label-text-alt text-error">Choose exactly {count} mission{count > 1 ? 's' : ''}</span>}
+        {(error || !random) && <span className={clsx('label-text-alt', error && 'text-error')}>Choose exactly {count} mission{count > 1 ? 's' : ''}</span>}
       </div>
       {random && <input {...getInputProps({
         type: 'hidden',

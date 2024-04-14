@@ -1,4 +1,11 @@
-import { Link, json, useOutletContext, useParams } from '@remix-run/react'
+import {
+  Link,
+  json,
+  redirect,
+  useActionData,
+  useOutletContext,
+  useParams
+} from '@remix-run/react'
 import clsx from 'clsx'
 import type { LoaderData } from './_app.games.$game'
 import { MissionSlotType, MissionStage, MissionType } from '@prisma/client'
@@ -25,9 +32,14 @@ const drawValidator = withZod(
       )
   })
 )
-const chooseValidator = withZod(zfd.formData({}))
+const chooseValidator = withZod(
+  zfd.formData({
+    mission: zfd.numeric(z.number().int().positive()),
+    slot: zfd.numeric(z.number().int().positive())
+  })
+)
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async ({ request, params }: ActionFunctionArgs) => {
   const user = await getUser(request)
 
   const formData = await request.formData()
@@ -41,28 +53,30 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return validationError(error)
     }
 
-    // determine how many missions need to be chosen
+    // determine how many missions need to be drawn
 
-    // validate missions
+    // validate drawn missions (or randomize missions)
 
-    // add chosen missions to game
+    // add drawn missions to game
 
-    // return json data
-  } else {
+    // return success response
+    return new Response(undefined, { status: 204 })
+  } else if (action === 'choose') {
     const { data, error } = await chooseValidator.validate(formData)
 
     if (error) {
       return validationError(error)
     }
 
-    // validate chosen mission
+    // validate chosen mission and campaign mission slot
 
     // add game mission to campaing mission slot
 
     // redirect to current page to reload data and close modal
+    return redirect(`/games/${params.game}`)
   }
 
-  return json({})
+  return new Response(undefined, { status: 401 })
 }
 
 const Game = () => {
@@ -174,7 +188,8 @@ const Game = () => {
                                     </SideMissionsInput>
                                     <div className="flex gap-2">
                                       <SubmitButton>
-                                        Choose Mission
+                                        Draw Mission
+                                        {activeSideMissions.length ? '' : 's'}
                                       </SubmitButton>
                                       <button
                                         type="button"
@@ -198,6 +213,11 @@ const Game = () => {
                                       name="action"
                                       value="choose"
                                     />
+                                    <input
+                                      type="hidden"
+                                      name="slot"
+                                      value={slot.id}
+                                    />
                                     <SelectInput
                                       name="mission"
                                       label="Mission"
@@ -207,6 +227,9 @@ const Game = () => {
                                       {activeSideMissions.map((m) => (
                                         <option key={m.id} value={m.id}>
                                           {m.mission.name}
+                                          {m.mission.type ===
+                                            MissionType.IMPERIAL &&
+                                            ' (IMPERIAL AGENDA)'}
                                         </option>
                                       ))}
                                     </SelectInput>
