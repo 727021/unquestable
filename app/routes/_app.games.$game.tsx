@@ -144,7 +144,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
         },
         where: {
           gameMissions: {
-            none: {}
+            none: {
+              gameId
+            }
           }
         }
       }

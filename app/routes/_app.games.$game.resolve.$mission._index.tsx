@@ -724,7 +724,7 @@ const Resolve = () => {
   }, [data.mission.hero, rewards.rebelReward])
 
   const isFinale =
-    data.missionSlot?.index &&
+    !!data.missionSlot?.index &&
     data.missionSlot.index === data.game.campaign.missionSlots[0].index
 
   return (
