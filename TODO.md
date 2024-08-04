@@ -1,4 +1,4 @@
-- [ ] empire page - view only
+- [X] empire page - view only
 - [ ] empire page - manage owned agendas (discard and reshuffle)
 - [ ] empire page - arbitrary updates
 - [ ] rebel page - view only

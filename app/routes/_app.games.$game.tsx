@@ -99,12 +99,29 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
               agendas: true
             }
           },
-          agendas: true,
+          agendas: {
+            select: {
+              discarded: true,
+              agenda: true,
+              agendaId: true
+            }
+          },
           classCards: true,
           rewards: {
             select: {
               id: true,
-              name: true
+              name: true,
+              tagline: true
+            }
+          },
+          villains: {
+            select: {
+              id: true,
+              name: true,
+              traits: true,
+              deployment: true,
+              reinforcement: true,
+              elite: true
             }
           }
         }
