@@ -62,52 +62,51 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return json({})
   }
 
-  // Save changes to db (create, update, delete ownedAgenda)
-
-  // add
   await prisma.imperialPlayer.update({
     where: {
       id: player.id
     },
     data: {
       agendas: {
-        create: data.agendasToAdd.map((agendaId) => ({
-          agenda: {
-            connect: {
-              id: agendaId
-            }
-          }
-        }))
-      }
-    }
-  })
-
-  // discard (may not be owned)
-  await prisma.imperialPlayer.update({
-    where: {
-      id: player.id
-    },
-    data: {
-      agendas: {
-        // create for previously unowned agendas
-        create: data.agendasToDiscard
-          .filter(
-            (agendaId) => !player.agendas.some((a) => a.agenda.id === agendaId)
-          )
-          .map((agendaId) => ({
+        create: [
+          ...data.agendasToAdd.map((agendaId) => ({
             agenda: {
               connect: {
                 id: agendaId
               }
-            },
-            discarded: true
+            }
           })),
-        // update for previously owned agendas
-        update: data.agendasToDiscard
-          .filter((agendaId) =>
-            player.agendas.some((a) => a.agenda.id === agendaId)
-          )
-          .map((agendaId) => ({
+          ...data.agendasToDiscard
+            .filter(
+              (agendaId) =>
+                !player.agendas.some((a) => a.agenda.id === agendaId)
+            )
+            .map((agendaId) => ({
+              agenda: {
+                connect: {
+                  id: agendaId
+                }
+              },
+              discarded: true
+            }))
+        ],
+        update: [
+          ...data.agendasToDiscard
+            .filter((agendaId) =>
+              player.agendas.some((a) => a.agenda.id === agendaId)
+            )
+            .map((agendaId) => ({
+              where: {
+                imperialId_agendaId: {
+                  imperialId: player.id,
+                  agendaId
+                }
+              },
+              data: {
+                discarded: true
+              }
+            })),
+          ...data.agendasToRestore.map((agendaId) => ({
             where: {
               imperialId_agendaId: {
                 imperialId: player.id,
@@ -115,42 +114,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
               }
             },
             data: {
-              discarded: true
+              discarded: false
             }
           }))
-      }
-    }
-  })
-
-  // restore
-  await prisma.imperialPlayer.update({
-    where: {
-      id: player.id
-    },
-    data: {
-      agendas: {
-        update: data.agendasToRestore.map((agendaId) => ({
-          where: {
-            imperialId_agendaId: {
-              imperialId: player.id,
-              agendaId
-            }
-          },
-          data: {
-            discarded: false
-          }
-        }))
-      }
-    }
-  })
-
-  // reshuffle
-  await prisma.imperialPlayer.update({
-    where: {
-      id: player.id
-    },
-    data: {
-      agendas: {
+        ],
         deleteMany: {
           agendaId: {
             in: data.agendasToReshuffle
