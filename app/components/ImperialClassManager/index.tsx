@@ -1,10 +1,11 @@
 import type { FetcherWithComponents } from '@remix-run/react'
 import type { LoaderData } from '~/routes/_app.games.$game'
-import EditButton from '../EditButton'
-import { Reducer, useCallback, useEffect, useReducer } from 'react'
+import EditButton from '~/components/EditButton'
+import type { Reducer } from 'react';
+import { useCallback, useEffect, useReducer } from 'react'
 import { ValidatedForm } from 'remix-validated-form'
 import { classValidator } from '~/routes/_app.games.$game.empire.class'
-import SubmitButton from '../SubmitButton'
+import SubmitButton from '~/components/SubmitButton'
 
 type CardId = NonNullable<
   LoaderData['game']['imperialPlayer']

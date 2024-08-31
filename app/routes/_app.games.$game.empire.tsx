@@ -4,6 +4,8 @@ import type { LoaderData } from './_app.games.$game'
 import type { ActionData } from './_app.games.$game.empire.agendas'
 import AgendaManager from '~/components/AgendaManager'
 import ImperialClassManager from '~/components/ImperialClassManager'
+import EditButton from '~/components/EditButton'
+import ImperialSummaryManager from '~/components/ImperialSummaryManager'
 
 const Empire = () => {
   const data = useOutletContext<LoaderData>()
@@ -21,18 +23,7 @@ const Empire = () => {
         <div className="flex gap-3 items-baseline">
           <h2 className="m-0">Empire</h2>
         </div>
-        <div className="flex flex-1 px-2 pb-1 gap-2 border border-gray-400 rounded justify-between">
-          <div>
-            <span className="font-bold">Name:</span> {imperialPlayer.name}
-          </div>
-          <div>
-            <span className="font-bold">XP:</span> {imperialPlayer.xp}
-          </div>
-          <div>
-            <span className="font-bold">Influence:</span>{' '}
-            {imperialPlayer.influence}
-          </div>
-        </div>
+        <ImperialSummaryManager imperialPlayer={imperialPlayer} />
         <div className="flex flex-wrap gap-2">
           <ImperialClassManager
             imperialPlayer={imperialPlayer}
