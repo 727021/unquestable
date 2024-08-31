@@ -48,12 +48,13 @@ const SelectInput = forwardRef(
             {required && <RequiredIndicator />}
             {label}
           </span>
-          <span className="label-text-alt">
-            {labelRight}
-          </span>
+          <span className="label-text-alt">{labelRight}</span>
         </div>
         <select
-          className={clsx('select select-bordered grow', error && 'select-error')}
+          className={clsx(
+            'select select-bordered grow',
+            error && 'select-error'
+          )}
           {...getInputProps({
             id: name,
             value,

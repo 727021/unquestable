@@ -76,21 +76,23 @@ const BuyAgendaCard = ({ cards, influence, label, name }: Props) => {
           </div>
         </div>
         <div className="flex flex-col gap-1">
-          {bought.toSorted((a, b) => a.cost - b.cost).map((b) => (
-            <div className="inline-flex gap-1 items-center" key={b.id}>
-              <button
-                type="button"
-                className="btn btn-xs btn-outline btn-error px-1"
-                onClick={() => handleRemove(b.id)}
-              >
-                <TrashIcon className="w-4 h-4" />
-              </button>
-              <span>
-                {b.cost} - {b.name}
-              </span>
-              <input type="hidden" name={name} value={b.id} />
-            </div>
-          ))}
+          {bought
+            .toSorted((a, b) => a.cost - b.cost)
+            .map((b) => (
+              <div className="inline-flex gap-1 items-center" key={b.id}>
+                <button
+                  type="button"
+                  className="btn btn-xs btn-outline btn-error px-1"
+                  onClick={() => handleRemove(b.id)}
+                >
+                  <TrashIcon className="w-4 h-4" />
+                </button>
+                <span>
+                  {b.cost} - {b.name}
+                </span>
+                <input type="hidden" name={name} value={b.id} />
+              </div>
+            ))}
         </div>
       </div>
     </div>

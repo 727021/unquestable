@@ -480,7 +480,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       decks: {
         some: {
           id: {
-            in: newGame.rebelPlayers.map(r => r.hero.class?.id ?? 0)
+            in: newGame.rebelPlayers.map((r) => r.hero.class?.id ?? 0)
           }
         }
       }
@@ -497,7 +497,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
                 },
                 where: {
                   id: {
-                    in: newGame.rebelPlayers.map(r => r.id)
+                    in: newGame.rebelPlayers.map((r) => r.id)
                   }
                 }
               }
@@ -508,18 +508,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   })
 
-  await Promise.all(rebelCards.map(card => prisma.classCard.update({
-    data: {
-      rebels: {
-        connect: {
-          id: card.decks[0].hero?.players[0].id
+  await Promise.all(
+    rebelCards.map((card) =>
+      prisma.classCard.update({
+        data: {
+          rebels: {
+            connect: {
+              id: card.decks[0].hero?.players[0].id
+            }
+          }
+        },
+        where: {
+          id: card.id
         }
-      }
-    },
-    where: {
-      id: card.id
-    }
-  })))
+      })
+    )
+  )
 
   return redirect(`/games/${newGame.id}`)
 }

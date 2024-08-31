@@ -31,7 +31,7 @@ export const ThemeProvider = ({ children }: PropsWithChildren) => {
       localStorage.setItem(THEME_KEY, newTheme)
       _setTheme(newTheme)
     } else {
-      _setTheme(prev => {
+      _setTheme((prev) => {
         const t = newTheme(prev)
         localStorage.setItem(THEME_KEY, t)
         return t

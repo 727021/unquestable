@@ -145,7 +145,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
           imperialPlayer: {
             update: {
               agendas: {
-                create: agendas.map(a => ({ agendaId: a.id }))
+                create: agendas.map((a) => ({ agendaId: a.id }))
               },
               influence: {
                 decrement: agendasCost
@@ -154,7 +154,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                 decrement: classCardCost._sum.cost ?? 0
               },
               classCards: {
-                connect: data.classCards.map(c => ({ id: c }))
+                connect: data.classCards.map((c) => ({ id: c }))
               }
             }
           }

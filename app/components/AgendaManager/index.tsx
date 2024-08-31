@@ -220,10 +220,7 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
     [initialDiscardedAgendas, initialOwnedAgendas]
   )
 
-  const [agendaState, changeAgenda] = useReducer(
-    reducer,
-    initialAgendaState
-  )
+  const [agendaState, changeAgenda] = useReducer(reducer, initialAgendaState)
 
   useEffect(() => {
     if (fetcher?.data?.success && fetcher.state === 'idle') {

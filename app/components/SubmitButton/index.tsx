@@ -3,11 +3,23 @@ import clsx from 'clsx'
 import type { ComponentProps, PropsWithChildren } from 'react'
 import { useIsSubmitting } from 'remix-validated-form'
 
-type Props = PropsWithChildren<Omit<ComponentProps<'button'>, 'type'> & { formId?: string, fetcher?: Fetcher }>
+type Props = PropsWithChildren<
+  Omit<ComponentProps<'button'>, 'type'> & {
+    formId?: string
+    fetcher?: Fetcher
+  }
+>
 
-const SubmitButton = ({ children, disabled, className, formId, fetcher, ...props }: Props) => {
+const SubmitButton = ({
+  children,
+  disabled,
+  className,
+  formId,
+  fetcher,
+  ...props
+}: Props) => {
   const isSubmitting = useIsSubmitting(formId)
-  const isLoading = isSubmitting || fetcher?.state === 'loading';
+  const isLoading = isSubmitting || fetcher?.state === 'loading'
 
   return (
     <button

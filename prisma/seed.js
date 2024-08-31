@@ -1836,12 +1836,14 @@ await prisma.missionReward.createMany({
       missionId: darkObsession.id,
       type: MissionRewardType.LOSS,
       side: Side.IMPERIAL,
-      troopId: (await prisma.troop.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Darth Vader (Lord of the Sith)'
-        }
-      })).id
+      troopId: (
+        await prisma.troop.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Darth Vader (Lord of the Sith)'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -1857,24 +1859,28 @@ await prisma.missionReward.createMany({
       missionId: wanted.id,
       type: MissionRewardType.LOSS,
       side: Side.IMPERIAL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Old Wounds'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Old Wounds'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
       missionId: impounded.id,
       type: MissionRewardType.LOSS,
       side: Side.IMPERIAL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Special Operations'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Special Operations'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -1888,12 +1894,14 @@ await prisma.missionReward.createMany({
       missionId: breakingPoint.id,
       type: MissionRewardType.LOSS,
       side: Side.IMPERIAL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Supply Deficit'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Supply Deficit'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -1916,12 +1924,14 @@ await prisma.missionReward.createMany({
       missionId: meansOfProduction.id,
       type: MissionRewardType.LOSS,
       side: Side.IMPERIAL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Imperial Industry'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Imperial Industry'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -1944,12 +1954,14 @@ await prisma.missionReward.createMany({
       missionId: brushfire.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Veteran Prowess'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Veteran Prowess'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -1972,12 +1984,14 @@ await prisma.missionReward.createMany({
       missionId: temptation.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: "Shu Yen's Lightsaber"
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: "Shu Yen's Lightsaber"
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2000,12 +2014,14 @@ await prisma.missionReward.createMany({
       missionId: friendsOfOld.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Fearless Leader'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Fearless Leader'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2028,12 +2044,14 @@ await prisma.missionReward.createMany({
       missionId: looseCannon.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Shadow Suit'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Shadow Suit'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2056,12 +2074,14 @@ await prisma.missionReward.createMany({
       missionId: indebted.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Life Debt'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Life Debt'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2084,12 +2104,14 @@ await prisma.missionReward.createMany({
       missionId: highMoon.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Peacemaker'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Peacemaker'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2112,12 +2134,14 @@ await prisma.missionReward.createMany({
       missionId: sympathyForTheRebellion.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'The Ways of the Force'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'The Ways of the Force'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2140,12 +2164,14 @@ await prisma.missionReward.createMany({
       missionId: luxuryCruise.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Allied Operations'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Allied Operations'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2193,12 +2219,14 @@ await prisma.missionReward.createMany({
       missionId: aSimpleTask.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Adrenal Implant'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Adrenal Implant'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2221,12 +2249,14 @@ await prisma.missionReward.createMany({
       missionId: vipersDen.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      rewardId: (await prisma.reward.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Rebel Recon'
-        }
-      })).id
+      rewardId: (
+        await prisma.reward.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Rebel Recon'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2249,12 +2279,14 @@ await prisma.missionReward.createMany({
       missionId: targetOfOpportunity.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      troopId: (await prisma.troop.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Rebel Saboteur'
-        }
-      })).id
+      troopId: (
+        await prisma.troop.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Rebel Saboteur'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2277,12 +2309,14 @@ await prisma.missionReward.createMany({
       missionId: theSpiceJob.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      troopId: (await prisma.troop.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Chewbacca (Loyal Wookiee)'
-        }
-      })).id
+      troopId: (
+        await prisma.troop.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Chewbacca (Loyal Wookiee)'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2305,12 +2339,14 @@ await prisma.missionReward.createMany({
       missionId: homecoming.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      troopId: (await prisma.troop.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Luke Skywalker (Hero of the Rebellion)'
-        }
-      })).id
+      troopId: (
+        await prisma.troop.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Luke Skywalker (Hero of the Rebellion)'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,
@@ -2333,12 +2369,14 @@ await prisma.missionReward.createMany({
       missionId: sorryAboutTheMess.id,
       type: MissionRewardType.WIN,
       side: Side.REBEL,
-      troopId: (await prisma.troop.findFirst({
-        where: {
-          expansionId: core.id,
-          name: 'Han Solo (Scoundrel)'
-        }
-      })).id
+      troopId: (
+        await prisma.troop.findFirst({
+          where: {
+            expansionId: core.id,
+            name: 'Han Solo (Scoundrel)'
+          }
+        })
+      ).id
     },
     {
       campaignId: campaign.id,

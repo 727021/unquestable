@@ -2,7 +2,12 @@ import { useField } from 'remix-validated-form'
 import RequiredIndicator from '~/components/RequiredIndicator'
 import clsx from 'clsx'
 import { forwardRef } from 'react'
-import type { ChangeEventHandler, ReactNode, ForwardedRef, ComponentProps } from 'react'
+import type {
+  ChangeEventHandler,
+  ReactNode,
+  ForwardedRef,
+  ComponentProps
+} from 'react'
 
 type Props = {
   name: string
@@ -16,7 +21,17 @@ type Props = {
 
 const TextInput = forwardRef(
   (
-    { name, label, required, hintLeft, hintRight, value, onChange, type = 'text', ...props }: Props,
+    {
+      name,
+      label,
+      required,
+      hintLeft,
+      hintRight,
+      value,
+      onChange,
+      type = 'text',
+      ...props
+    }: Props,
     ref: ForwardedRef<HTMLInputElement>
   ) => {
     const { getInputProps, error } = useField(name)
