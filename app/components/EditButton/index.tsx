@@ -4,12 +4,13 @@ import { PencilIcon, XMarkIcon } from '@heroicons/react/24/solid'
 
 type EditButtonProps = {
   onClick: MouseEventHandler<ElementRef<'button'>>
-  active: boolean
+  active: boolean,
+  hideLabel?: boolean
 }
 
-const EditButton = ({ onClick, active }: EditButtonProps) => (
+const EditButton = ({ onClick, active, hideLabel }: EditButtonProps) => (
   <span className="flex gap-2 items-center">
-    {active && <p className="m-0 text-primary">Editing</p>}
+    {active && !hideLabel && <p className="m-0 text-primary">Editing</p>}
     <button
       className={clsx(
         'swap swap-flip btn btn-ghost btn-circle btn-sm',

@@ -17,6 +17,7 @@ type Props = {
   hintRight?: ReactNode
   value?: string | number
   onChange?: ChangeEventHandler<HTMLInputElement>
+  inline?: boolean
 } & ComponentProps<'input'>
 
 const TextInput = forwardRef(
@@ -30,6 +31,7 @@ const TextInput = forwardRef(
       value,
       onChange,
       type = 'text',
+      inline,
       ...props
     }: Props,
     ref: ForwardedRef<HTMLInputElement>
@@ -37,9 +39,15 @@ const TextInput = forwardRef(
     const { getInputProps, error } = useField(name)
 
     return (
-      <label className="form-control max-w-full w-96">
-        <div className="label">
-          <span className="label-text">
+      <label
+        className={clsx(
+          'form-control max-w-full w-fit sm:w-96',
+          inline && 'flex-row items-center',
+          type === 'number' && 'sm:w-fit'
+        )}
+      >
+        <div className={clsx("label", inline && 'py-0')}>
+          <span className={clsx(typeof label === 'string' && 'label-text')}>
             {required && <RequiredIndicator />}
             {label}
           </span>
@@ -47,7 +55,8 @@ const TextInput = forwardRef(
         <input
           className={clsx(
             'input input-bordered w-full',
-            error && 'input-error'
+            error && 'input-error',
+            inline && 'input-sm'
           )}
           {...getInputProps({
             ...props,

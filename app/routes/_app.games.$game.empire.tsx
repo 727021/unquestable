@@ -4,18 +4,20 @@ import type { LoaderData } from './_app.games.$game'
 import type { ActionData } from './_app.games.$game.empire.agendas'
 import AgendaManager from '~/components/AgendaManager'
 import ImperialClassManager from '~/components/ImperialClassManager'
-import EditButton from '~/components/EditButton'
 import ImperialSummaryManager from '~/components/ImperialSummaryManager'
 
 const Empire = () => {
   const data = useOutletContext<LoaderData>()
   const imperialPlayer = data.game.imperialPlayer!
 
-  const agendaFetcher = useFetcher<ActionData>()
-  const agendasFormAction = useFormAction('agendas')
+  const summaryFetcher = useFetcher<ActionData>()
+  const summaryFormAction = useFormAction('summary')
 
   const classFetcher = useFetcher<ActionData>()
   const classFormAction = useFormAction('class')
+
+  const agendaFetcher = useFetcher<ActionData>()
+  const agendasFormAction = useFormAction('agendas')
 
   return (
     <>
@@ -23,7 +25,11 @@ const Empire = () => {
         <div className="flex gap-3 items-baseline">
           <h2 className="m-0">Empire</h2>
         </div>
-        <ImperialSummaryManager imperialPlayer={imperialPlayer} />
+        <ImperialSummaryManager
+          imperialPlayer={imperialPlayer}
+          fetcher={summaryFetcher}
+          formAction={summaryFormAction}
+        />
         <div className="flex flex-wrap gap-2">
           <ImperialClassManager
             imperialPlayer={imperialPlayer}
