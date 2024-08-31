@@ -1,7 +1,7 @@
 import type { Reducer } from 'react'
-import { useEffect, useReducer } from 'react'
+import { useCallback, useEffect, useReducer } from 'react'
 import clsx from 'clsx'
-import { useActionData, useFetcher, useFormAction, useOutletContext } from '@remix-run/react'
+import { useFetcher, useFormAction, useOutletContext } from '@remix-run/react'
 import type { LoaderData } from './_app.games.$game'
 import EditButton from '~/components/EditButton'
 import { ValidatedForm } from 'remix-validated-form'
@@ -12,7 +12,8 @@ import {
   ArrowLeftCircleIcon,
   ArrowRightCircleIcon
 } from '@heroicons/react/24/outline'
-import { ActionData, agendaValidator } from './_app.games.$game.empire.agendas'
+import type { ActionData } from './_app.games.$game.empire.agendas'
+import { agendaValidator } from './_app.games.$game.empire.agendas'
 
 type AgendaId = NonNullable<
   LoaderData['game']['imperialPlayer']
@@ -27,8 +28,6 @@ type AgendaState = State & {
   agendasToDiscard: AgendaId[]
   agendasToRestore: AgendaId[]
   agendasToReshuffle: AgendaId[]
-  initialOwnedAgendas: AgendaId[]
-  initialDiscardedAgendas: AgendaId[]
   chosenAgenda: AgendaId
 }
 
@@ -52,151 +51,7 @@ const initialAgendaState: AgendaState = {
   agendasToDiscard: [],
   agendasToRestore: [],
   agendasToReshuffle: [],
-  initialOwnedAgendas: [],
-  initialDiscardedAgendas: [],
   chosenAgenda: -1
-}
-
-const agendaReducer: Reducer<AgendaState, AgendaAction> = (state, action) => {
-  switch (action.type) {
-    case 'ADD_AGENDA': // unowned -> owned
-      if (state.initialOwnedAgendas.includes(action.agenda)) {
-        return {
-          ...state,
-          agendasToAdd: state.agendasToAdd.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          agendasToReshuffle: state.agendasToReshuffle.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          chosenAgenda: initialAgendaState.chosenAgenda
-        }
-      }
-      if (state.initialDiscardedAgendas.includes(action.agenda)) {
-        return {
-          ...state,
-          agendasToAdd: state.agendasToAdd.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          agendasToReshuffle: state.agendasToReshuffle.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          agendasToRestore: [...state.agendasToRestore, action.agenda],
-          chosenAgenda: initialAgendaState.chosenAgenda
-        }
-      }
-      return {
-        ...state,
-        agendasToReshuffle: state.agendasToReshuffle.filter(
-          (agenda) => agenda !== action.agenda
-        ),
-        agendasToAdd: [...state.agendasToAdd, action.agenda],
-        chosenAgenda: initialAgendaState.chosenAgenda
-      }
-    case 'DISCARD_AGENDA': // owned -> discarded
-      if (state.initialDiscardedAgendas.includes(action.agenda)) {
-        return {
-          ...state,
-          agendasToRestore: state.agendasToRestore.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          agendasToAdd: state.agendasToAdd.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          agendasToDiscard: state.agendasToDiscard.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          chosenAgenda: initialAgendaState.chosenAgenda
-        }
-      }
-      return {
-        ...state,
-        agendasToDiscard: [...state.agendasToDiscard, action.agenda],
-        agendasToAdd: state.agendasToAdd.filter(
-          (agenda) => agenda !== action.agenda
-        ),
-        agendasToRestore: state.agendasToRestore.filter(
-          (agenda) => agenda !== action.agenda
-        )
-      }
-    case 'RESTORE_AGENDA': // discarded -> owned
-      if (state.initialOwnedAgendas.includes(action.agenda)) {
-        return {
-          ...state,
-          agendasToRestore: state.agendasToRestore.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          agendasToAdd: state.agendasToAdd.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          agendasToDiscard: state.agendasToDiscard.filter(
-            (agenda) => agenda !== action.agenda
-          )
-        }
-      }
-      if (state.initialDiscardedAgendas.includes(action.agenda)) {
-        return {
-          ...state,
-          agendasToRestore: [...state.agendasToRestore, action.agenda],
-          agendasToDiscard: state.agendasToDiscard.filter(
-            (agenda) => agenda !== action.agenda
-          )
-        }
-      }
-      return {
-        ...state,
-        agendasToAdd: [...state.agendasToAdd, action.agenda],
-        agendasToReshuffle: state.agendasToReshuffle.filter(
-          (agenda) => agenda !== action.agenda
-        )
-      }
-    case 'RESHUFFLE_AGENDA': // owned|discarded -> unowned
-      if (
-        !state.initialOwnedAgendas.includes(action.agenda) &&
-        !state.initialDiscardedAgendas.includes(action.agenda)
-      ) {
-        return {
-          ...state,
-          agendasToReshuffle: state.agendasToReshuffle.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          agendasToAdd: state.agendasToAdd.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          agendasToDiscard: state.agendasToDiscard.filter(
-            (agenda) => agenda !== action.agenda
-          ),
-          agendasToRestore: state.agendasToRestore.filter(
-            (agenda) => agenda !== action.agenda
-          )
-        }
-      }
-      return {
-        ...state,
-        agendasToReshuffle: [...state.agendasToReshuffle, action.agenda],
-        agendasToAdd: state.agendasToAdd.filter(
-          (agenda) => agenda !== action.agenda
-        ),
-        agendasToDiscard: state.agendasToDiscard.filter(
-          (agenda) => agenda !== action.agenda
-        ),
-        agendasToRestore: state.agendasToRestore.filter(
-          (agenda) => agenda !== action.agenda
-        )
-      }
-    case 'CHOOSE_AGENDA':
-      return {
-        ...state,
-        chosenAgenda: action.agenda
-      }
-    case 'TOGGLE_EDITING':
-      return {
-        ...initialAgendaState,
-        initialOwnedAgendas: state.initialOwnedAgendas,
-        initialDiscardedAgendas: state.initialDiscardedAgendas,
-        editing: !state.editing
-      }
-  }
 }
 
 const Empire = () => {
@@ -205,8 +60,6 @@ const Empire = () => {
 
   const agendaFetcher = useFetcher<ActionData>()
   const agendasFormAction = useFormAction('agendas')
-
-  console.log(agendasFormAction)
 
   const allAgendas = imperialPlayer.agendaDecks
     .map((deck) => deck.agendas)
@@ -227,14 +80,152 @@ const Empire = () => {
     )
     .map((a) => a.id)
 
+  const agendaReducer: Reducer<AgendaState, AgendaAction> = useCallback(
+    (state, action) => {
+      switch (action.type) {
+        case 'ADD_AGENDA': // unowned -> owned
+          if (initialOwnedAgendas.includes(action.agenda)) {
+            return {
+              ...state,
+              agendasToAdd: state.agendasToAdd.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              agendasToReshuffle: state.agendasToReshuffle.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              chosenAgenda: initialAgendaState.chosenAgenda
+            }
+          }
+          if (initialDiscardedAgendas.includes(action.agenda)) {
+            return {
+              ...state,
+              agendasToAdd: state.agendasToAdd.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              agendasToReshuffle: state.agendasToReshuffle.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              agendasToRestore: [...state.agendasToRestore, action.agenda],
+              chosenAgenda: initialAgendaState.chosenAgenda
+            }
+          }
+          return {
+            ...state,
+            agendasToReshuffle: state.agendasToReshuffle.filter(
+              (agenda) => agenda !== action.agenda
+            ),
+            agendasToAdd: [...state.agendasToAdd, action.agenda],
+            chosenAgenda: initialAgendaState.chosenAgenda
+          }
+        case 'DISCARD_AGENDA': // owned -> discarded
+          if (initialDiscardedAgendas.includes(action.agenda)) {
+            return {
+              ...state,
+              agendasToRestore: state.agendasToRestore.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              agendasToAdd: state.agendasToAdd.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              agendasToDiscard: state.agendasToDiscard.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              chosenAgenda: initialAgendaState.chosenAgenda
+            }
+          }
+          return {
+            ...state,
+            agendasToDiscard: [...state.agendasToDiscard, action.agenda],
+            agendasToAdd: state.agendasToAdd.filter(
+              (agenda) => agenda !== action.agenda
+            ),
+            agendasToRestore: state.agendasToRestore.filter(
+              (agenda) => agenda !== action.agenda
+            )
+          }
+        case 'RESTORE_AGENDA': // discarded -> owned
+          if (initialOwnedAgendas.includes(action.agenda)) {
+            return {
+              ...state,
+              agendasToRestore: state.agendasToRestore.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              agendasToAdd: state.agendasToAdd.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              agendasToDiscard: state.agendasToDiscard.filter(
+                (agenda) => agenda !== action.agenda
+              )
+            }
+          }
+          if (initialDiscardedAgendas.includes(action.agenda)) {
+            return {
+              ...state,
+              agendasToRestore: [...state.agendasToRestore, action.agenda],
+              agendasToDiscard: state.agendasToDiscard.filter(
+                (agenda) => agenda !== action.agenda
+              )
+            }
+          }
+          return {
+            ...state,
+            agendasToAdd: [...state.agendasToAdd, action.agenda],
+            agendasToReshuffle: state.agendasToReshuffle.filter(
+              (agenda) => agenda !== action.agenda
+            )
+          }
+        case 'RESHUFFLE_AGENDA': // owned|discarded -> unowned
+          if (
+            !initialOwnedAgendas.includes(action.agenda) &&
+            !initialDiscardedAgendas.includes(action.agenda)
+          ) {
+            return {
+              ...state,
+              agendasToReshuffle: state.agendasToReshuffle.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              agendasToAdd: state.agendasToAdd.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              agendasToDiscard: state.agendasToDiscard.filter(
+                (agenda) => agenda !== action.agenda
+              ),
+              agendasToRestore: state.agendasToRestore.filter(
+                (agenda) => agenda !== action.agenda
+              )
+            }
+          }
+          return {
+            ...state,
+            agendasToReshuffle: [...state.agendasToReshuffle, action.agenda],
+            agendasToAdd: state.agendasToAdd.filter(
+              (agenda) => agenda !== action.agenda
+            ),
+            agendasToDiscard: state.agendasToDiscard.filter(
+              (agenda) => agenda !== action.agenda
+            ),
+            agendasToRestore: state.agendasToRestore.filter(
+              (agenda) => agenda !== action.agenda
+            )
+          }
+        case 'CHOOSE_AGENDA':
+          return {
+            ...state,
+            chosenAgenda: action.agenda
+          }
+        case 'TOGGLE_EDITING':
+          return {
+            ...initialAgendaState,
+            editing: !state.editing
+          }
+      }
+    },
+    [initialDiscardedAgendas, initialOwnedAgendas]
+  )
+
   const [agendaState, changeAgenda] = useReducer(
     agendaReducer,
-    initialAgendaState,
-    (state) => ({
-      ...state,
-      initialOwnedAgendas,
-      initialDiscardedAgendas
-    })
+    initialAgendaState
   )
   useEffect(() => {
     if (agendaFetcher.data?.success) {
@@ -274,6 +265,8 @@ const Empire = () => {
         !discardedAgendas.some((a) => a.id === agenda.id)
     )
     .sort((a, b) => a.cost - b.cost)
+
+  console.log(agendaFetcher.state)
 
   return (
     <>
