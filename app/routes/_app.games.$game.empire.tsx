@@ -1,12 +1,9 @@
 import type { Reducer } from 'react'
 import { useEffect, useReducer } from 'react'
 import clsx from 'clsx'
-import { useActionData, useOutletContext } from '@remix-run/react'
+import { useActionData, useFetcher, useFormAction, useOutletContext } from '@remix-run/react'
 import type { LoaderData } from './_app.games.$game'
 import EditButton from '~/components/EditButton'
-import { withZod } from '@remix-validated-form/with-zod'
-import { zfd } from 'zod-form-data'
-import { z } from 'zod'
 import { ValidatedForm } from 'remix-validated-form'
 import SubmitButton from '~/components/SubmitButton'
 import { PlusIcon } from '@heroicons/react/24/solid'
@@ -15,12 +12,7 @@ import {
   ArrowLeftCircleIcon,
   ArrowRightCircleIcon
 } from '@heroicons/react/24/outline'
-import type { ActionFunctionArgs} from '@remix-run/node';
-import { json } from '@remix-run/node'
-import { prisma } from '~/services/db.server'
-import { getUser } from '~/services/auth.server'
-
-// TODO: Pull all the agenda management out into a component?
+import { ActionData, agendaValidator } from './_app.games.$game.empire.agendas'
 
 type AgendaId = NonNullable<
   LoaderData['game']['imperialPlayer']
@@ -35,6 +27,8 @@ type AgendaState = State & {
   agendasToDiscard: AgendaId[]
   agendasToRestore: AgendaId[]
   agendasToReshuffle: AgendaId[]
+  initialOwnedAgendas: AgendaId[]
+  initialDiscardedAgendas: AgendaId[]
   chosenAgenda: AgendaId
 }
 
@@ -52,103 +46,131 @@ type AgendaAction =
       agenda: AgendaId
     }
 
-const agendaValidator = withZod(
-  zfd.formData({
-    agendasToAdd: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    agendasToDiscard: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    agendasToRestore: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    agendasToReshuffle: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    form: z.literal('agenda')
-  })
-)
-
-type ActionData = { success?: number }
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const {
-    data
-  } = await agendaValidator.validate(await request.formData())
-
-  console.log(data)
-
-  const user = await getUser(request)
-  const gameId = parseInt(params.game!, 10)
-
-  const player = await prisma.imperialPlayer.findFirst({
-    where: {
-      game: {
-        id: gameId,
-        userId: user.id
-      }
-    },
-    select: {
-      id: true,
-      agendaDecks: {
-        select: {
-          agendas: true
-        }
-      },
-      agendas: {
-        select: {
-          discarded: true,
-          agenda: true
-        }
-      }
-    }
-  })
-
-  if (!player) {
-    return json({})
-  }
-
-  // Figure out what actually needs to change
-
-  // Save changes to db (create, update, delete ownedAgenda)
-
-  return json<ActionData>({ success: Date.now() })
-}
-
 const initialAgendaState: AgendaState = {
   editing: false,
   agendasToAdd: [],
   agendasToDiscard: [],
   agendasToRestore: [],
   agendasToReshuffle: [],
+  initialOwnedAgendas: [],
+  initialDiscardedAgendas: [],
   chosenAgenda: -1
 }
 
 const agendaReducer: Reducer<AgendaState, AgendaAction> = (state, action) => {
   switch (action.type) {
     case 'ADD_AGENDA': // unowned -> owned
+      if (state.initialOwnedAgendas.includes(action.agenda)) {
+        return {
+          ...state,
+          agendasToAdd: state.agendasToAdd.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          agendasToReshuffle: state.agendasToReshuffle.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          chosenAgenda: initialAgendaState.chosenAgenda
+        }
+      }
+      if (state.initialDiscardedAgendas.includes(action.agenda)) {
+        return {
+          ...state,
+          agendasToAdd: state.agendasToAdd.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          agendasToReshuffle: state.agendasToReshuffle.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          agendasToRestore: [...state.agendasToRestore, action.agenda],
+          chosenAgenda: initialAgendaState.chosenAgenda
+        }
+      }
       return {
         ...state,
+        agendasToReshuffle: state.agendasToReshuffle.filter(
+          (agenda) => agenda !== action.agenda
+        ),
         agendasToAdd: [...state.agendasToAdd, action.agenda],
         chosenAgenda: initialAgendaState.chosenAgenda
       }
     case 'DISCARD_AGENDA': // owned -> discarded
+      if (state.initialDiscardedAgendas.includes(action.agenda)) {
+        return {
+          ...state,
+          agendasToRestore: state.agendasToRestore.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          agendasToAdd: state.agendasToAdd.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          agendasToDiscard: state.agendasToDiscard.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          chosenAgenda: initialAgendaState.chosenAgenda
+        }
+      }
       return {
         ...state,
         agendasToDiscard: [...state.agendasToDiscard, action.agenda],
         agendasToAdd: state.agendasToAdd.filter(
           (agenda) => agenda !== action.agenda
+        ),
+        agendasToRestore: state.agendasToRestore.filter(
+          (agenda) => agenda !== action.agenda
         )
       }
     case 'RESTORE_AGENDA': // discarded -> owned
+      if (state.initialOwnedAgendas.includes(action.agenda)) {
+        return {
+          ...state,
+          agendasToRestore: state.agendasToRestore.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          agendasToAdd: state.agendasToAdd.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          agendasToDiscard: state.agendasToDiscard.filter(
+            (agenda) => agenda !== action.agenda
+          )
+        }
+      }
+      if (state.initialDiscardedAgendas.includes(action.agenda)) {
+        return {
+          ...state,
+          agendasToRestore: [...state.agendasToRestore, action.agenda],
+          agendasToDiscard: state.agendasToDiscard.filter(
+            (agenda) => agenda !== action.agenda
+          )
+        }
+      }
       return {
         ...state,
         agendasToAdd: [...state.agendasToAdd, action.agenda],
-        agendasToDiscard: state.agendasToDiscard.filter(
+        agendasToReshuffle: state.agendasToReshuffle.filter(
           (agenda) => agenda !== action.agenda
         )
       }
     case 'RESHUFFLE_AGENDA': // owned|discarded -> unowned
+      if (
+        !state.initialOwnedAgendas.includes(action.agenda) &&
+        !state.initialDiscardedAgendas.includes(action.agenda)
+      ) {
+        return {
+          ...state,
+          agendasToReshuffle: state.agendasToReshuffle.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          agendasToAdd: state.agendasToAdd.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          agendasToDiscard: state.agendasToDiscard.filter(
+            (agenda) => agenda !== action.agenda
+          ),
+          agendasToRestore: state.agendasToRestore.filter(
+            (agenda) => agenda !== action.agenda
+          )
+        }
+      }
       return {
         ...state,
         agendasToReshuffle: [...state.agendasToReshuffle, action.agenda],
@@ -156,6 +178,9 @@ const agendaReducer: Reducer<AgendaState, AgendaAction> = (state, action) => {
           (agenda) => agenda !== action.agenda
         ),
         agendasToDiscard: state.agendasToDiscard.filter(
+          (agenda) => agenda !== action.agenda
+        ),
+        agendasToRestore: state.agendasToRestore.filter(
           (agenda) => agenda !== action.agenda
         )
       }
@@ -165,7 +190,12 @@ const agendaReducer: Reducer<AgendaState, AgendaAction> = (state, action) => {
         chosenAgenda: action.agenda
       }
     case 'TOGGLE_EDITING':
-      return { ...initialAgendaState, editing: !state.editing }
+      return {
+        ...initialAgendaState,
+        initialOwnedAgendas: state.initialOwnedAgendas,
+        initialDiscardedAgendas: state.initialDiscardedAgendas,
+        editing: !state.editing
+      }
   }
 }
 
@@ -173,24 +203,46 @@ const Empire = () => {
   const data = useOutletContext<LoaderData>()
   const imperialPlayer = data.game.imperialPlayer!
 
-  const actionData = useActionData<ActionData>()
+  const agendaFetcher = useFetcher<ActionData>()
+  const agendasFormAction = useFormAction('agendas')
 
-  const [agendaState, changeAgenda] = useReducer(
-    agendaReducer,
-    initialAgendaState
-  )
-
-  useEffect(() => {
-    if (actionData?.success) {
-      // Exit edit mode after data is refreshed if the last submission was successful
-      changeAgenda({ type: 'TOGGLE_EDITING' })
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data])
+  console.log(agendasFormAction)
 
   const allAgendas = imperialPlayer.agendaDecks
     .map((deck) => deck.agendas)
     .flat()
+
+  const initialOwnedAgendas = allAgendas
+    .filter((agenda) =>
+      imperialPlayer.agendas.some(
+        (a) => a.agendaId === agenda.id && !a.discarded
+      )
+    )
+    .map((a) => a.id)
+  const initialDiscardedAgendas = allAgendas
+    .filter((agenda) =>
+      imperialPlayer.agendas.some(
+        (a) => a.agendaId === agenda.id && a.discarded
+      )
+    )
+    .map((a) => a.id)
+
+  const [agendaState, changeAgenda] = useReducer(
+    agendaReducer,
+    initialAgendaState,
+    (state) => ({
+      ...state,
+      initialOwnedAgendas,
+      initialDiscardedAgendas
+    })
+  )
+  useEffect(() => {
+    if (agendaFetcher.data?.success) {
+      // Exit edit mode after data is refreshed if the last submission was successful
+      changeAgenda({ type: 'TOGGLE_EDITING' })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data])
 
   const ownedAgendas = allAgendas
     .filter(
@@ -283,6 +335,8 @@ const Empire = () => {
                 validator={agendaValidator}
                 method="POST"
                 className="flex flex-col flex-1"
+                fetcher={agendaFetcher}
+                action={agendasFormAction}
               >
                 <div className="flex flex-wrap">
                   <div className="flex flex-col flex-1">
