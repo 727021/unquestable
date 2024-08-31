@@ -266,8 +266,6 @@ const Empire = () => {
     )
     .sort((a, b) => a.cost - b.cost)
 
-  console.log(agendaFetcher.state)
-
   return (
     <>
       <div className="flex flex-col flex-1 gap-2">
@@ -448,7 +446,7 @@ const Empire = () => {
                       </button>
                     </div>
                   </div>
-                  <SubmitButton className="btn btn-primary btn-outline">
+                  <SubmitButton className="btn btn-primary btn-outline" fetcher={agendaFetcher}>
                     Save
                   </SubmitButton>
                 </div>
