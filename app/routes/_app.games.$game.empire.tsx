@@ -3,6 +3,7 @@ import { useFetcher, useFormAction, useOutletContext } from '@remix-run/react'
 import type { LoaderData } from './_app.games.$game'
 import type { ActionData } from './_app.games.$game.empire.agendas'
 import AgendaManager from '~/components/AgendaManager'
+import ImperialClassManager from '~/components/ImperialClassManager'
 
 const Empire = () => {
   const data = useOutletContext<LoaderData>()
@@ -10,6 +11,9 @@ const Empire = () => {
 
   const agendaFetcher = useFetcher<ActionData>()
   const agendasFormAction = useFormAction('agendas')
+
+  const classFetcher = useFetcher<ActionData>()
+  const classFormAction = useFormAction('class')
 
   return (
     <>
@@ -30,29 +34,11 @@ const Empire = () => {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
-            <h2 className="m-0">{imperialPlayer.class.name}</h2>
-            <div className="form-control items-start w-fit py-2">
-              {imperialPlayer.class.cards.map((card) => (
-                <label
-                  key={card.id}
-                  className="label cursor-default gap-2 flex py-1"
-                >
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-sm cursor-default"
-                    checked={imperialPlayer.classCards.some(
-                      (c) => c.id === card.id
-                    )}
-                    readOnly
-                  />
-                  <span className="label-text">
-                    {card.cost} XP - {card.name}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
+          <ImperialClassManager
+            imperialPlayer={imperialPlayer}
+            fetcher={classFetcher}
+            formAction={classFormAction}
+          />
           <AgendaManager
             imperialPlayer={imperialPlayer}
             fetcher={agendaFetcher}

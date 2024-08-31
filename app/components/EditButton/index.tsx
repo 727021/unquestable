@@ -1,4 +1,4 @@
-import type { ElementRef, MouseEventHandler } from 'react';
+import type { ElementRef, MouseEventHandler } from 'react'
 import clsx from 'clsx'
 import { PencilIcon, XMarkIcon } from '@heroicons/react/24/solid'
 
@@ -8,16 +8,19 @@ type EditButtonProps = {
 }
 
 const EditButton = ({ onClick, active }: EditButtonProps) => (
-  <button
-    className={clsx(
-      'swap swap-flip btn btn-ghost btn-circle btn-sm',
-      active && 'swap-active'
-    )}
-    onClick={onClick}
-  >
-    <PencilIcon className="swap-off w-5 h-5" />
-    <XMarkIcon className="swap-on w-6 h-6" />
-  </button>
+  <span className="flex gap-2 items-center">
+    {active && <p className="m-0 text-primary">Editing</p>}
+    <button
+      className={clsx(
+        'swap swap-flip btn btn-ghost btn-circle btn-sm',
+        active && 'swap-active'
+      )}
+      onClick={onClick}
+    >
+      <PencilIcon className="swap-off w-5 h-5" />
+      <XMarkIcon className="swap-on w-6 h-6" />
+    </button>
+  </span>
 )
 
 export default EditButton

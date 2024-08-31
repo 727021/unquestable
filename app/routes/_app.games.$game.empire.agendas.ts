@@ -25,8 +25,7 @@ export const agendaValidator = withZod(
     ),
     agendasToReshuffle: zfd.repeatable(
       z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    form: z.literal('agenda')
+    )
   })
 )
 

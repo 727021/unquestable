@@ -1,7 +1,7 @@
 import type { FetcherWithComponents } from '@remix-run/react'
 import { useCallback, useEffect, useReducer, type Reducer } from 'react'
 import type { LoaderData } from '~/routes/_app.games.$game'
-import EditButton from '../EditButton'
+import EditButton from '~/components/EditButton'
 import { ValidatedForm } from 'remix-validated-form'
 import { agendaValidator } from '~/routes/_app.games.$game.empire.agendas'
 import { PlusIcon } from '@heroicons/react/24/solid'
@@ -10,7 +10,7 @@ import {
   ArrowLeftCircleIcon,
   ArrowRightCircleIcon
 } from '@heroicons/react/24/outline'
-import SubmitButton from '../SubmitButton'
+import SubmitButton from '~/components/SubmitButton'
 
 type AgendaId = NonNullable<
   LoaderData['game']['imperialPlayer']
@@ -72,7 +72,7 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
     )
     .map((a) => a.id)
 
-  const agendaReducer: Reducer<State, Action> = useCallback(
+  const reducer: Reducer<State, Action> = useCallback(
     (state, action) => {
       switch (action.type) {
         case 'ADD_AGENDA': // unowned -> owned
@@ -221,9 +221,10 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
   )
 
   const [agendaState, changeAgenda] = useReducer(
-    agendaReducer,
+    reducer,
     initialAgendaState
   )
+
   useEffect(() => {
     if (fetcher?.data?.success && fetcher.state === 'idle') {
       // Exit edit mode after data is refreshed if the last submission was successful
@@ -267,13 +268,10 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
     <div className="flex flex-col flex-1 px-2 pb-1 border rounded border-gray-400">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">Agendas</h2>
-        <span className="flex gap-2 items-center">
-          {agendaState.editing && <p className="m-0 text-primary">Editing</p>}
-          <EditButton
-            active={agendaState.editing}
-            onClick={() => changeAgenda({ type: 'TOGGLE_EDITING' })}
-          />
-        </span>
+        <EditButton
+          active={agendaState.editing}
+          onClick={() => changeAgenda({ type: 'TOGGLE_EDITING' })}
+        />
       </div>
       {agendaState.editing ? (
         <ValidatedForm
@@ -405,7 +403,6 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
               Save
             </SubmitButton>
           </div>
-          <input type="hidden" name="form" value="agenda" />
           {agendaState.agendasToAdd.map((agenda, i) => (
             <input
               key={`agendasToAdd-${agenda}`}
