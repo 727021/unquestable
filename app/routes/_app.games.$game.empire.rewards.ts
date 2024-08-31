@@ -12,20 +12,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return redirect(`/games/${params.game}/empire`)
 }
 
-export const summaryValidator = withZod(
+export const rewardValidator = withZod(
   zfd.formData({
-    name: zfd
-      .text(z.ostring())
-      .optional()
-      .default('')
-      .transform((input) => input?.trim() || null),
-    xp: zfd.numeric(z.optional(z.number().int().nonnegative())).optional().default(0),
-    influence: zfd.numeric(z.optional(z.number().int().nonnegative())).optional().default(0)
+    rewardsToAdd: zfd.repeatable(
+      z.array(zfd.numeric(z.number().int().positive()))
+    ),
+    rewardsToRemove: zfd.repeatable(
+      z.array(zfd.numeric(z.number().int().positive()))
+    )
   })
 )
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { data } = await summaryValidator.validate(await request.formData())
+  const { data } = await rewardValidator.validate(await request.formData())
 
   const user = await getUser(request)
   const gameId = parseInt(params.game!, 10)
@@ -49,9 +48,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   await prisma.imperialPlayer.update({
     where: { id: player.id },
     data: {
-      name: data.name,
-      xp: data.xp,
-      influence: data.influence
+      rewards: {
+        connect: data.rewardsToAdd.map((id) => ({ id })),
+        disconnect: data.rewardsToRemove.map((id) => ({ id }))
+      }
     }
   })
 

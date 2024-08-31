@@ -1,14 +1,77 @@
 import clsx from 'clsx'
-import { useFetcher, useFormAction, useOutletContext } from '@remix-run/react'
-import type { LoaderData } from './_app.games.$game'
+import {
+  json,
+  useFetcher,
+  useFormAction,
+  useLoaderData,
+  useOutletContext
+} from '@remix-run/react'
+import type { LoaderData as GameLoaderData } from './_app.games.$game'
 import type { ActionData } from './_app.games.$game.empire.agendas'
 import AgendaManager from '~/components/AgendaManager'
 import ImperialClassManager from '~/components/ImperialClassManager'
 import ImperialSummaryManager from '~/components/ImperialSummaryManager'
+import type { LoaderFunctionArgs } from '@remix-run/node'
+import { prisma } from '~/services/db.server'
+import { getUser } from '~/services/auth.server'
+import { Side } from '@prisma/client'
+import ImperialRewardManager from '~/components/ImperialRewardManager'
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const user = await getUser(request)
+
+  const rewards = await prisma.reward.findMany({
+    where: {
+      OR: [
+        {
+          expansionId: {
+            in: user.collection.map((c) => c.id)
+          }
+        },
+        {
+          expansion: {
+            defaultOwned: true
+          }
+        }
+      ],
+      side: {
+        in: [Side.ALL, Side.IMPERIAL]
+      }
+    },
+    select: {
+      id: true,
+      name: true,
+      tagline: true
+    }
+  })
+
+  const troops = await prisma.troop.findMany({
+    where: {
+      OR: [
+        {
+          expansionId: {
+            in: user.collection.map((c) => c.id)
+          }
+        },
+        {
+          expansion: {
+            defaultOwned: true
+          }
+        }
+      ]
+    }
+  })
+
+  return json({ rewards, troops })
+}
+
+export type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>
 
 const Empire = () => {
-  const data = useOutletContext<LoaderData>()
+  const data = useOutletContext<GameLoaderData>()
   const imperialPlayer = data.game.imperialPlayer!
+
+  const loaderData = useLoaderData<LoaderData>()
 
   const summaryFetcher = useFetcher<ActionData>()
   const summaryFormAction = useFormAction('summary')
@@ -18,6 +81,9 @@ const Empire = () => {
 
   const agendaFetcher = useFetcher<ActionData>()
   const agendasFormAction = useFormAction('agendas')
+
+  const rewardsFetcher = useFetcher<ActionData>()
+  const rewardsFormAction = useFormAction('rewards')
 
   return (
     <>
@@ -43,20 +109,12 @@ const Empire = () => {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
-            <h2 className="m-0">Rewards</h2>
-            {!imperialPlayer.rewards.length ? (
-              <p className="m-0">No Rewards</p>
-            ) : (
-              <div className="flex flex-col items-start w-fit py-2">
-                {imperialPlayer.rewards.map((reward) => (
-                  <p className="m-0" key={reward.id}>
-                    {reward.name}
-                  </p>
-                ))}
-              </div>
-            )}
-          </div>
+          <ImperialRewardManager
+            imperialPlayer={imperialPlayer}
+            allRewards={loaderData.rewards}
+            fetcher={rewardsFetcher}
+            formAction={rewardsFormAction}
+          />
           <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
             <h2 className="m-0">Villains</h2>
             {!imperialPlayer.villains.length ? (
