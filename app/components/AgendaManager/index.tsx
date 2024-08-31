@@ -26,7 +26,7 @@ type State = {
 }
 
 type Action =
-  | { type: 'TOGGLE_EDITING' }
+  | { type: 'TOGGLE_EDITING' | 'STOP_EDITING' }
   | {
       type:
         | 'ADD_AGENDA'
@@ -210,6 +210,11 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
             ...initialAgendaState,
             editing: !state.editing
           }
+        case 'STOP_EDITING':
+          return {
+            ...state,
+            editing: false
+          }
       }
     },
     [initialDiscardedAgendas, initialOwnedAgendas]
@@ -220,9 +225,9 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
     initialAgendaState
   )
   useEffect(() => {
-    if (fetcher?.data?.success) {
+    if (fetcher?.data?.success && fetcher.state === 'idle') {
       // Exit edit mode after data is refreshed if the last submission was successful
-      changeAgenda({ type: 'TOGGLE_EDITING' })
+      changeAgenda({ type: 'STOP_EDITING' })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetcher?.state])
