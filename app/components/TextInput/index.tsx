@@ -46,7 +46,7 @@ const TextInput = forwardRef(
           type === 'number' && 'sm:w-fit'
         )}
       >
-        <div className={clsx("label", inline && 'py-0')}>
+        <div className={clsx('label', inline && 'py-0')}>
           <span className={clsx(typeof label === 'string' && 'label-text')}>
             {required && <RequiredIndicator />}
             {label}

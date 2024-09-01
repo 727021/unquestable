@@ -132,7 +132,9 @@ const VillainManager = ({
         <EditButton
           active={villainState.editing}
           onClick={() => updateVillains({ type: 'TOGGLE_EDITING' })}
-          disabled={fetcher?.state === 'loading' || fetcher?.state === 'submitting'}
+          disabled={
+            fetcher?.state === 'loading' || fetcher?.state === 'submitting'
+          }
         />
       </div>
       {villainState.editing ? (
@@ -220,7 +222,6 @@ const VillainManager = ({
             </SubmitButton>
             {villainState.villainsToAdd.map((id, i) => (
               <input
-
                 key={`villainsToAdd-${id}`}
                 type="hidden"
                 name={`villainsToAdd[${i}]`}

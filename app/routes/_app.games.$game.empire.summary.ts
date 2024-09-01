@@ -19,8 +19,14 @@ export const summaryValidator = withZod(
       .optional()
       .default('')
       .transform((input) => input?.trim() || null),
-    xp: zfd.numeric(z.optional(z.number().int().nonnegative())).optional().default(0),
-    influence: zfd.numeric(z.optional(z.number().int().nonnegative())).optional().default(0)
+    xp: zfd
+      .numeric(z.optional(z.number().int().nonnegative()))
+      .optional()
+      .default(0),
+    influence: zfd
+      .numeric(z.optional(z.number().int().nonnegative()))
+      .optional()
+      .default(0)
   })
 )
 

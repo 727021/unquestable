@@ -1,7 +1,7 @@
 import type { FetcherWithComponents } from '@remix-run/react'
 import type { LoaderData } from '~/routes/_app.games.$game'
 import EditButton from '~/components/EditButton'
-import type { Reducer } from 'react';
+import type { Reducer } from 'react'
 import { useCallback, useEffect, useReducer } from 'react'
 import { ValidatedForm } from 'remix-validated-form'
 import { classValidator } from '~/routes/_app.games.$game.empire.class'
@@ -98,7 +98,9 @@ const ImperialClassManager = ({
         <EditButton
           active={classState.editing}
           onClick={() => updateClass({ type: 'TOGGLE_EDITING' })}
-          disabled={fetcher?.state === 'loading' || fetcher?.state === 'submitting'}
+          disabled={
+            fetcher?.state === 'loading' || fetcher?.state === 'submitting'
+          }
         />
       </div>
       {classState.editing ? (
