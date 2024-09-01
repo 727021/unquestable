@@ -103,7 +103,10 @@ const ImperialSummaryManager = ({
               inline
               value={summary.xp.toString()}
               onChange={(e) =>
-                update({ type: 'SET_XP', xp: parseInt(e.target.value, 10) || 0 })
+                update({
+                  type: 'SET_XP',
+                  xp: parseInt(e.target.value, 10) || 0
+                })
               }
               min={0}
             />
@@ -149,6 +152,9 @@ const ImperialSummaryManager = ({
         active={summary.editing}
         onClick={() => update({ type: 'TOGGLE_EDITING' })}
         hideLabel
+        disabled={
+          fetcher?.state === 'loading' || fetcher?.state === 'submitting'
+        }
       />
     </div>
   )

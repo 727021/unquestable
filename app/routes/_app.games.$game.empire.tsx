@@ -1,4 +1,3 @@
-import clsx from 'clsx'
 import {
   json,
   useFetcher,
@@ -16,6 +15,7 @@ import { prisma } from '~/services/db.server'
 import { getUser } from '~/services/auth.server'
 import { Side } from '@prisma/client'
 import ImperialRewardManager from '~/components/ImperialRewardManager'
+import VillainManager from '~/components/VillainManager'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request)
@@ -85,6 +85,9 @@ const Empire = () => {
   const rewardsFetcher = useFetcher<ActionData>()
   const rewardsFormAction = useFormAction('rewards')
 
+  const villainsFetcher = useFetcher<ActionData>()
+  const villainsFormAction = useFormAction('villains')
+
   return (
     <>
       <div className="flex flex-col flex-1 gap-2">
@@ -115,23 +118,12 @@ const Empire = () => {
             fetcher={rewardsFetcher}
             formAction={rewardsFormAction}
           />
-          <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
-            <h2 className="m-0">Villains</h2>
-            {!imperialPlayer.villains.length ? (
-              <p className="m-0">No Villains</p>
-            ) : (
-              <div className="flex flex-col items-start w-fit-py-2">
-                {imperialPlayer.villains.map((villain) => (
-                  <p
-                    className={clsx('m-0', villain.elite && 'text-red-600')}
-                    key={villain.id}
-                  >
-                    {villain.name}
-                  </p>
-                ))}
-              </div>
-            )}
-          </div>
+          <VillainManager
+            imperialPlayer={imperialPlayer}
+            allVillains={loaderData.troops}
+            fetcher={villainsFetcher}
+            formAction={villainsFormAction}
+          />
         </div>
       </div>
     </>

@@ -268,6 +268,7 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
         <EditButton
           active={agendaState.editing}
           onClick={() => changeAgenda({ type: 'TOGGLE_EDITING' })}
+          disabled={fetcher?.state === 'loading' || fetcher?.state === 'submitting'}
         />
       </div>
       {agendaState.editing ? (

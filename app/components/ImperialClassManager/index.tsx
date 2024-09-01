@@ -98,6 +98,7 @@ const ImperialClassManager = ({
         <EditButton
           active={classState.editing}
           onClick={() => updateClass({ type: 'TOGGLE_EDITING' })}
+          disabled={fetcher?.state === 'loading' || fetcher?.state === 'submitting'}
         />
       </div>
       {classState.editing ? (

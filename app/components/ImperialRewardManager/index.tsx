@@ -125,6 +125,9 @@ const ImperialRewardManager = ({
         <EditButton
           active={rewardState.editing}
           onClick={() => updateRewards({ type: 'TOGGLE_EDITING' })}
+          disabled={
+            fetcher?.state === 'loading' || fetcher?.state === 'submitting'
+          }
         />
       </div>
       {rewardState.editing ? (
@@ -135,21 +138,17 @@ const ImperialRewardManager = ({
           fetcher={fetcher}
           action={formAction}
         >
-          {rewardsToShow.length === 0 ? (
-            <div className="flex-1">
+          <div className="flex flex-col items-start w-fit py-2">
+            {rewardsToShow.length === 0 ? (
               <p className="m-0">No Rewards</p>
-            </div>
-          ) : (
-            <div className="flex flex-col items-start w-fit py-2">
-              {rewardsToShow.map((reward) => (
+            ) : (
+              rewardsToShow.map((reward) => (
                 <div key={reward.id} className="flex gap-1 items-center">
-                  <p className="m-0">
-                    {reward.name}
-                  </p>
+                  <p className="m-0">{reward.name}</p>
                   <button
-                    className='btn btn-xs btn-circle btn-ghost tooltip'
-                    data-tip='Remove'
-                    type='button'
+                    className="btn btn-xs btn-circle btn-ghost tooltip"
+                    data-tip="Remove"
+                    type="button"
                     onClick={() =>
                       updateRewards({
                         type: 'REMOVE_REWARD',
@@ -157,12 +156,12 @@ const ImperialRewardManager = ({
                       })
                     }
                   >
-                    <XCircleIcon className='w-5 h-5' />
+                    <XCircleIcon className="w-5 h-5" />
                   </button>
                 </div>
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
           <div className="flex justify-between items-center flex-1">
             <div className="join">
               <select
@@ -228,7 +227,7 @@ const ImperialRewardManager = ({
           </div>
         </ValidatedForm>
       ) : !imperialPlayer.rewards.length ? (
-        <p className="m-0">No Rewards</p>
+        <p className="m-0 py-2">No Rewards</p>
       ) : (
         <div className="flex flex-col items-start w-fit py-2">
           {imperialPlayer.rewards.map((reward) => (
