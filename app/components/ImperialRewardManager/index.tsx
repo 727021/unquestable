@@ -7,6 +7,8 @@ import EditButton from '../EditButton'
 import { ValidatedForm } from 'remix-validated-form'
 import { rewardValidator } from '~/routes/_app.games.$game.empire.rewards'
 import SubmitButton from '../SubmitButton'
+import { PlusIcon } from '@heroicons/react/24/solid'
+import { XCircleIcon } from '@heroicons/react/24/outline'
 
 type RewardId = LoaderData['rewards'][0]['id']
 
@@ -14,16 +16,21 @@ type State = {
   editing: boolean
   rewardsToAdd: RewardId[]
   rewardsToRemove: RewardId[]
+  chosenReward: RewardId
 }
 
 type Action =
   | { type: 'TOGGLE_EDITING' | 'STOP_EDITING' }
-  | { type: 'ADD_REWARD' | 'REMOVE_REWARD'; rewardId: RewardId }
+  | {
+      type: 'ADD_REWARD' | 'REMOVE_REWARD' | 'CHOOSE_REWARD'
+      rewardId: RewardId
+    }
 
 const initialState: State = {
   editing: false,
   rewardsToAdd: [],
-  rewardsToRemove: []
+  rewardsToRemove: [],
+  chosenReward: -1
 }
 
 type Props = {
@@ -55,7 +62,8 @@ const ImperialRewardManager = ({
               ),
               rewardsToRemove: state.rewardsToRemove.filter(
                 (id) => id !== action.rewardId
-              )
+              ),
+              chosenReward: initialState.chosenReward
             }
           }
           return {
@@ -63,7 +71,8 @@ const ImperialRewardManager = ({
             rewardsToAdd: [...state.rewardsToAdd, action.rewardId],
             rewardsToRemove: state.rewardsToRemove.filter(
               (id) => id !== action.rewardId
-            )
+            ),
+            chosenReward: initialState.chosenReward
           }
         case 'REMOVE_REWARD':
           if (!imperialPlayer.rewards.some((r) => r.id === action.rewardId)) {
@@ -74,7 +83,8 @@ const ImperialRewardManager = ({
               ),
               rewardsToRemove: state.rewardsToRemove.filter(
                 (id) => id !== action.rewardId
-              )
+              ),
+              chosenReward: action.rewardId
             }
           }
           return {
@@ -82,8 +92,11 @@ const ImperialRewardManager = ({
             rewardsToAdd: state.rewardsToAdd.filter(
               (id) => id !== action.rewardId
             ),
-            rewardsToRemove: [...state.rewardsToRemove, action.rewardId]
+            rewardsToRemove: [...state.rewardsToRemove, action.rewardId],
+            chosenReward: action.rewardId
           }
+        case 'CHOOSE_REWARD':
+          return { ...state, chosenReward: action.rewardId }
       }
     },
     [imperialPlayer.rewards]
@@ -129,22 +142,89 @@ const ImperialRewardManager = ({
           ) : (
             <div className="flex flex-col items-start w-fit py-2">
               {rewardsToShow.map((reward) => (
-                <p className="m-0" key={reward.id}>
-                  {reward.name}
-                </p>
+                <div key={reward.id} className="flex gap-1 items-center">
+                  <p className="m-0">
+                    {reward.name}
+                  </p>
+                  <button
+                    className='btn btn-xs btn-circle btn-ghost tooltip'
+                    data-tip='Remove'
+                    type='button'
+                    onClick={() =>
+                      updateRewards({
+                        type: 'REMOVE_REWARD',
+                        rewardId: reward.id
+                      })
+                    }
+                  >
+                    <XCircleIcon className='w-5 h-5' />
+                  </button>
+                </div>
               ))}
             </div>
           )}
           <div className="flex justify-between items-center flex-1">
-            {/* TODO: selct input */}
-            <span>Select</span>
+            <div className="join">
+              <select
+                className="join-item select select-bordered"
+                value={rewardState.chosenReward}
+                onChange={(e) =>
+                  updateRewards({
+                    type: 'CHOOSE_REWARD',
+                    rewardId: parseInt(e.target.value, 10)
+                  })
+                }
+              >
+                <option value={-1} disabled>
+                  Choose a Reward
+                </option>
+                {allRewards
+                  .filter(
+                    (reward) => !rewardsToShow.some((r) => r.id === reward.id)
+                  )
+                  .map((reward) => (
+                    <option key={reward.id} value={reward.id}>
+                      {reward.name}
+                    </option>
+                  ))}
+              </select>
+              <button
+                className="join-item btn btn-outline"
+                type="button"
+                onClick={() =>
+                  rewardState.chosenReward > -1 &&
+                  updateRewards({
+                    type: 'ADD_REWARD',
+                    rewardId: rewardState.chosenReward
+                  })
+                }
+                disabled={rewardState.chosenReward === -1}
+              >
+                <PlusIcon className="w-5 h-5" />
+              </button>
+            </div>
             <SubmitButton
               className="btn btn-primary btn-outline"
               fetcher={fetcher}
             >
               Save
             </SubmitButton>
-            {/* TODO: hidden inputs for add/remove */}
+            {rewardState.rewardsToAdd.map((id, i) => (
+              <input
+                key={`rewardsToAdd-${id}`}
+                type="hidden"
+                name={`rewardsToAdd[${i}]`}
+                value={id}
+              />
+            ))}
+            {rewardState.rewardsToRemove.map((id, i) => (
+              <input
+                key={`rewardsToRemove-${id}`}
+                type="hidden"
+                name={`rewardsToRemove[${i}]`}
+                value={id}
+              />
+            ))}
           </div>
         </ValidatedForm>
       ) : !imperialPlayer.rewards.length ? (
