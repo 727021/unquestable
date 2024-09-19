@@ -1,11 +1,10 @@
 # MVP
 
 - [X] empire page
-  - [x] view only
-  - [x] manage owned agendas (discard and reshuffle)
-  - [x] arbitrary updates (agendas, villains, class cards, rewards, xp, name, influence)
-  - [ ] BUG - fix styling for class card edit mode
-  - [ ] BUG - don't allow removing 0-cost class card
+  - [X] view only
+  - [X] manage owned agendas (discard and reshuffle)
+  - [X] arbitrary updates (agendas, villains, class cards, rewards, xp, name, influence)
+  - [X] BUG - fix styling for class card edit mode
 - [ ] rebel page
   - [ ] view only
   - [ ] arbitrary updates (class cards, items, xp, credits, name)

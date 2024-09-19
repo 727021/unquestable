@@ -111,7 +111,7 @@ const ImperialClassManager = ({
           fetcher={fetcher}
           action={formAction}
         >
-          <div className="form-control items-start w-fit py-2">
+          <div className="form-control items-start w-fit py-2 self-start">
             {imperialPlayer.class.cards.map((card) => (
               <label key={card.id} className="label gap-2 flex py-1">
                 <input
