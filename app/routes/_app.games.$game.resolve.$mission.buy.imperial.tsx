@@ -1,6 +1,6 @@
 import { MissionStage } from '@prisma/client'
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
+import { json, redirect } from '@vercel/remix'
 import { useLoaderData, useOutletContext } from '@remix-run/react'
 import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'

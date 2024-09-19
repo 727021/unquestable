@@ -1,4 +1,4 @@
-import { json, type LoaderFunction } from '@remix-run/node'
+import { json, type LoaderFunction } from '@vercel/remix'
 import { Form, useLoaderData } from '@remix-run/react'
 import { useState } from 'react'
 import { authenticator } from '~/services/auth.server'

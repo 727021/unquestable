@@ -1,5 +1,5 @@
-import { json, redirect } from '@remix-run/node'
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
+import { json, redirect } from '@vercel/remix'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
 import { withZod } from '@remix-validated-form/with-zod'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'

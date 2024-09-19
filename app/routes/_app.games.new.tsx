@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
+import { json, redirect } from '@vercel/remix'
 import { useLoaderData } from '@remix-run/react'
 import type { Dispatch, SetStateAction } from 'react'
 import { useCallback, useMemo, useRef, useState } from 'react'

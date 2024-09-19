@@ -1,14 +1,13 @@
-import type { LinksFunction } from '@remix-run/node'
+import type { LinksFunction } from '@vercel/remix'
 import {
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration
 } from '@remix-run/react'
 
-import stylesheet from '~/tailwind.css'
+import stylesheet from '~/tailwind.css?url'
 import { useTheme } from './context/theme-context'
 
 export const links: LinksFunction = () => [
@@ -30,7 +29,6 @@ export default function App() {
         <Outlet />
         <ScrollRestoration />
         <Scripts />
-        <LiveReload />
       </body>
     </html>
   )

@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs } from '@remix-run/node'
+import type { LoaderFunctionArgs } from '@vercel/remix'
 import { Outlet, json, useLoaderData } from '@remix-run/react'
 import { getUser } from '~/services/auth.server'
 import Footer from '~/components/Footer'

@@ -5,7 +5,7 @@ import {
   useOutletContext
 } from '@remix-run/react'
 import type { LoaderData } from './_app.games.$game'
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
 import { prisma } from '~/services/db.server'
 import type { ChangeEvent, ElementRef } from 'react'
 import { useEffect, useReducer, useState } from 'react'

@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from '@remix-run/node'
+import { json, type LoaderFunctionArgs } from '@vercel/remix'
 import { Link, useLoaderData } from '@remix-run/react'
 import { getUser } from '~/services/auth.server'
 import { prisma } from '~/services/db.server'

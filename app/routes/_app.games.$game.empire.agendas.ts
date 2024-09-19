@@ -1,5 +1,5 @@
-import { json, redirect } from '@remix-run/node'
-import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node'
+import { json, redirect } from '@vercel/remix'
+import type { LoaderFunctionArgs, ActionFunctionArgs } from '@vercel/remix'
 import { prisma } from '~/services/db.server'
 import { getUser } from '~/services/auth.server'
 import { withZod } from '@remix-validated-form/with-zod'

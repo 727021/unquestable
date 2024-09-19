@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
+import { json } from '@vercel/remix'
 import { useLoaderData } from '@remix-run/react'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'

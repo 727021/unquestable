@@ -2,8 +2,8 @@ import type { BoxArt, Expansion } from '@prisma/client'
 import { useFetcher } from '@remix-run/react'
 import clsx from 'clsx'
 
-import coreWebp from '../../../public/img/expansion/core.webp'
-import corePng from '../../../public/img/expansion/core.png'
+import coreWebp from '/img/expansion/core.webp?url'
+import corePng from '/img/expansion/core.png?url'
 
 type Props = {
   expansion: Expansion & { boxArt: BoxArt[] }
