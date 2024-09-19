@@ -5,7 +5,7 @@
   - [X] manage owned agendas (discard and reshuffle)
   - [X] arbitrary updates (agendas, villains, class cards, rewards, xp, name, influence)
   - [X] BUG - fix styling for class card edit mode
-  - [ ] BUG - fix styling for villains manager edit mode
+  - [X] BUG - fix styling for villains manager edit mode
 - [ ] rebel page
   - [ ] view only
   - [ ] arbitrary updates (class cards, items, xp, credits, name)

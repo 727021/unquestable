@@ -162,7 +162,7 @@ const ImperialRewardManager = ({
               ))
             )}
           </div>
-          <div className="flex justify-between items-center flex-1">
+          <div className="flex justify-between items-end flex-1">
             <div className="join">
               <select
                 className="join-item select select-bordered"
