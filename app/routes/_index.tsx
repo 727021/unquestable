@@ -9,7 +9,7 @@ export default function Index() {
   return (
     <div className="prose">
       <h1>Unquestable</h1>
-      <Link to="/home">App &rarr;</Link>
+      <Link to="/games">App &rarr;</Link>
     </div>
   )
 }

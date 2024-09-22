@@ -20,12 +20,12 @@
   - [ ] imperial buy
   - [ ] empire
   - [ ] rebel
-- [ ] home page (maybe just replace with games page?)
+- [X] home page (maybe just replace with games page?)
 - [ ] landing page (before login)
 
 # Stretch
 
-- [ ] empire pagedates (agendas, villains, class cards, rewards, xp, name, influence)
+- [ ] empire page (agendas, villains, class cards, rewards, xp, name, influence)
   - [ ] change class
   - [ ] change agenda decks
 - [ ] rebel page

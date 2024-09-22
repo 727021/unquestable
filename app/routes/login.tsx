@@ -7,7 +7,7 @@ import { ExclamationTriangleIcon, XMarkIcon } from '@heroicons/react/24/outline'
 
 export const loader: LoaderFunction = async ({ request }) => {
   await authenticator.isAuthenticated(request, {
-    successRedirect: '/home'
+    successRedirect: '/games'
   })
   const session = await getSession(request.headers.get('cookie'))
   const error = session.get(authenticator.sessionErrorKey)

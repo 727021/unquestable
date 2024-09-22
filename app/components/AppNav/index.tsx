@@ -13,7 +13,7 @@ const AppNav = ({ user }: Props) => {
   return (
     <div className="navbar bg-base-300 text-base-content mb-4">
       <div className="flex-1">
-        <NavLink to="/home" className="btn btn-ghost text-xl">
+        <NavLink to="/games" className="btn btn-ghost text-xl">
           Unquestable
         </NavLink>
       </div>
