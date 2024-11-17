@@ -8,6 +8,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node'
 import { getUser } from '~/services/auth.server'
 import { prisma } from '~/services/db.server'
 import { Side } from '@prisma/client'
+import ItemManager from '~/components/ItemManager'
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await getUser(request)
@@ -54,7 +55,24 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
   })
 
-  return json({ rewards, troops })
+  const items = await prisma.item.findMany({
+    where: {
+      OR: [
+        {
+          expansionId: {
+            in: user.collection.map((c) => c.id)
+          }
+        },
+        {
+          expansion: {
+            defaultOwned: true
+          }
+        }
+      ]
+    }
+  })
+
+  return json({ rewards, troops, items })
 }
 
 export type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>
@@ -85,11 +103,9 @@ const Rebels = () => {
               )}
             </div>
           ))}
+          <ItemManager items={data.game.items} allItems={loaderData.items} credits={data.game.credits} />
+          <AllyManager allies={data.game.allies} allAllies={loaderData.troops} />
         </div>
-        <div className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded">
-          Items
-        </div>
-        <AllyManager allies={data.game.allies} allAllies={loaderData.troops} />
       </div>
     </>
   )
