@@ -153,6 +153,16 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       },
       credits: true,
       items: true,
+      allies: {
+        select: {
+          id: true,
+          name: true,
+          traits: true,
+          deployment: true,
+          reinforcement: true,
+          elite: true
+        }
+      },
       sideMissionDeck: {
         select: {
           type: true,
