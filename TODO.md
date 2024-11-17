@@ -8,7 +8,11 @@
   - [X] BUG - fix styling for villains manager edit mode
 - [ ] rebel page
   - [ ] view only
-  - [ ] arbitrary updates (class cards, items, xp, credits, name)
+  - [ ] update items and credits
+  - [ ] update player class cards
+  - [ ] update player name and xp
+  - [ ] update player rewards
+  - [ ] update allies
 - [ ] Move drawing side missions to resolve mission page, with mission rewards
 - [ ] Delete games
 - [ ] mobile view
