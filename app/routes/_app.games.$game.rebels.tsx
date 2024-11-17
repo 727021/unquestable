@@ -2,6 +2,7 @@ import { useOutletContext } from '@remix-run/react'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
 import RebelSummaryManager from '~/components/RebelSummaryManager'
 import RebelClassManager from '~/components/RebelClassManager'
+import RebelRewardManager from '~/components/RebelRewardManager'
 
 const Rebels = () => {
   const data = useOutletContext<GameLoaderData>()
@@ -21,6 +22,12 @@ const Rebels = () => {
               <RebelSummaryManager rebel={rebel} />
               <hr className="border-gray-400 my-0" />
               <RebelClassManager rebel={rebel} />
+              {rebel.rewards.length > 0 && (
+                <>
+                  <hr className="border-gray-400 my-0" />
+                  <RebelRewardManager rebel={rebel} />
+                </>
+              )}
             </div>
           ))}
         </div>

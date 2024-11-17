@@ -7,7 +7,7 @@ type Props = {
 
 const RebelSummaryManager = ({ rebel }: Props) => {
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col">
       <div className="flex gap-2 justify-between items-center">
         <h2 className="m-0">{rebel.hero.name}</h2>
         <EditButton active={false} onClick={() => {}} hideLabel />
@@ -20,7 +20,7 @@ const RebelSummaryManager = ({ rebel }: Props) => {
           <span className="font-bold">XP:</span> {rebel.xp}
         </div>
       </div>
-    </div>    
+    </div>
   )
 }
 

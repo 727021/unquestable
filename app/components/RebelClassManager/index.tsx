@@ -7,7 +7,7 @@ type Props = {
 
 const RebelClassManager = ({ rebel }: Props) => {
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col">
       <div className="flex justify-between items-center w-full">
         <h3 className="m-0">Class</h3>
         <EditButton active={false} onClick={() => {}} hideLabel />
