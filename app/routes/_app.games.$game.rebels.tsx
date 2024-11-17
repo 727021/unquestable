@@ -1,4 +1,4 @@
-import { json, useLoaderData, useOutletContext } from '@remix-run/react'
+import { json, useFormAction, useLoaderData, useOutletContext } from '@remix-run/react'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
 import RebelSummaryManager from '~/components/RebelSummaryManager'
 import RebelClassManager from '~/components/RebelClassManager'
@@ -79,8 +79,11 @@ export type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>
 
 const Rebels = () => {
   const data = useOutletContext<GameLoaderData>()
+  data.game.rebelPlayers.sort((a, b) => a.hero.name.localeCompare(b.hero.name))
 
   const loaderData = useLoaderData<LoaderData>()
+
+  const summaryFormAction = useFormAction('summary')
 
   return (
     <>
@@ -92,7 +95,7 @@ const Rebels = () => {
               key={rebel.id}
               className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded"
             >
-              <RebelSummaryManager rebel={rebel} />
+              <RebelSummaryManager rebel={rebel} formAction={summaryFormAction} />
               <hr className="border-gray-400 my-0" />
               <RebelClassManager rebel={rebel} />
               {rebel.rewards.length > 0 && (

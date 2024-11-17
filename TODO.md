@@ -8,7 +8,7 @@
   - [X] BUG - fix styling for villains manager edit mode
 - [ ] rebel page
   - [X] view only
-  - [ ] update player name and xp
+  - [X] update player name and xp
   - [ ] update player class cards
   - [ ] update player rewards
   - [ ] update allies

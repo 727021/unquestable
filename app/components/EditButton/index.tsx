@@ -24,6 +24,7 @@ const EditButton = ({
       )}
       onClick={onClick}
       disabled={disabled}
+      type="button"
     >
       <PencilIcon className="swap-off w-5 h-5" />
       <XMarkIcon className="swap-on w-6 h-6" />
