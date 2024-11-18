@@ -14,7 +14,7 @@
   - [X] update player rewards
   - [X] update allies
   - [X] update items and credits
-- [ ] Move drawing side missions to resolve mission page, with mission rewards
+- [X] Move drawing side missions to resolve mission page, with mission rewards
 - [ ] Delete games
 - [ ] mobile view
   - [ ] collection

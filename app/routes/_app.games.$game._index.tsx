@@ -16,22 +16,9 @@ import { z } from 'zod'
 import { withZod } from '@remix-validated-form/with-zod'
 import SelectInput from '~/components/SelectInput'
 import type { ActionFunctionArgs } from '@vercel/remix'
-import SideMissionsInput from '~/components/SideMissionsInput'
-import { randomIndex } from '~/utils/randomIndex'
 import { prisma } from '~/services/db.server'
 
-const drawValidator = withZod(
-  zfd.formData({
-    missions: zfd
-      .text(z.literal('RANDOM'))
-      .or(
-        zfd.repeatable(
-          z.array(zfd.numeric(z.number().int().positive())).min(1).max(2)
-        )
-      )
-  })
-)
-const chooseValidator = withZod(
+const validator = withZod(
   zfd.formData({
     mission: zfd.numeric(z.number().int().positive()),
     slot: zfd.numeric(z.number().int().positive())
@@ -39,10 +26,6 @@ const chooseValidator = withZod(
 )
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const formData = await request.formData()
-
-  const action = formData.get('action')?.toString()
-
   const game = await prisma.game.findUnique({
     where: {
       id: parseInt(params.game!, 10)
@@ -75,99 +58,54 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return redirect('/games')
   }
 
-  if (action === 'draw') {
-    const { data, error } = await drawValidator.validate(formData)
+  const { data, error } = await validator.validate(await request.formData())
 
-    if (error) {
-      return validationError(error)
-    }
+  if (error) {
+    return validationError(error)
+  }
 
-    // determine how many missions need to be drawn
-    const activeSideMissions = game.missions.filter(
-      (m) => !m.forced && !m.stage && m.mission.type !== MissionType.STORY
-    )
-    const rebelSideMissions = activeSideMissions.filter(
-      (m) => m.mission.type !== MissionType.IMPERIAL
-    )
-    const missionsNeeded = 2 - rebelSideMissions.length
-
-    // validate drawn missions (or randomize missions)
-    let chosenMissions: number[] = []
-    if (data.missions === 'RANDOM') {
-      chosenMissions = new Array(missionsNeeded)
-        .fill(0)
-        .map(
-          () =>
-            game.sideMissionDeck.splice(randomIndex(game.sideMissionDeck), 1)[0]
-              .id
-        )
-    } else {
-      chosenMissions = data.missions
-      // TODO: Validate chosen mission ids
-    }
-
-    // add drawn missions to game
-    await prisma.gameMission.createMany({
-      data: chosenMissions.map((m) => ({
-        gameId: game.id,
-        missionId: m
-      }))
-    })
-
-    // return success response
-    return new Response(undefined, { status: 204 })
-  } else if (action === 'choose') {
-    const { data, error } = await chooseValidator.validate(formData)
-
-    if (error) {
-      return validationError(error)
-    }
-
-    // validate chosen mission and campaign mission slot
-    const gameMission = game.missions.find(
-      (m) =>
-        m.id === data.mission &&
-        !m.forced &&
-        !m.stage &&
-        !m.missionSlotId &&
-        (m.mission.type === MissionType.GRAY ||
-          m.mission.type === MissionType.GREEN ||
-          m.mission.type === MissionType.RED)
-    )
-    if (!gameMission) {
-      return validationError({
-        fieldErrors: {
-          mission: 'Required'
-        }
-      })
-    }
-    const slot = game.campaign.missionSlots.find(
-      (s) =>
-        s.id === data.slot &&
-        s.type === MissionSlotType.SIDE &&
-        !game.missions.some((m) => m.missionSlotId === s.id)
-    )
-    if (!slot) {
-      // Something went wrong, reload the page to close the mission modal
-      return redirect(`/games/${params.game}`)
-    }
-
-    // add game mission to campaing mission slot
-    await prisma.gameMission.update({
-      where: {
-        id: gameMission.id
-      },
-      data: {
-        missionSlotId: slot.id,
-        threat: slot.threat
+  // validate chosen mission and campaign mission slot
+  const gameMission = game.missions.find(
+    (m) =>
+      m.id === data.mission &&
+      !m.forced &&
+      !m.stage &&
+      !m.missionSlotId &&
+      (m.mission.type === MissionType.GRAY ||
+        m.mission.type === MissionType.GREEN ||
+        m.mission.type === MissionType.RED)
+  )
+  if (!gameMission) {
+    return validationError({
+      fieldErrors: {
+        mission: 'Required'
       }
     })
-
-    // redirect to current page to reload data and close modal
+  }
+  const slot = game.campaign.missionSlots.find(
+    (s) =>
+      s.id === data.slot &&
+      s.type === MissionSlotType.SIDE &&
+      !game.missions.some((m) => m.missionSlotId === s.id)
+  )
+  if (!slot) {
+    // Something went wrong, reload the page to close the mission modal
     return redirect(`/games/${params.game}`)
   }
 
-  return new Response(undefined, { status: 401 })
+  // add game mission to campaing mission slot
+  await prisma.gameMission.update({
+    where: {
+      id: gameMission.id
+    },
+    data: {
+      missionSlotId: slot.id,
+      threat: slot.threat
+    }
+  })
+
+  // redirect to current page to reload data and close modal
+  return redirect(`/games/${params.game}`)
 }
 
 const Game = () => {
@@ -179,11 +117,6 @@ const Game = () => {
   const activeSideMissions = data.game.missions.filter(
     (m) => !m.forced && !m.stage && m.mission.type !== MissionType.STORY
   )
-  const rebelSideMissions = activeSideMissions.filter(
-    (m) => m.mission.type !== MissionType.IMPERIAL
-  )
-
-  const availableSideMissions = data.game.sideMissionDeck
 
   // Forced missions are resolved BETWEEN campaign stages. They do not get their own buy stages.
   // If there is an active forced mission, the players cannot resolve another mission or buy stage.
@@ -251,91 +184,47 @@ const Game = () => {
                               open={choosing !== null}
                               onClose={() => setChoosing(null)}
                             >
-                              {rebelSideMissions.length < 2 ? (
-                                <>
-                                  <h2 className="m-0">Draw Side Missions</h2>
-                                  <ValidatedForm
-                                    validator={drawValidator}
-                                    method="POST"
+                              <h2 className="m-0">Choose Side Mission</h2>
+                              <ValidatedForm
+                                validator={validator}
+                                method="POST"
+                              >
+                                <input
+                                  type="hidden"
+                                  name="action"
+                                  value="choose"
+                                />
+                                <input
+                                  type="hidden"
+                                  name="slot"
+                                  value={slot.id}
+                                />
+                                <SelectInput
+                                  name="mission"
+                                  label="Mission"
+                                  required
+                                >
+                                  <option selected disabled></option>
+                                  {activeSideMissions.map((m) => (
+                                    <option key={m.id} value={m.id}>
+                                      {m.mission.name}
+                                      {m.mission.type ===
+                                        MissionType.IMPERIAL &&
+                                        ' (IMPERIAL AGENDA)'}
+                                    </option>
+                                  ))}
+                                </SelectInput>
+                                <div className="flex gap-2">
+                                  <SubmitButton>Start Mission</SubmitButton>
+                                  <button
+                                    type="button"
+                                    className="btn"
+                                    onClick={() => setChoosing(null)}
                                   >
-                                    <input
-                                      type="hidden"
-                                      name="action"
-                                      value="draw"
-                                    />
-                                    <SideMissionsInput
-                                      name="missions"
-                                      count={2 - rebelSideMissions.length}
-                                    >
-                                      {availableSideMissions.map((mission) => (
-                                        <option
-                                          key={mission.id}
-                                          value={mission.id}
-                                        >
-                                          {mission.name}
-                                        </option>
-                                      ))}
-                                    </SideMissionsInput>
-                                    <div className="flex gap-2">
-                                      <SubmitButton>
-                                        Draw Mission
-                                        {rebelSideMissions.length ? '' : 's'}
-                                      </SubmitButton>
-                                      <button
-                                        type="button"
-                                        className="btn"
-                                        onClick={() => setChoosing(null)}
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </ValidatedForm>
-                                </>
-                              ) : (
-                                <>
-                                  <h2 className="m-0">Choose Side Mission</h2>
-                                  <ValidatedForm
-                                    validator={chooseValidator}
-                                    method="POST"
-                                  >
-                                    <input
-                                      type="hidden"
-                                      name="action"
-                                      value="choose"
-                                    />
-                                    <input
-                                      type="hidden"
-                                      name="slot"
-                                      value={slot.id}
-                                    />
-                                    <SelectInput
-                                      name="mission"
-                                      label="Mission"
-                                      required
-                                    >
-                                      <option selected disabled></option>
-                                      {activeSideMissions.map((m) => (
-                                        <option key={m.id} value={m.id}>
-                                          {m.mission.name}
-                                          {m.mission.type ===
-                                            MissionType.IMPERIAL &&
-                                            ' (IMPERIAL AGENDA)'}
-                                        </option>
-                                      ))}
-                                    </SelectInput>
-                                    <div className="flex gap-2">
-                                      <SubmitButton>Start Mission</SubmitButton>
-                                      <button
-                                        type="button"
-                                        className="btn"
-                                        onClick={() => setChoosing(null)}
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </ValidatedForm>
-                                </>
-                              )}
+                                    Cancel
+                                  </button>
+                                </div>
+                              </ValidatedForm>
                             </Modal>
                           </>
                         )}
@@ -355,7 +244,22 @@ const Game = () => {
                     ) : (
                       <td className="text-center">
                         {slot.gameMissions[0].stage ===
-                        MissionStage.REBEL_BUY ? (
+                        MissionStage.CHOOSE_MISSION ? (
+                          <Link
+                            to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/draw`}
+                            className={clsx(
+                              'btn btn-sm btn-primary',
+                              hasActiveForcedMission && 'btn-disabled'
+                            )}
+                            onClick={(e) =>
+                              hasActiveForcedMission && e.preventDefault()
+                            }
+                            aria-disabled={hasActiveForcedMission}
+                          >
+                            Draw
+                          </Link>
+                        ) : slot.gameMissions[0].stage ===
+                          MissionStage.REBEL_BUY ? (
                           <Link
                             to={`/games/${params.game}/resolve/${slot.gameMissions[0].id}/buy/rebel`}
                             className={clsx(

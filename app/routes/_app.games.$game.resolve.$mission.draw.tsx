@@ -9,6 +9,7 @@ import { zfd } from 'zod-form-data'
 import SideMissionsInput from '~/components/SideMissionsInput'
 import SubmitButton from '~/components/SubmitButton'
 import { prisma } from '~/services/db.server'
+import { randomIndex } from '~/utils/randomIndex'
 
 const validator = withZod(
   zfd.formData({
@@ -100,7 +101,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   if (data.missions === 'RANDOM') {
     chosenMissions = new Array(missionsNeeded)
       .fill(0)
-      .map(() => game.sideMissionDeck[Math.floor(Math.random() * game.sideMissionDeck.length)].id)
+      .map(
+        () =>
+          game.sideMissionDeck.splice(randomIndex(game.sideMissionDeck), 1)[0]
+            .id
+      )
   } else {
     chosenMissions = data.missions
     // TODO: validate chosen mission ids
