@@ -85,6 +85,8 @@ const Rebels = () => {
 
   const summaryFormAction = useFormAction('summary')
 
+  const classFormAction = useFormAction('class')
+
   return (
     <>
       <div className="flex flex-col flex-1 gap-2">
@@ -97,7 +99,7 @@ const Rebels = () => {
             >
               <RebelSummaryManager rebel={rebel} formAction={summaryFormAction} />
               <hr className="border-gray-400 my-0" />
-              <RebelClassManager rebel={rebel} />
+              <RebelClassManager rebel={rebel} formAction={classFormAction} />
               {rebel.rewards.length > 0 && (
                 <>
                   <hr className="border-gray-400 my-0" />

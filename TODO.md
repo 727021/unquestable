@@ -6,10 +6,11 @@
   - [X] arbitrary updates (agendas, villains, class cards, rewards, xp, name, influence)
   - [X] BUG - fix styling for class card edit mode
   - [X] BUG - fix styling for villains manager edit mode
-- [ ] rebel page
+  - [ ] move save buttons to match rebels page
+- [ ] rebels page
   - [X] view only
   - [X] update player name and xp
-  - [ ] update player class cards
+  - [X] update player class cards
   - [ ] update player rewards
   - [ ] update allies
   - [ ] update items and credits
@@ -32,7 +33,7 @@
 - [ ] empire page (agendas, villains, class cards, rewards, xp, name, influence)
   - [ ] change class
   - [ ] change agenda decks
-- [ ] rebel page
+- [ ] rebels page
   - [ ] add/remove players
 - [ ] Profile
 - [ ] Share with players (read-only)
