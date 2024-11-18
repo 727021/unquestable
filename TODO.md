@@ -12,8 +12,8 @@
   - [X] update player name and xp
   - [X] update player class cards
   - [X] update player rewards
-  - [ ] update allies
-  - [ ] update items and credits
+  - [X] update allies
+  - [X] update items and credits
 - [ ] Move drawing side missions to resolve mission page, with mission rewards
 - [ ] Delete games
 - [ ] mobile view

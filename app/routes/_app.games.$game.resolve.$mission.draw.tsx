@@ -1,0 +1,228 @@
+import { MissionStage, MissionType } from '@prisma/client'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
+import { json, redirect } from '@remix-run/node'
+import { useLoaderData } from '@remix-run/react'
+import { withZod } from '@remix-validated-form/with-zod'
+import { ValidatedForm, validationError } from 'remix-validated-form'
+import { z } from 'zod'
+import { zfd } from 'zod-form-data'
+import SideMissionsInput from '~/components/SideMissionsInput'
+import SubmitButton from '~/components/SubmitButton'
+import { prisma } from '~/services/db.server'
+
+const validator = withZod(
+  zfd.formData({
+    missions: zfd
+      .text(z.literal('RANDOM'))
+      .or(
+        zfd.repeatable(
+          z.array(zfd.numeric(z.number().int().positive())).min(1).max(2)
+        )
+      )
+  })
+)
+
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const mission = await prisma.gameMission.findUnique({
+    where: {
+      id: parseInt(params.mission!, 10),
+      stage: MissionStage.CHOOSE_MISSION
+    },
+    select: {
+      id: true
+    }
+  })
+
+  if (!mission) {
+    return redirect(`/games/${params.game}`)
+  }
+
+  const game = await prisma.game.findUnique({
+    where: {
+      id: parseInt(params.game!, 10)
+    },
+    select: {
+      id: true,
+      sideMissionDeck: {
+        where: {
+          gameMissions: {
+            none: {
+              gameId: parseInt(params.game!, 10)
+            }
+          }
+        }
+      },
+      missions: {
+        include: {
+          mission: true
+        }
+      },
+      campaign: {
+        select: {
+          missionSlots: true
+        }
+      }
+    }
+  })
+
+  if (!game) {
+    return redirect('/games')
+  }
+
+  const activeSideMissions = game.missions.filter(
+    (m) => !m.forced && !m.stage && m.mission.type !== MissionType.STORY
+  )
+  const rebelSideMissions = activeSideMissions.filter(
+    (m) => m.mission.type !== MissionType.IMPERIAL
+  )
+  const missionsNeeded = 2 - rebelSideMissions.length
+
+  if (!missionsNeeded) {
+    await prisma.gameMission.update({
+      where: {
+        id: mission.id
+      },
+      data: {
+        stage: MissionStage.REBEL_BUY
+      }
+    })
+
+    return redirect(`/games/${params.game}/resolve/${mission.id}/buy/rebel`)
+  }
+
+  const { data, error } = await validator.validate(await request.formData())
+
+  if (error) {
+    return validationError(error)
+  }
+
+  let chosenMissions: number[] = []
+  if (data.missions === 'RANDOM') {
+    chosenMissions = new Array(missionsNeeded)
+      .fill(0)
+      .map(() => game.sideMissionDeck[Math.floor(Math.random() * game.sideMissionDeck.length)].id)
+  } else {
+    chosenMissions = data.missions
+    // TODO: validate chosen mission ids
+  }
+
+  await prisma.gameMission.createMany({
+    data: chosenMissions.map((m) => ({
+      gameId: game.id,
+      missionId: m
+    }))
+  })
+
+  await prisma.gameMission.update({
+    where: {
+      id: mission.id
+    },
+    data: {
+      stage: MissionStage.REBEL_BUY
+    }
+  })
+
+  return redirect(`/games/${params.game}/resolve/${mission.id}/buy/rebel`)
+}
+
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+  const mission = await prisma.gameMission.findUnique({
+    where: {
+      id: parseInt(params.mission!, 10),
+      stage: MissionStage.CHOOSE_MISSION
+    },
+    select: {
+      id: true
+    }
+  })
+
+  if (!mission) {
+    return redirect(`/games/${params.game}`)
+  }
+
+  const game = await prisma.game.findUnique({
+    where: {
+      id: parseInt(params.game!, 10)
+    },
+    select: {
+      id: true,
+      sideMissionDeck: {
+        where: {
+          gameMissions: {
+            none: {
+              gameId: parseInt(params.game!, 10)
+            }
+          }
+        }
+      },
+      missions: {
+        include: {
+          mission: true
+        }
+      },
+      campaign: {
+        select: {
+          missionSlots: true
+        }
+      }
+    }
+  })
+
+  if (!game) {
+    return redirect('/games')
+  }
+
+  const activeSideMissions = game.missions.filter(
+    (m) => !m.forced && !m.stage && m.mission.type !== MissionType.STORY
+  )
+  const rebelSideMissions = activeSideMissions.filter(
+    (m) => m.mission.type !== MissionType.IMPERIAL
+  )
+  const missionsNeeded = 2 - rebelSideMissions.length
+
+  if (!missionsNeeded) {
+    await prisma.gameMission.update({
+      where: {
+        id: mission.id
+      },
+      data: {
+        stage: MissionStage.REBEL_BUY
+      }
+    })
+
+    return redirect(`/games/${params.game}/resolve/${mission.id}/buy/rebel`)
+  }
+
+  return json({
+    activeSideMissions,
+    sideMissionDeck: game.sideMissionDeck,
+    missionsNeeded
+  })
+}
+
+type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>
+
+const ChooseStage = () => {
+  const data = useLoaderData<LoaderData>()
+
+  return (
+    <>
+      <h2 className="m-0">Draw Side Missions</h2>
+      <ValidatedForm validator={validator} method="POST">
+        <SideMissionsInput name="missions" count={data.missionsNeeded}>
+          {data.sideMissionDeck.map((mission) => (
+            <option key={mission.id} value={mission.id}>
+              {mission.name}
+            </option>
+          ))}
+        </SideMissionsInput>
+        <SubmitButton>
+          Draw Mission
+          {data.missionsNeeded > 1 && 's'}
+        </SubmitButton>
+      </ValidatedForm>
+    </>
+  )
+}
+
+export default ChooseStage

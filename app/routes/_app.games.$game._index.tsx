@@ -52,8 +52,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       sideMissionDeck: {
         where: {
           gameMissions: {
-            every: {
-              id: undefined
+            none: {
+              gameId: parseInt(params.game!, 10)
             }
           }
         }

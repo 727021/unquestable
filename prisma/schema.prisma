@@ -310,6 +310,7 @@ model Game {
 }
 
 enum MissionStage {
+  CHOOSE_MISSION
   REBEL_BUY
   IMPERIAL_BUY
   RESOLVED

@@ -339,6 +339,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                 take: 1
               }
             }
+          },
+          missions: {
+            include: {
+              mission: true
+            }
           }
         }
       }
@@ -495,6 +500,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const imperialRewardId = imperialReward?.id ?? skippedMissionReward?.rewardId
   const villainId = villain?.id ?? skippedMissionReward?.troopId
 
+  // determine if we need to choose side missions
+  const activeSideMissions = mission.game.missions.filter(
+    m => !m.forced && !m.stage && m.mission.type !== MissionType.STORY && m.id !== mission.id
+  )
+  const rebelSideMissions = activeSideMissions.filter(
+    m => m.mission.type !== MissionType.IMPERIAL
+  )
+  const needSideMission = 2 - rebelSideMissions.length > 0
+  const nextStage = needSideMission ? MissionStage.CHOOSE_MISSION : MissionStage.REBEL_BUY
+
   await prisma.game.update({
     where: {
       id: gameId
@@ -548,7 +563,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                     // Forced missions don't have their own buy stages
                     stage: mission.forced
                       ? MissionStage.RESOLVED
-                      : MissionStage.REBEL_BUY,
+                      : nextStage,
                     winner: data.win
                   }
                 },
@@ -579,7 +594,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                     stage:
                       mission.forced || isFinale
                         ? MissionStage.RESOLVED
-                        : MissionStage.REBEL_BUY,
+                        : nextStage,
                     winner: data.win
                   }
                 },
@@ -668,7 +683,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return redirect(`/games/${gameId}`)
   }
 
-  return redirect(`/games/${gameId}/resolve/${params.mission}/buy/rebel`)
+  const redirectTo = nextStage === MissionStage.CHOOSE_MISSION
+    ? `/games/${gameId}/resolve/${params.mission}/draw`
+    : `/games/${gameId}/resolve/${params.mission}/buy/rebel`
+
+  return redirect(redirectTo)
 }
 
 const Resolve = () => {
