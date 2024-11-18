@@ -86,6 +86,7 @@ const Rebels = () => {
   const summaryFormAction = useFormAction('summary')
   const classFormAction = useFormAction('class')
   const rewardFormAction = useFormAction('rewards')
+  const allyFormAction = useFormAction('allies')
 
   return (
     <>
@@ -105,7 +106,7 @@ const Rebels = () => {
             </div>
           ))}
           <ItemManager items={data.game.items} allItems={loaderData.items} credits={data.game.credits} />
-          <AllyManager allies={data.game.allies} allAllies={loaderData.troops} />
+          <AllyManager allies={data.game.allies} allAllies={loaderData.troops} formAction={allyFormAction} />
         </div>
       </div>
     </>

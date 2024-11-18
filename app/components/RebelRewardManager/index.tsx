@@ -1,12 +1,11 @@
 import type { LoaderData as GameLoaderData } from '~/routes/_app.games.$game'
 import type { LoaderData } from '~/routes/_app.games.$game.rebels'
 import EditButton from '../EditButton'
-import { Reducer, useCallback, useEffect, useId, useReducer } from 'react'
+import type { Reducer } from 'react'
+import { useCallback, useEffect, useId, useReducer } from 'react'
 import { useFetcher } from '@remix-run/react'
-import {
-  ActionData,
-  rewardValidator
-} from '~/routes/_app.games.$game.rebels.rewards'
+import type { ActionData } from '~/routes/_app.games.$game.rebels.rewards'
+import { rewardValidator } from '~/routes/_app.games.$game.rebels.rewards'
 import SubmitButton from '../SubmitButton'
 import { ValidatedForm } from 'remix-validated-form'
 import { XCircleIcon } from '@heroicons/react/24/outline'
@@ -93,6 +92,8 @@ const RebelRewardManager = ({ rebel, allRewards, formAction }: Props) => {
           }
         case 'CHOOSE_REWARD':
           return { ...state, chosenReward: action.rewardId }
+        default:
+          return state
       }
     },
     [rebel.rewards]
