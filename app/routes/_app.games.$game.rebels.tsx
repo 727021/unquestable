@@ -1,4 +1,9 @@
-import { json, useFormAction, useLoaderData, useOutletContext } from '@remix-run/react'
+import {
+  json,
+  useFormAction,
+  useLoaderData,
+  useOutletContext
+} from '@remix-run/react'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
 import RebelSummaryManager from '~/components/RebelSummaryManager'
 import RebelClassManager from '~/components/RebelClassManager'
@@ -87,6 +92,7 @@ const Rebels = () => {
   const classFormAction = useFormAction('class')
   const rewardFormAction = useFormAction('rewards')
   const allyFormAction = useFormAction('allies')
+  const itemFormAction = useFormAction('items')
 
   return (
     <>
@@ -98,15 +104,31 @@ const Rebels = () => {
               key={rebel.id}
               className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded"
             >
-              <RebelSummaryManager rebel={rebel} formAction={summaryFormAction} />
+              <RebelSummaryManager
+                rebel={rebel}
+                formAction={summaryFormAction}
+              />
               <hr className="border-gray-400 my-0" />
               <RebelClassManager rebel={rebel} formAction={classFormAction} />
               <hr className="border-gray-400 my-0" />
-              <RebelRewardManager rebel={rebel} formAction={rewardFormAction} allRewards={loaderData.rewards} />
+              <RebelRewardManager
+                rebel={rebel}
+                formAction={rewardFormAction}
+                allRewards={loaderData.rewards}
+              />
             </div>
           ))}
-          <ItemManager items={data.game.items} allItems={loaderData.items} credits={data.game.credits} />
-          <AllyManager allies={data.game.allies} allAllies={loaderData.troops} formAction={allyFormAction} />
+          <ItemManager
+            items={data.game.items}
+            allItems={loaderData.items}
+            credits={data.game.credits}
+            formAction={itemFormAction}
+          />
+          <AllyManager
+            allies={data.game.allies}
+            allAllies={loaderData.troops}
+            formAction={allyFormAction}
+          />
         </div>
       </div>
     </>

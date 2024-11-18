@@ -18,6 +18,7 @@ type Props = {
   value?: string | number
   onChange?: ChangeEventHandler<HTMLInputElement>
   inline?: boolean
+  formId?: string
 } & ComponentProps<'input'>
 
 const TextInput = forwardRef(
@@ -32,11 +33,12 @@ const TextInput = forwardRef(
       onChange,
       type = 'text',
       inline,
+      formId,
       ...props
     }: Props,
     ref: ForwardedRef<HTMLInputElement>
   ) => {
-    const { getInputProps, error } = useField(name)
+    const { getInputProps, error } = useField(name, { formId })
 
     return (
       <label
