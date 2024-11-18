@@ -7,7 +7,7 @@
   - [X] BUG - fix styling for class card edit mode
   - [X] BUG - fix styling for villains manager edit mode
   - [ ] move save buttons to match rebels page
-- [ ] rebels page
+- [X] rebels page
   - [X] view only
   - [X] update player name and xp
   - [X] update player class cards
@@ -15,6 +15,7 @@
   - [X] update allies
   - [X] update items and credits
 - [X] Move drawing side missions to resolve mission page, with mission rewards
+- [ ] Edit side mission deck
 - [ ] Delete games
 - [ ] mobile view
   - [ ] collection

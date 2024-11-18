@@ -354,7 +354,7 @@ const Game = () => {
         <div className="flex flex-col gap-2 flex-1">
           <Link
             to={`/games/${params.game}/empire`}
-            className="w-full no-underline"
+            className="w-full no-underline border rounded p-2"
           >
             <div className="flex gap-5 items-baseline">
               <h2 className="m-0">Empire</h2>
@@ -370,7 +370,7 @@ const Game = () => {
           </Link>
           <Link
             to={`/games/${params.game}/rebels`}
-            className="w-full no-underline"
+            className="w-full no-underline border rounded p-2"
           >
             <h2 className="m-0">Rebels</h2>
             <p className="m-0">Credits: {data.game.credits}</p>
@@ -394,6 +394,14 @@ const Game = () => {
               </tbody>
             </table>
           </Link>
+          <div className="flex flex-col px-2">
+            <Link
+              to={`/games/${params.game}/missions`}
+              className="no-underline hover:underline"
+            >
+              Side Mission Deck
+            </Link>
+          </div>
         </div>
       </div>
     </>
