@@ -11,7 +11,7 @@
   - [X] view only
   - [X] update player name and xp
   - [X] update player class cards
-  - [ ] update player rewards
+  - [X] update player rewards
   - [ ] update allies
   - [ ] update items and credits
 - [ ] Move drawing side missions to resolve mission page, with mission rewards

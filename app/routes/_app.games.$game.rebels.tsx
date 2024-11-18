@@ -84,8 +84,8 @@ const Rebels = () => {
   const loaderData = useLoaderData<LoaderData>()
 
   const summaryFormAction = useFormAction('summary')
-
   const classFormAction = useFormAction('class')
+  const rewardFormAction = useFormAction('rewards')
 
   return (
     <>
@@ -100,12 +100,8 @@ const Rebels = () => {
               <RebelSummaryManager rebel={rebel} formAction={summaryFormAction} />
               <hr className="border-gray-400 my-0" />
               <RebelClassManager rebel={rebel} formAction={classFormAction} />
-              {rebel.rewards.length > 0 && (
-                <>
-                  <hr className="border-gray-400 my-0" />
-                  <RebelRewardManager rebel={rebel} />
-                </>
-              )}
+              <hr className="border-gray-400 my-0" />
+              <RebelRewardManager rebel={rebel} formAction={rewardFormAction} allRewards={loaderData.rewards} />
             </div>
           ))}
           <ItemManager items={data.game.items} allItems={loaderData.items} credits={data.game.credits} />
