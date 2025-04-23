@@ -28,6 +28,7 @@
   - [ ] rebel
 - [X] home page (maybe just replace with games page?)
 - [ ] landing page (before login)
+- [ ] Migrate from remix to react-router@7
 
 # Stretch
 
