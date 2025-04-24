@@ -1,10 +1,25 @@
 import type { ActionFunction } from '@remix-run/node'
 import { Webhook } from 'svix'
+import { prisma } from '~/services/db.server'
 
 const deleteUser = async (userId: string) => {
-  // TODO: delete user from db
+  await prisma.user.delete({
+    where: {
+      id: userId
+    }
+  })
 
   return new Response(null, { status: 204 })
+}
+
+const createUser = async (userId: string) => {
+  await prisma.user.create({
+    data: {
+      id: userId
+    }
+  })
+
+  return new Response(null, { status: 201 })
 }
 
 export const action: ActionFunction = async ({ request }) => {
@@ -25,6 +40,12 @@ export const action: ActionFunction = async ({ request }) => {
           }
         }
       | {
+          type: 'user.created'
+          data: {
+            id: string
+          }
+        }
+      | {
           type: ''
         }
   } catch (error) {
@@ -34,6 +55,9 @@ export const action: ActionFunction = async ({ request }) => {
   switch (hook.type) {
     case 'user.deleted': {
       return await deleteUser(hook.data.id)
+    }
+    case 'user.created': {
+      return await createUser(hook.data.id)
     }
     default: {
       console.log('Unhandled webhook type:', hook.type)
