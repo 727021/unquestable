@@ -1,22 +1,26 @@
-import type { LoaderFunctionArgs } from '@vercel/remix'
-import { Outlet, json, useLoaderData } from '@remix-run/react'
-import { getUser } from '~/services/auth.server'
+import type { LoaderFunction } from '@vercel/remix'
+import { Outlet, redirect } from '@remix-run/react'
 import Footer from '~/components/Footer'
 import AppNav from '~/components/AppNav'
+import { getAuth } from '@clerk/remix/ssr.server'
+import { SignedIn } from '@clerk/remix'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUser(request)
-  return json({ user })
+export const loader: LoaderFunction = async (args) => {
+  const { userId } = await getAuth(args)
+  if (!userId) {
+    return redirect(`/sign-in?redirect_url=${args.request.url}`)
+  }
+  return {}
 }
 
 const App = () => {
-  const data = useLoaderData<typeof loader>()
-
   return (
     <div className="min-h-screen flex flex-col">
-      <AppNav user={data.user} />
+      <AppNav />
       <main className="grow max-w-screen-xl w-full mx-auto">
-        <Outlet />
+        <SignedIn>
+          <Outlet />
+        </SignedIn>
       </main>
       <Footer />
     </div>
