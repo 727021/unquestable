@@ -1,15 +1,12 @@
 import type { LoaderFunction } from '@vercel/remix'
-import { Outlet, redirect } from '@remix-run/react'
+import { Outlet } from '@remix-run/react'
 import Footer from '~/components/Footer'
 import AppNav from '~/components/AppNav'
-import { getAuth } from '@clerk/remix/ssr.server'
 import { SignedIn } from '@clerk/remix'
+import { requireAuth } from '~/utils/requireAuth.server'
 
 export const loader: LoaderFunction = async (args) => {
-  const { userId } = await getAuth(args)
-  if (!userId) {
-    return redirect(`/sign-in?redirect_url=${args.request.url}`)
-  }
+  await requireAuth(args)
   return {}
 }
 

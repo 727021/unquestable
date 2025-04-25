@@ -10,7 +10,9 @@ installGlobals()
 
 const { resolve } = createRequire(import.meta.url)
 const prismaClient = `prisma${path.sep}client`
-const prismaClientIndexBrowser = resolve('@prisma/client/index-browser').replace(`@${prismaClient}`, `.${prismaClient}`)
+const prismaClientIndexBrowser = resolve(
+  '@prisma/client/index-browser'
+).replace(`@${prismaClient}`, `.${prismaClient}`)
 
 export default defineConfig({
   server: {
@@ -25,7 +27,10 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '.prisma/client/index-browser': path.relative(__dirname, prismaClientIndexBrowser)
+      '.prisma/client/index-browser': path.relative(
+        __dirname,
+        prismaClientIndexBrowser
+      )
     }
   }
 })

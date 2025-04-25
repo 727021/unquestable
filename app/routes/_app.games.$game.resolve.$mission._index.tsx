@@ -24,9 +24,9 @@ import TextInput from '~/components/TextInput'
 import ButtonBar from '~/components/ButtonBar'
 import { calculateRewards } from '~/utils/missionRewards'
 import PlaceholderInput from '~/components/PlaceholderInput'
-import { getUser } from '~/services/auth.server'
 import SubmitButton from '~/components/SubmitButton'
 import SelectInput from '~/components/SelectInput'
+import { requireAuth } from '~/utils/requireAuth.server'
 
 const validator = withZod(
   zfd.formData({
@@ -152,8 +152,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return json(mission)
 }
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const user = await getUser(request)
+export const action = async (args: ActionFunctionArgs) => {
+  const { userId } = await requireAuth(args)
+
+  const { params, request } = args
 
   const { data, error } = await validator.validate(await request.formData())
 
@@ -172,7 +174,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const game = await prisma.game.findUnique({
     where: {
       id: gameId,
-      userId: user.id
+      userId
     },
     select: {
       missions: {
@@ -502,13 +504,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   // determine if we need to choose side missions
   const activeSideMissions = mission.game.missions.filter(
-    m => !m.forced && !m.stage && m.mission.type !== MissionType.STORY && m.id !== mission.id
+    (m) =>
+      !m.forced &&
+      !m.stage &&
+      m.mission.type !== MissionType.STORY &&
+      m.id !== mission.id
   )
   const rebelSideMissions = activeSideMissions.filter(
-    m => m.mission.type !== MissionType.IMPERIAL
+    (m) => m.mission.type !== MissionType.IMPERIAL
   )
   const needSideMission = 2 - rebelSideMissions.length > 0
-  const nextStage = needSideMission ? MissionStage.CHOOSE_MISSION : MissionStage.REBEL_BUY
+  const nextStage = needSideMission
+    ? MissionStage.CHOOSE_MISSION
+    : MissionStage.REBEL_BUY
 
   await prisma.game.update({
     where: {
@@ -561,9 +569,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
                   },
                   data: {
                     // Forced missions don't have their own buy stages
-                    stage: mission.forced
-                      ? MissionStage.RESOLVED
-                      : nextStage,
+                    stage: mission.forced ? MissionStage.RESOLVED : nextStage,
                     winner: data.win
                   }
                 },
@@ -683,9 +689,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return redirect(`/games/${gameId}`)
   }
 
-  const redirectTo = nextStage === MissionStage.CHOOSE_MISSION
-    ? `/games/${gameId}/resolve/${params.mission}/draw`
-    : `/games/${gameId}/resolve/${params.mission}/buy/rebel`
+  const redirectTo =
+    nextStage === MissionStage.CHOOSE_MISSION
+      ? `/games/${gameId}/resolve/${params.mission}/draw`
+      : `/games/${gameId}/resolve/${params.mission}/buy/rebel`
 
   return redirect(redirectTo)
 }

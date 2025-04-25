@@ -3,7 +3,6 @@ import { json, redirect } from '@vercel/remix'
 import { useLoaderData } from '@remix-run/react'
 import type { Dispatch, SetStateAction } from 'react'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { getUser } from '~/services/auth.server'
 import { prisma } from '~/services/db.server'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
@@ -16,6 +15,7 @@ import SelectInput from '~/components/SelectInput'
 import SubmitButton from '~/components/SubmitButton'
 import GrayMissionsInput from '~/components/GrayMissionsInput'
 import { randomIndex } from '~/utils/randomIndex'
+import { requireAuth } from '~/utils/requireAuth.server'
 
 const validator = withZod(
   zfd.formData({
@@ -56,8 +56,21 @@ const validator = withZod(
   })
 )
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUser(request)
+export const loader = async (args: LoaderFunctionArgs) => {
+  const { userId } = await requireAuth(args)
+
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId
+    },
+    include: {
+      collection: {
+        select: {
+          id: true
+        }
+      }
+    }
+  })
   const expansions = await prisma.expansion.findMany({
     where: {
       OR: [
@@ -66,7 +79,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         },
         {
           id: {
-            in: user.collection?.map(({ id }) => id) ?? []
+            in: user?.collection.map(({ id }) => id)
           }
         }
       ]
@@ -135,15 +148,29 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   })
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const user = await getUser(request)
+export const action = async (args: ActionFunctionArgs) => {
+  const { userId } = await requireAuth(args)
 
-  const { data, error } = await validator.validate(await request.formData())
+  const { data, error } = await validator.validate(
+    await args.request.formData()
+  )
 
   if (error) {
     return validationError(error)
   }
 
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId
+    },
+    include: {
+      collection: {
+        select: {
+          id: true
+        }
+      }
+    }
+  })
   const campaign = await prisma.campaign.findUnique({
     where: {
       id: data.campaign,

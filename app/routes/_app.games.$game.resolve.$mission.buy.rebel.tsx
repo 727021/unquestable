@@ -12,8 +12,8 @@ import { Fragment } from 'react'
 import SubmitButton from '~/components/SubmitButton'
 import { z } from 'zod'
 import BuyItemCard from '~/components/BuyItemCard'
-import { getUser } from '~/services/auth.server'
 import { getSellPrice } from '~/utils/sellPrice'
+import { requireAuth } from '~/utils/requireAuth.server'
 
 const validator = withZod(
   zfd.formData({
@@ -41,12 +41,12 @@ const validator = withZod(
   })
 )
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-  const user = await getUser(request)
+export const loader = async (args: LoaderFunctionArgs) => {
+  const { userId } = await requireAuth(args)
 
   const forcedMission = await prisma.gameMission.findFirst({
     where: {
-      gameId: parseInt(params.game!, 10),
+      gameId: parseInt(args.params.game!, 10),
       stage: {
         equals: null
       },
@@ -55,12 +55,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   })
 
   if (forcedMission) {
-    return redirect(`/games/${params.game}`)
+    return redirect(`/games/${args.params.game}`)
   }
 
   const mission = await prisma.gameMission.findUnique({
     where: {
-      id: parseInt(params.mission!, 10),
+      id: parseInt(args.params.mission!, 10),
       stage: MissionStage.REBEL_BUY,
       // Forced missions don't get their own buy stage
       forced: false
@@ -83,9 +83,21 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   })
 
   if (!mission) {
-    return redirect(`/games/${params.game}`)
+    return redirect(`/games/${args.params.game}`)
   }
 
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId
+    },
+    include: {
+      collection: {
+        select: {
+          id: true
+        }
+      }
+    }
+  })
   const items = await prisma.item.findMany({
     where: {
       tier: {
@@ -105,7 +117,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
       ],
       games: {
         none: {
-          id: parseInt(params.game!, 10)
+          id: parseInt(args.params.game!, 10)
         }
       }
     }

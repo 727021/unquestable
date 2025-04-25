@@ -4,11 +4,11 @@ import { useLoaderData } from '@remix-run/react'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
 import CollectionItem from '~/components/CollectionItem'
-import { getUser } from '~/services/auth.server'
 import { prisma } from '~/services/db.server'
+import { requireAuth } from '~/utils/requireAuth.server'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUser(request)
+export const loader = async (args: LoaderFunctionArgs) => {
+  const { userId } = await requireAuth(args)
 
   const allExpansions = await prisma.expansion.findMany({
     include: { boxArt: true }
@@ -18,7 +18,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       where: {
         owners: {
           some: {
-            id: user.id
+            id: userId
           }
         }
       },
@@ -36,12 +36,12 @@ const addRemoveSchema = zfd.formData({
   action: zfd.text(z.enum(['add', 'remove']))
 })
 
-export const action = async ({ request }: ActionFunctionArgs) => {
+export const action = async (args: ActionFunctionArgs) => {
   const { action, expansionId } = addRemoveSchema.parse(
-    await request.formData()
+    await args.request.formData()
   )
 
-  const user = await getUser(request)
+  const { userId } = await requireAuth(args)
 
   const expansion = await prisma.expansion.findUnique({
     where: {
@@ -59,7 +59,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   await prisma.user.update({
     where: {
-      id: user.id
+      id: userId
     },
     data: {
       collection: {

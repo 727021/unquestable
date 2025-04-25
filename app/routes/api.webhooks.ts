@@ -3,21 +3,45 @@ import { Webhook } from 'svix'
 import { prisma } from '~/services/db.server'
 
 const deleteUser = async (userId: string) => {
-  await prisma.user.delete({
-    where: {
-      id: userId
+  try {
+    await prisma.user.delete({
+      where: {
+        id: userId
+      }
+    })
+  } catch (error) {
+    const found = await prisma.user.findUnique({
+      where: {
+        id: userId
+      }
+    })
+    if (found) {
+      console.error(`Error deleting user ${userId}:`, error)
+      return new Response(null, { status: 500 })
     }
-  })
+  }
 
   return new Response(null, { status: 204 })
 }
 
 const createUser = async (userId: string) => {
-  await prisma.user.create({
-    data: {
-      id: userId
+  try {
+    await prisma.user.create({
+      data: {
+        id: userId
+      }
+    })
+  } catch (error) {
+    const found = await prisma.user.findUnique({
+      where: {
+        id: userId
+      }
+    })
+    if (!found) {
+      console.error(`Error creating user ${userId}:`, error)
+      return new Response(null, { status: 500 })
     }
-  })
+  }
 
   return new Response(null, { status: 201 })
 }
