@@ -31,6 +31,7 @@
 - [ ] Migrate from remix to react-router@7
 - [x] Clerk auth
 - [ ] Default theme picker to "os"
+- [ ] Rework win/loss logic into arbitrary conditions
 
 # Stretch
 
