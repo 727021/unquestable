@@ -1,13 +1,13 @@
 import { json, type LoaderFunctionArgs } from '@vercel/remix'
 import { Link, useLoaderData } from '@remix-run/react'
-import { getUser } from '~/services/auth.server'
 import { prisma } from '~/services/db.server'
+import { requireAuth } from '~/utils/requireAuth.server'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUser(request)
+export const loader = async (args: LoaderFunctionArgs) => {
+  const { userId } = await requireAuth(args)
   const games = await prisma.game.findMany({
     where: {
-      userId: user.id
+      userId
     },
     include: {
       campaign: true,

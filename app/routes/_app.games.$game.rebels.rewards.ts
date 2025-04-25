@@ -3,8 +3,8 @@ import { json, redirect } from '@remix-run/node'
 import { withZod } from '@remix-validated-form/with-zod'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
-import { getUser } from '~/services/auth.server'
 import { prisma } from '~/services/db.server'
+import { requireAuth } from '~/utils/requireAuth.server'
 
 export type ActionData = { success?: number }
 
@@ -24,11 +24,11 @@ export const rewardValidator = withZod(
   })
 )
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { data } = await rewardValidator.validate(await request.formData())
+export const action = async (args: ActionFunctionArgs) => {
+  const { data } = await rewardValidator.validate(await args.request.formData())
 
-  const user = await getUser(request)
-  const gameId = parseInt(params.game!, 10)
+  const { userId } = await requireAuth(args)
+  const gameId = parseInt(args.params.game!, 10)
 
   if (!data) {
     return json({})
@@ -38,7 +38,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     where: {
       game: {
         id: gameId,
-        userId: user.id
+        userId
       },
       id: data?.id
     },

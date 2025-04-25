@@ -2,19 +2,11 @@ import type { LoaderData as GameLoaderData } from '~/routes/_app.games.$game'
 import type { LoaderData } from '~/routes/_app.games.$game.rebels'
 import EditButton from '../EditButton'
 import { sortItems } from '~/utils/sortItems'
-import {
-  Reducer,
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useReducer
-} from 'react'
+import type { Reducer } from 'react'
+import { useCallback, useEffect, useId, useMemo, useReducer } from 'react'
 import { useFetcher } from 'react-router-dom'
-import {
-  ActionData,
-  itemValidator
-} from '~/routes/_app.games.$game.rebels.items'
+import type { ActionData } from '~/routes/_app.games.$game.rebels.items'
+import { itemValidator } from '~/routes/_app.games.$game.rebels.items'
 import SubmitButton from '../SubmitButton'
 import TextInput from '../TextInput'
 import { ValidatedForm } from 'remix-validated-form'

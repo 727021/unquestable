@@ -1,10 +1,10 @@
 import { json, redirect } from '@vercel/remix'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from '@vercel/remix'
 import { prisma } from '~/services/db.server'
-import { getUser } from '~/services/auth.server'
 import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
+import { requireAuth } from '~/utils/requireAuth.server'
 
 export type ActionData = { success?: number }
 
@@ -29,17 +29,17 @@ export const agendaValidator = withZod(
   })
 )
 
-export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { data } = await agendaValidator.validate(await request.formData())
+export const action = async (args: ActionFunctionArgs) => {
+  const { data } = await agendaValidator.validate(await args.request.formData())
 
-  const user = await getUser(request)
-  const gameId = parseInt(params.game!, 10)
+  const { userId } = await requireAuth(args)
+  const gameId = parseInt(args.params.game!, 10)
 
   const player = await prisma.imperialPlayer.findFirst({
     where: {
       game: {
         id: gameId,
-        userId: user.id
+        userId
       }
     },
     select: {

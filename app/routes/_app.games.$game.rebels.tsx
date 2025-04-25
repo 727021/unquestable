@@ -10,13 +10,26 @@ import RebelClassManager from '~/components/RebelClassManager'
 import RebelRewardManager from '~/components/RebelRewardManager'
 import AllyManager from '~/components/AllyManager'
 import type { LoaderFunctionArgs } from '@remix-run/node'
-import { getUser } from '~/services/auth.server'
 import { prisma } from '~/services/db.server'
 import { Side } from '@prisma/client'
 import ItemManager from '~/components/ItemManager'
+import { requireAuth } from '~/utils/requireAuth.server'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUser(request)
+export const loader = async (args: LoaderFunctionArgs) => {
+  const { userId } = await requireAuth(args)
+
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId
+    },
+    include: {
+      collection: {
+        select: {
+          id: true
+        }
+      }
+    }
+  })
 
   const rewards = await prisma.reward.findMany({
     where: {

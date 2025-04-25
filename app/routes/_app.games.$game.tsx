@@ -6,17 +6,17 @@ import {
   useLocation,
   useParams
 } from '@remix-run/react'
-import { getUser } from '~/services/auth.server'
 import { prisma } from '~/services/db.server'
 import { ArrowUturnLeftIcon } from '@heroicons/react/24/outline'
+import { requireAuth } from '~/utils/requireAuth.server'
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-  const user = await getUser(request)
+export const loader = async (args: LoaderFunctionArgs) => {
+  const { userId } = await requireAuth(args)
 
-  if (!params.game) {
+  if (!args.params.game) {
     return redirect('/games')
   }
-  const gameId = parseInt(params.game, 10)
+  const gameId = parseInt(args.params.game, 10)
   if (isNaN(gameId)) {
     return redirect('/games')
   }
@@ -24,7 +24,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const game = await prisma.game.findUnique({
     where: {
       id: gameId,
-      userId: user.id
+      userId
     },
     select: {
       name: true,
