@@ -14,12 +14,7 @@ datasource db {
 
 // #region User Data
 model User {
-  id            Int         @id @default(autoincrement())
-  discordId     String      @unique
-  displayName   String
-  discriminator String
-  email         String?     @unique
-  avatar        String?
+  id            String @id
   collection    Expansion[]
   games         Game[]
 }
@@ -294,7 +289,7 @@ model MissionSlot {
 model Game {
   id              Int             @id @default(autoincrement())
   owner           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId          Int
+  userId          String
   name            String
   started         DateTime        @default(now())
   rebelPlayers    RebelPlayer[]

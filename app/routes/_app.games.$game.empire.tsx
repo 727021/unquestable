@@ -12,13 +12,25 @@ import ImperialClassManager from '~/components/ImperialClassManager'
 import ImperialSummaryManager from '~/components/ImperialSummaryManager'
 import type { LoaderFunctionArgs } from '@vercel/remix'
 import { prisma } from '~/services/db.server'
-import { getUser } from '~/services/auth.server'
 import { Side } from '@prisma/client'
 import ImperialRewardManager from '~/components/ImperialRewardManager'
 import VillainManager from '~/components/VillainManager'
+import { requireAuth } from '~/utils/requireAuth.server'
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const user = await getUser(request)
+export const loader = async (args: LoaderFunctionArgs) => {
+  const { userId } = await requireAuth(args)
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId
+    },
+    include: {
+      collection: {
+        select: {
+          id: true
+        }
+      }
+    }
+  })
 
   const rewards = await prisma.reward.findMany({
     where: {
