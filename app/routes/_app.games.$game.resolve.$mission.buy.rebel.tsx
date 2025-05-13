@@ -4,8 +4,7 @@ import { redirect } from 'react-router'
 import { useLoaderData, useOutletContext } from 'react-router'
 import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
-import { ValidatedForm, validationError } from 'remix-validated-form'
-import { withZod } from '@remix-validated-form/with-zod'
+import { parseFormData, ValidatedForm, validationError } from '@rvf/react-router'
 import { zfd } from 'zod-form-data'
 import BuyClassCard from '~/components/BuyClassCard'
 import { Fragment } from 'react'
@@ -15,7 +14,7 @@ import BuyItemCard from '~/components/BuyItemCard'
 import { getSellPrice } from '~/utils/sellPrice'
 import { requireAuth } from '~/utils/requireAuth.server'
 
-const validator = withZod(
+const schema =
   zfd.formData({
     rebels: zfd.repeatable(
       z.array(
@@ -39,7 +38,6 @@ const validator = withZod(
       .optional()
       .default({})
   })
-)
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { userId } = await requireAuth(args)
@@ -127,7 +125,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 }
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { data, error } = await validator.validate(await request.formData())
+  const { data, error } = await parseFormData(await request.formData(), schema)
 
   if (error) {
     return validationError(error)
@@ -220,9 +218,12 @@ const BuyStage = () => {
         Rebel Buy for <em>{data.mission.mission.name}</em>
       </h2>
       <ValidatedForm
-        validator={validator}
+        schema={schema}
         method="POST"
         className="flex flex-col gap-3 w-fit"
+        defaultValues={{
+          rebels: []
+        }}
       >
         <div className="flex flex-wrap gap-3">
           {ctx.game.rebelPlayers.map((rebel, i) => (

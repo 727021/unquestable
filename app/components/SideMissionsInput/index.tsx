@@ -6,7 +6,7 @@ import type {
 } from 'react'
 import { useState } from 'react'
 import RequiredIndicator from '../RequiredIndicator'
-import { useField } from 'remix-validated-form'
+import { useField } from '@rvf/react-router'
 import clsx from 'clsx'
 
 type Props = PropsWithChildren<

@@ -4,8 +4,8 @@ import { useCallback, useEffect, useReducer } from 'react'
 import type { LoaderData as GameLoaderData } from '~/routes/_app.games.$game'
 import type { LoaderData } from '~/routes/_app.games.$game.empire'
 import EditButton from '../EditButton'
-import { ValidatedForm } from 'remix-validated-form'
-import { rewardValidator } from '~/routes/_app.games.$game.empire.rewards'
+import { ValidatedForm } from '@rvf/react-router'
+import { rewardSchema } from '~/routes/_app.games.$game.empire.rewards'
 import SubmitButton from '../SubmitButton'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import { XCircleIcon } from '@heroicons/react/24/outline'
@@ -132,11 +132,15 @@ const ImperialRewardManager = ({
       </div>
       {rewardState.editing ? (
         <ValidatedForm
-          validator={rewardValidator}
+          schema={rewardSchema}
           method="POST"
           className="flex flex-1 flex-col gap-2"
           fetcher={fetcher}
           action={formAction}
+          defaultValues={{
+            rewardsToAdd: [],
+            rewardsToRemove: []
+          }}
         >
           <div className="flex flex-col items-start w-fit py-2">
             {rewardsToShow.length === 0 ? (

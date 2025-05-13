@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import type { ChangeEvent, PropsWithChildren } from 'react'
 import { useState } from 'react'
-import { useField } from 'remix-validated-form'
+import { useField } from '@rvf/react-router'
 import RequiredIndicator from '../RequiredIndicator'
 
 const GrayMissionsInput = ({ children }: PropsWithChildren) => {

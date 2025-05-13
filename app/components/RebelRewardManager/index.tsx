@@ -5,9 +5,9 @@ import type { Reducer } from 'react'
 import { useCallback, useEffect, useId, useReducer } from 'react'
 import { useFetcher } from 'react-router'
 import type { ActionData } from '~/routes/_app.games.$game.rebels.rewards'
-import { rewardValidator } from '~/routes/_app.games.$game.rebels.rewards'
+import { rewardSchema } from '~/routes/_app.games.$game.rebels.rewards'
 import SubmitButton from '../SubmitButton'
-import { ValidatedForm } from 'remix-validated-form'
+import { ValidatedForm } from '@rvf/react-router'
 import { XCircleIcon } from '@heroicons/react/24/outline'
 import { PlusIcon } from '@heroicons/react/24/solid'
 
@@ -147,12 +147,17 @@ const RebelRewardManager = ({ rebel, allRewards, formAction }: Props) => {
       </div>
       {rewardState.editing ? (
         <ValidatedForm
-          validator={rewardValidator}
+          schema={rewardSchema}
           method="POST"
           className="flex flex-1 flex-col gap-2"
           fetcher={fetcher}
           action={formAction}
           id={formId}
+          defaultValues={{
+            rewardsToAdd: [],
+            rewardsToRemove: [],
+            id: rebel.id
+          }}
         >
           <div className="flex flex-col items-start w-fit">
             {!rewardsToShow.length ? (

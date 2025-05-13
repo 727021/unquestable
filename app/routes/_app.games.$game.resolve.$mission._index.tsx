@@ -10,11 +10,10 @@ import {
   MissionType,
   Side
 } from '@prisma/client'
-import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
-import type { FieldErrors } from 'remix-validated-form'
-import { validationError, ValidatedForm } from 'remix-validated-form'
+import type { FieldErrors } from '@rvf/react-router'
+import { validationError, ValidatedForm, parseFormData } from '@rvf/react-router'
 import TextInput from '~/components/TextInput'
 import ButtonBar from '~/components/ButtonBar'
 import { calculateRewards } from '~/utils/missionRewards'
@@ -23,7 +22,7 @@ import SubmitButton from '~/components/SubmitButton'
 import SelectInput from '~/components/SelectInput'
 import { requireAuth } from '~/utils/requireAuth.server'
 
-const validator = withZod(
+const schema =
   zfd.formData({
     win: zfd.text(z.enum([Side.IMPERIAL, Side.REBEL])),
     crates: zfd.numeric(z.number().int().nonnegative()),
@@ -40,7 +39,6 @@ const validator = withZod(
       .optional(),
     rewardedRebel: zfd.numeric(z.number().int().positive()).optional()
   })
-)
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const mission = await prisma.gameMission.findUnique({
@@ -152,7 +150,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
   const { params, request } = args
 
-  const { data, error } = await validator.validate(await request.formData())
+  const { data, error } = await parseFormData(await request.formData(), schema)
 
   if (error) {
     return validationError(error)
@@ -755,9 +753,13 @@ const Resolve = () => {
       </h2>
       <div className="flex w-full flex-wrap max-w-full">
         <ValidatedForm
-          validator={validator}
+          schema={schema}
           method="POST"
           className="flex-1 whitespace-nowrap"
+          defaultValues={{
+            crates: 0,
+            win: Side.REBEL
+          }}
         >
           <ButtonBar
             name="win"

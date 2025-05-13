@@ -5,8 +5,8 @@ import type { LoaderData as GameLoaderData } from '~/routes/_app.games.$game'
 import SubmitButton from '../SubmitButton'
 import { useFetcher } from 'react-router'
 import type { ActionData } from '~/routes/_app.games.$game.rebels.summary'
-import { summaryValidator } from '~/routes/_app.games.$game.rebels.summary'
-import { ValidatedForm } from 'remix-validated-form'
+import { summarySchema } from '~/routes/_app.games.$game.rebels.summary'
+import { ValidatedForm } from '@rvf/react-router'
 import TextInput from '../TextInput'
 
 type State = {
@@ -99,12 +99,15 @@ const RebelSummaryManager = ({ rebel, formAction }: Props) => {
       </div>
       {summary.editing ? (
         <ValidatedForm
-          validator={summaryValidator}
+          schema={summarySchema}
           method="POST"
           className="flex flex-1 gap-2 items-start"
           fetcher={fetcher}
           action={formAction}
           id={formId}
+          defaultValues={{
+            id: rebel.id
+          }}
         >
           <div className="flex flex-1 flex-wrap gap-2 justify-between items-center">
             <input type="hidden" name="id" value={rebel.id} />

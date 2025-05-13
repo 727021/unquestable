@@ -1,7 +1,7 @@
 import type { Fetcher } from 'react-router'
 import clsx from 'clsx'
 import type { ComponentProps, PropsWithChildren } from 'react'
-import { useIsSubmitting } from 'remix-validated-form'
+import { useIsSubmitting } from '@rvf/react-router'
 
 type Props = PropsWithChildren<
   Omit<ComponentProps<'button'>, 'type'> & {

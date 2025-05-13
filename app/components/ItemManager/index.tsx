@@ -6,10 +6,10 @@ import type { Reducer } from 'react'
 import { useCallback, useEffect, useId, useMemo, useReducer } from 'react'
 import { useFetcher } from 'react-router'
 import type { ActionData } from '~/routes/_app.games.$game.rebels.items'
-import { itemValidator } from '~/routes/_app.games.$game.rebels.items'
+import { itemSchema } from '~/routes/_app.games.$game.rebels.items'
 import SubmitButton from '../SubmitButton'
 import TextInput from '../TextInput'
-import { ValidatedForm } from 'remix-validated-form'
+import { ValidatedForm } from '@rvf/react-router'
 import { XCircleIcon } from '@heroicons/react/24/outline'
 import { PlusIcon } from '@heroicons/react/24/solid'
 
@@ -181,12 +181,16 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
       <hr className="border-gray-400 my-0" />
       {itemState.editing ? (
         <ValidatedForm
-          validator={itemValidator}
+          schema={itemSchema}
           method="POST"
           className="flex flex-1 flex-col gap-2"
           fetcher={fetcher}
           action={formAction}
           id={formId}
+          defaultValues={{
+            itemsToAdd: [],
+            itemsToRemove: []
+          }}
         >
           <div className="flex flex-col">
             {!itemsToShow.length ? (

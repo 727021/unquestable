@@ -3,8 +3,8 @@ import type { LoaderData } from '~/routes/_app.games.$game'
 import EditButton from '~/components/EditButton'
 import type { Reducer } from 'react'
 import { useCallback, useEffect, useReducer } from 'react'
-import { ValidatedForm } from 'remix-validated-form'
-import { summaryValidator } from '~/routes/_app.games.$game.empire.summary'
+import { ValidatedForm } from '@rvf/react-router'
+import { summarySchema } from '~/routes/_app.games.$game.empire.summary'
 import SubmitButton from '~/components/SubmitButton'
 import TextInput from '~/components/TextInput'
 
@@ -80,11 +80,12 @@ const ImperialSummaryManager = ({
     <div className="flex flex-1 px-2 py-1 gap-2 border border-gray-400 rounded items-start">
       {summary.editing ? (
         <ValidatedForm
-          validator={summaryValidator}
+          schema={summarySchema}
           method="POST"
           className="flex flex-1 gap-2 items-start"
           fetcher={fetcher}
           action={formAction}
+          defaultValues={{}}
         >
           <div className="flex flex-1 flex-wrap gap-2 justify-between items-center">
             <TextInput

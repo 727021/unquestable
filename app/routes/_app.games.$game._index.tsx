@@ -9,21 +9,20 @@ import {
 } from '@prisma/client'
 import { useState } from 'react'
 import Modal from '~/components/Modal'
-import { ValidatedForm, validationError } from 'remix-validated-form'
+import { parseFormData, ValidatedForm, validationError } from '@rvf/react-router'
 import SubmitButton from '~/components/SubmitButton'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
-import { withZod } from '@remix-validated-form/with-zod'
 import SelectInput from '~/components/SelectInput'
 import type { ActionFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
 
-const validator = withZod(
+const schema =
   zfd.formData({
     mission: zfd.numeric(z.number().int().positive()),
     slot: zfd.numeric(z.number().int().positive())
   })
-)
+
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const game = await prisma.game.findUnique({
@@ -58,7 +57,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return redirect('/games')
   }
 
-  const { data, error } = await validator.validate(await request.formData())
+  const { data, error } = await parseFormData(await request.formData(), schema)
 
   if (error) {
     return validationError(error)
@@ -186,7 +185,11 @@ const Game = () => {
                             >
                               <h2 className="m-0">Choose Side Mission</h2>
                               <ValidatedForm
-                                validator={validator}
+                                schema={schema}
+                                defaultValues={{
+                                  slot: slot.id,
+                                  mission: -1
+                                }}
                                 method="POST"
                               >
                                 <input

@@ -1,6 +1,6 @@
+import { parseFormData } from '@rvf/react-router'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { redirect } from 'react-router'
-import { withZod } from '@remix-validated-form/with-zod'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
 import { prisma } from '~/services/db.server'
@@ -12,7 +12,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return redirect(`/games/${params.game}/empire`)
 }
 
-export const itemValidator = withZod(
+export const itemSchema =
   zfd.formData({
     credits: zfd
       .numeric(z.optional(z.number().int().nonnegative()))
@@ -25,10 +25,9 @@ export const itemValidator = withZod(
       z.array(zfd.numeric(z.number().int().positive()))
     )
   })
-)
 
 export const action = async (args: ActionFunctionArgs) => {
-  const { data } = await itemValidator.validate(await args.request.formData())
+  const { data } = await parseFormData(await args.request.formData(), itemSchema)
 
   const { userId } = await requireAuth(args)
   const gameId = parseInt(args.params.game!, 10)

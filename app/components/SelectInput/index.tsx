@@ -6,7 +6,7 @@ import type {
   ReactNode
 } from 'react'
 import { forwardRef } from 'react'
-import { useField } from 'remix-validated-form'
+import { useField } from '@rvf/react-router'
 import RequiredIndicator from '../RequiredIndicator'
 
 type Props = PropsWithChildren<{

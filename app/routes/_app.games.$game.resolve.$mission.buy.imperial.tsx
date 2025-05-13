@@ -4,15 +4,14 @@ import { redirect } from 'react-router'
 import { useLoaderData, useOutletContext } from 'react-router'
 import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
-import { withZod } from '@remix-validated-form/with-zod'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
-import { ValidatedForm, validationError } from 'remix-validated-form'
+import { parseFormData, ValidatedForm, validationError } from '@rvf/react-router'
 import SubmitButton from '~/components/SubmitButton'
 import BuyClassCard from '~/components/BuyClassCard'
 import BuyAgendaCard from '~/components/BuyAgendaCard'
 
-const validator = withZod(
+const schema =
   zfd.formData({
     classCards: zfd.repeatable(z.array(zfd.numeric(z.number().positive()))),
     agendas: zfd
@@ -20,7 +19,6 @@ const validator = withZod(
       .optional()
       .default([])
   })
-)
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const forcedMission = await prisma.gameMission.findFirst({
@@ -69,7 +67,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 }
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { data, error } = await validator.validate(await request.formData())
+  const { data, error } = await parseFormData(await request.formData(), schema)
 
   if (error) {
     return validationError(error)
@@ -183,9 +181,12 @@ const BuyStage = () => {
         Imperial Buy for <em>{data.mission.name}</em>
       </h2>
       <ValidatedForm
-        validator={validator}
+        schema={schema}
         method="POST"
         className="flex flex-col gap-3 w-fit"
+        defaultValues={{
+          classCards: []
+        }}
       >
         <div className="flex flex-wrap gap-3">
           <BuyClassCard

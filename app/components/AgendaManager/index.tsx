@@ -2,8 +2,8 @@ import type { FetcherWithComponents } from 'react-router'
 import { useCallback, useEffect, useReducer, type Reducer } from 'react'
 import type { LoaderData } from '~/routes/_app.games.$game'
 import EditButton from '~/components/EditButton'
-import { ValidatedForm } from 'remix-validated-form'
-import { agendaValidator } from '~/routes/_app.games.$game.empire.agendas'
+import { ValidatedForm } from '@rvf/react-router'
+import { agendaSchema } from '~/routes/_app.games.$game.empire.agendas'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import {
   ArrowDownCircleIcon,
@@ -275,11 +275,17 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
       </div>
       {agendaState.editing ? (
         <ValidatedForm
-          validator={agendaValidator}
+          schema={agendaSchema}
           method="POST"
           className="flex flex-col flex-1"
           fetcher={fetcher}
           action={formAction}
+          defaultValues={{
+            agendasToAdd: [],
+            agendasToDiscard: [],
+            agendasToReshuffle: [],
+            agendasToRestore: []
+          }}
         >
           <div className="flex flex-wrap">
             <div className="flex flex-col flex-1">

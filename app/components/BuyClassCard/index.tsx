@@ -2,7 +2,7 @@ import type { ClassCard } from '@prisma/client'
 import clsx from 'clsx'
 import type { ChangeEvent, ElementRef, ReactNode } from 'react'
 import { useState } from 'react'
-import { useField } from 'remix-validated-form'
+import { useField } from '@rvf/react-router'
 
 type Props = {
   cards: ClassCard[]

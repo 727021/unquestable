@@ -4,9 +4,9 @@ import type { Reducer } from 'react'
 import { useCallback, useEffect, useId, useReducer } from 'react'
 import { useFetcher } from 'react-router'
 import type { ActionData } from '~/routes/_app.games.$game.rebels.class'
-import { classValidator } from '~/routes/_app.games.$game.rebels.class'
+import { classSchema } from '~/routes/_app.games.$game.rebels.class'
 import SubmitButton from '../SubmitButton'
-import { ValidatedForm } from 'remix-validated-form'
+import { ValidatedForm } from '@rvf/react-router'
 
 type CardId = NonNullable<
   GameLoaderData['game']['rebelPlayers'][0]
@@ -121,7 +121,7 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
       </div>
       {classState.editing ? (
         <ValidatedForm
-          validator={classValidator}
+          schema={classSchema}
           method="POST"
           className="flex flex-1 justify-between items-end"
           fetcher={fetcher}

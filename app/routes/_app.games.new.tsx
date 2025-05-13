@@ -7,9 +7,8 @@ import { prisma } from '~/services/db.server'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
 import { PlusIcon, MinusIcon } from '@heroicons/react/24/solid'
-import { withZod } from '@remix-validated-form/with-zod'
-import type { FieldErrors } from 'remix-validated-form'
-import { ValidatedForm, validationError } from 'remix-validated-form'
+import type { FieldErrors } from '@rvf/react-router'
+import { parseFormData, ValidatedForm, validationError } from '@rvf/react-router'
 import TextInput from '~/components/TextInput'
 import SelectInput from '~/components/SelectInput'
 import SubmitButton from '~/components/SubmitButton'
@@ -17,7 +16,7 @@ import GrayMissionsInput from '~/components/GrayMissionsInput'
 import { randomIndex } from '~/utils/randomIndex'
 import { requireAuth } from '~/utils/requireAuth.server'
 
-const validator = withZod(
+const schema =
   zfd.formData({
     gameName: zfd.text(z.string().trim().min(1)),
     campaign: zfd.numeric(z.number().int().positive()),
@@ -54,7 +53,6 @@ const validator = withZod(
         .length(6, 'Choose exactly 6 agenda decks')
     )
   })
-)
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { userId } = await requireAuth(args)
@@ -151,8 +149,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
 export const action = async (args: ActionFunctionArgs) => {
   const { userId } = await requireAuth(args)
 
-  const { data, error } = await validator.validate(
-    await args.request.formData()
+  const { data, error } = await parseFormData(
+    await args.request.formData(), schema
   )
 
   if (error) {
@@ -623,9 +621,18 @@ const NewGame = () => {
     <div className="prose max-w-full">
       <h1 className="m-0">New Game</h1>
       <ValidatedForm
-        validator={validator}
+        schema={schema}
         method="POST"
         className="max-w-full p-3"
+        defaultValues={{
+          gameName: '',
+          campaign: -1,
+          agendaDecks: [],
+          rebels: [],
+          grayMissions: [],
+          greenMissions: [],
+          imperialClass: -1
+        }}
       >
         <h2 className="m-0">Campaign Info</h2>
         <div className="flex flex-row gap-x-2 flex-wrap">

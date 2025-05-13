@@ -1,6 +1,6 @@
+import { parseFormData } from '@rvf/react-router'
 import { redirect } from 'react-router'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
-import { withZod } from '@remix-validated-form/with-zod'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
 import { prisma } from '~/services/db.server'
@@ -12,7 +12,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return redirect(`/games/${params.game}/empire`)
 }
 
-export const villainValidator = withZod(
+export const villainSchema =
   zfd.formData({
     villainsToAdd: zfd.repeatable(
       z.array(zfd.numeric(z.number().int().positive()))
@@ -21,11 +21,11 @@ export const villainValidator = withZod(
       z.array(zfd.numeric(z.number().int().positive()))
     )
   })
-)
+
 
 export const action = async (args: ActionFunctionArgs) => {
-  const { data } = await villainValidator.validate(
-    await args.request.formData()
+  const { data } = await parseFormData(
+    await args.request.formData(), villainSchema
   )
 
   const { userId } = await requireAuth(args)

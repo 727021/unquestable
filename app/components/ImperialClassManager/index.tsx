@@ -3,8 +3,8 @@ import type { LoaderData } from '~/routes/_app.games.$game'
 import EditButton from '~/components/EditButton'
 import type { Reducer } from 'react'
 import { useCallback, useEffect, useReducer } from 'react'
-import { ValidatedForm } from 'remix-validated-form'
-import { classValidator } from '~/routes/_app.games.$game.empire.class'
+import { ValidatedForm } from '@rvf/react-router'
+import { classSchema } from '~/routes/_app.games.$game.empire.class'
 import SubmitButton from '~/components/SubmitButton'
 
 type CardId = NonNullable<
@@ -105,11 +105,15 @@ const ImperialClassManager = ({
       </div>
       {classState.editing ? (
         <ValidatedForm
-          validator={classValidator}
+          schema={classSchema}
           method="POST"
           className="flex flex-1 justify-between items-end"
           fetcher={fetcher}
           action={formAction}
+          defaultValues={{
+            cardsToAdd: [],
+            cardsToRemove: []
+          }}
         >
           <div className="form-control items-start w-fit py-2 self-start">
             {imperialPlayer.class.cards.map((card) => (

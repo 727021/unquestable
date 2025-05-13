@@ -5,8 +5,8 @@ import { useCallback, useEffect, useReducer } from 'react'
 import type { LoaderData as GameLoaderData } from '~/routes/_app.games.$game'
 import type { LoaderData } from '~/routes/_app.games.$game.empire'
 import EditButton from '../EditButton'
-import { ValidatedForm } from 'remix-validated-form'
-import { villainValidator } from '~/routes/_app.games.$game.empire.villains'
+import { ValidatedForm } from '@rvf/react-router'
+import { villainSchema } from '~/routes/_app.games.$game.empire.villains'
 import { XCircleIcon } from '@heroicons/react/24/outline'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import SubmitButton from '../SubmitButton'
@@ -139,11 +139,15 @@ const VillainManager = ({
       </div>
       {villainState.editing ? (
         <ValidatedForm
-          validator={villainValidator}
+          schema={villainSchema}
           method="POST"
           className="flex flex-1 flex-col gap-2"
           fetcher={fetcher}
           action={formAction}
+          defaultValues={{
+            villainsToAdd: [],
+            villainsToRemove: []
+          }}
         >
           <div className="flex flex-col items-start w-fit py-2">
             {villainsToShow.length === 0 ? (

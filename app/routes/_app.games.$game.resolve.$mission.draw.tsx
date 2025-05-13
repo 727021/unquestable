@@ -2,8 +2,7 @@ import { MissionStage, MissionType } from '@prisma/client'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { redirect } from 'react-router'
 import { useLoaderData } from 'react-router'
-import { withZod } from '@remix-validated-form/with-zod'
-import { ValidatedForm, validationError } from 'remix-validated-form'
+import { parseFormData, ValidatedForm, validationError } from '@rvf/react-router'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
 import SideMissionsInput from '~/components/SideMissionsInput'
@@ -11,7 +10,7 @@ import SubmitButton from '~/components/SubmitButton'
 import { prisma } from '~/services/db.server'
 import { randomIndex } from '~/utils/randomIndex'
 
-const validator = withZod(
+const schema =
   zfd.formData({
     missions: zfd
       .text(z.literal('RANDOM'))
@@ -21,7 +20,6 @@ const validator = withZod(
         )
       )
   })
-)
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const mission = await prisma.gameMission.findUnique({
@@ -91,7 +89,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return redirect(`/games/${params.game}/resolve/${mission.id}/buy/rebel`)
   }
 
-  const { data, error } = await validator.validate(await request.formData())
+  const { data, error } = await parseFormData(await request.formData(), schema)
 
   if (error) {
     return validationError(error)
@@ -213,7 +211,13 @@ const ChooseStage = () => {
   return (
     <>
       <h2 className="m-0">Draw Side Missions</h2>
-      <ValidatedForm validator={validator} method="POST">
+      <ValidatedForm
+        schema={schema}
+        method="POST"
+        defaultValues={{
+          missions: []
+        }}
+      >
         <SideMissionsInput name="missions" count={data.missionsNeeded}>
           {data.sideMissionDeck.map((mission) => (
             <option key={mission.id} value={mission.id}>

@@ -6,9 +6,9 @@ import type { Reducer } from 'react'
 import { useCallback, useEffect, useId, useReducer } from 'react'
 import { useFetcher } from 'react-router'
 import type { ActionData } from '~/routes/_app.games.$game.rebels.allies'
-import { allyValidator } from '~/routes/_app.games.$game.rebels.allies'
+import { allySchema } from '~/routes/_app.games.$game.rebels.allies'
 import SubmitButton from '../SubmitButton'
-import { ValidatedForm } from 'remix-validated-form'
+import { ValidatedForm } from '@rvf/react-router'
 import { XCircleIcon } from '@heroicons/react/24/outline'
 import { PlusIcon } from '@heroicons/react/24/solid'
 
@@ -151,12 +151,16 @@ const AllyManager = ({ allies, allAllies, formAction }: Props) => {
       </div>
       {allyState.editing ? (
         <ValidatedForm
-          validator={allyValidator}
+          schema={allySchema}
           method="POST"
           className="flex flex-1 flex-col gap-2"
           fetcher={fetcher}
           action={formAction}
           id={formId}
+          defaultValues={{
+            alliesToAdd: [],
+            alliesToRemove: []
+          }}
         >
           <div className="flex flex-col items-start w-fit">
             {!alliesToShow.length ? (
