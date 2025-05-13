@@ -1,6 +1,6 @@
 import { MissionStage } from '@prisma/client'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
-import { json, redirect } from '@vercel/remix'
+import { redirect } from '@vercel/remix'
 import { useLoaderData, useOutletContext } from '@remix-run/react'
 import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
@@ -123,7 +123,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }
   })
 
-  return json({ mission, items })
+  return { mission, items }
 }
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {

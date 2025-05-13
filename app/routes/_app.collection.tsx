@@ -1,5 +1,4 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
-import { json } from '@vercel/remix'
 import { useLoaderData } from '@remix-run/react'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
@@ -28,7 +27,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     })
   ).map(({ id }) => id)
 
-  return json({ allExpansions, owned })
+  return { allExpansions, owned }
 }
 
 const addRemoveSchema = zfd.formData({
@@ -70,9 +69,9 @@ export const action = async (args: ActionFunctionArgs) => {
     }
   })
 
-  return json({
+  return {
     owned: action === 'add'
-  })
+  }
 }
 
 const Collection = () => {

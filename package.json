@@ -27,30 +27,29 @@
     "@clerk/remix": "^4.5.20",
     "@heroicons/react": "^2.1.5",
     "@prisma/client": "^5.19.1",
-    "@remix-run/node": "^2.12.0",
-    "@remix-run/react": "^2.12.0",
-    "@remix-run/serve": "^2.12.0",
+    "@remix-run/node": "^2.16.6",
+    "@remix-run/react": "^2.16.6",
+    "@remix-run/serve": "^2.16.6",
     "@remix-validated-form/with-zod": "^2.0.7",
     "clsx": "^2.1.1",
     "isbot": "^3.7.1-deprecated",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "remix-auth": "^3.7.0",
-    "remix-auth-discord": "^1.4.0",
     "remix-validated-form": "^5.1.5",
     "svix": "^1.64.1",
     "zod": "^3.23.8",
     "zod-form-data": "^2.0.2"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.12.0",
-    "@remix-run/eslint-config": "^2.12.0",
+    "@remix-run/dev": "^2.16.6",
+    "@remix-run/fs-routes": "^2.16.6",
+    "@remix-run/route-config": "^2.16.6",
     "@tailwindcss/forms": "^0.5.9",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.7",
     "@types/react-dom": "^18.3.0",
-    "@vercel/remix": "^2.12.0",
+    "@vercel/remix": "^2.15.3",
     "daisyui": "^4.12.10",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
@@ -61,5 +60,12 @@
     "vercel": "^37.4.2",
     "vite": "^5.4.6",
     "vite-tsconfig-paths": "^5.0.1"
+  },
+  "overrides": {
+    "@vercel/remix": {
+      "@remix-run/dev": "$@remix-run/dev",
+      "@remix-run/node": "$@remix-run/node",
+      "@remix-run/server-runtime": "^2.16.6"
+    }
   }
 }

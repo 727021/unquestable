@@ -1,6 +1,6 @@
 import { MissionStage, MissionType } from '@prisma/client'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
+import { redirect } from '@remix-run/node'
 import { useLoaderData } from '@remix-run/react'
 import { withZod } from '@remix-validated-form/with-zod'
 import { ValidatedForm, validationError } from 'remix-validated-form'
@@ -198,11 +198,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     return redirect(`/games/${params.game}/resolve/${mission.id}/buy/rebel`)
   }
 
-  return json({
+  return {
     activeSideMissions,
     sideMissionDeck: game.sideMissionDeck,
     missionsNeeded
-  })
+  }
 }
 
 type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>

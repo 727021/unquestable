@@ -1,4 +1,4 @@
-import { json, type LoaderFunctionArgs } from '@vercel/remix'
+import type { LoaderFunctionArgs } from '@vercel/remix'
 import { Link, useLoaderData } from '@remix-run/react'
 import { prisma } from '~/services/db.server'
 import { requireAuth } from '~/utils/requireAuth.server'
@@ -23,7 +23,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }
   })
 
-  return json({ games })
+  return { games }
 }
 
 const Games = () => {

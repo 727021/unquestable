@@ -1,4 +1,5 @@
-import { json, redirect, type LoaderFunctionArgs } from '@vercel/remix'
+import type { LoaderFunctionArgs } from '@vercel/remix'
+import { redirect } from '@vercel/remix'
 import {
   Link,
   Outlet,
@@ -184,7 +185,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     return redirect('/games')
   }
 
-  return json({ game })
+  return { game }
 }
 
 export type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>

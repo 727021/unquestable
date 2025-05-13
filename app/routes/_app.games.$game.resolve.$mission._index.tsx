@@ -1,9 +1,4 @@
-import {
-  json,
-  redirect,
-  useLoaderData,
-  useOutletContext
-} from '@remix-run/react'
+import { redirect, useLoaderData, useOutletContext } from '@remix-run/react'
 import type { LoaderData } from './_app.games.$game'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
 import { prisma } from '~/services/db.server'
@@ -149,7 +144,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     return redirect(`/games/${params.game}`)
   }
 
-  return json(mission)
+  return mission
 }
 
 export const action = async (args: ActionFunctionArgs) => {

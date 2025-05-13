@@ -1,5 +1,4 @@
 import {
-  json,
   useFetcher,
   useFormAction,
   useLoaderData,
@@ -74,7 +73,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }
   })
 
-  return json({ rewards, troops })
+  return { rewards, troops }
 }
 
 export type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>

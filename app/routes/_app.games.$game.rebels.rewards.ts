@@ -31,7 +31,7 @@ export const action = async (args: ActionFunctionArgs) => {
   const gameId = parseInt(args.params.game!, 10)
 
   if (!data) {
-    return json({})
+    return {}
   }
 
   const player = await prisma.rebelPlayer.findFirst({
@@ -48,7 +48,7 @@ export const action = async (args: ActionFunctionArgs) => {
   })
 
   if (!player) {
-    return json({})
+    return {}
   }
 
   await prisma.rebelPlayer.update({

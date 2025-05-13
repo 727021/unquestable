@@ -51,7 +51,7 @@ export const action = async (args: ActionFunctionArgs) => {
   })
 
   if (!player || !data) {
-    return json({})
+    return {}
   }
 
   await prisma.imperialPlayer.update({

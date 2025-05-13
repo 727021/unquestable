@@ -40,7 +40,7 @@ export const action = async (args: ActionFunctionArgs) => {
   })
 
   if (!game || !data) {
-    return json({})
+    return {}
   }
 
   await prisma.game.update({

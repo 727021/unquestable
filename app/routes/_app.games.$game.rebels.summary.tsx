@@ -33,7 +33,7 @@ export const action = async (args: ActionFunctionArgs) => {
   )
 
   if (!data) {
-    return json({})
+    return {}
   }
 
   const { userId } = await requireAuth(args)
@@ -53,7 +53,7 @@ export const action = async (args: ActionFunctionArgs) => {
   })
 
   if (!player) {
-    return json({})
+    return {}
   }
 
   await prisma.rebelPlayer.update({

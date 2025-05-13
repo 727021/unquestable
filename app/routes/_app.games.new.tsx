@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
-import { json, redirect } from '@vercel/remix'
+import { redirect } from '@vercel/remix'
 import { useLoaderData } from '@remix-run/react'
 import type { Dispatch, SetStateAction } from 'react'
 import { useCallback, useMemo, useRef, useState } from 'react'
@@ -139,13 +139,13 @@ export const loader = async (args: LoaderFunctionArgs) => {
     .map((expansion) => expansion.classes)
     .flat()
 
-  return json({
+  return {
     campaigns,
     heroes,
     agendas,
     sideMissions,
     imperialClasses
-  })
+  }
 }
 
 export const action = async (args: ActionFunctionArgs) => {
