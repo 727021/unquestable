@@ -1,4 +1,4 @@
-import { Outlet } from '@remix-run/react'
+import { Outlet } from 'react-router'
 import AppNav from '~/components/AppNav'
 import Footer from '~/components/Footer'
 

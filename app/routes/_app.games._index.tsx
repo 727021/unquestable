@@ -1,5 +1,5 @@
-import type { LoaderFunctionArgs } from '@vercel/remix'
-import { Link, useLoaderData } from '@remix-run/react'
+import type { LoaderFunctionArgs } from 'react-router'
+import { Link, useLoaderData } from 'react-router'
 import { prisma } from '~/services/db.server'
 import { requireAuth } from '~/utils/requireAuth.server'
 

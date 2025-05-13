@@ -1,4 +1,4 @@
-import type { ActionFunction } from '@remix-run/node'
+import type { ActionFunction } from 'react-router'
 import { Webhook } from 'svix'
 import { prisma } from '~/services/db.server'
 

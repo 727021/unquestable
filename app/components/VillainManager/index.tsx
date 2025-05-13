@@ -1,4 +1,4 @@
-import type { FetcherWithComponents } from '@remix-run/react'
+import type { FetcherWithComponents } from 'react-router'
 import clsx from 'clsx'
 import type { Reducer } from 'react'
 import { useCallback, useEffect, useReducer } from 'react'

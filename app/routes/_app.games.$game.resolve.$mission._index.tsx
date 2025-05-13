@@ -1,6 +1,6 @@
-import { redirect, useLoaderData, useOutletContext } from '@remix-run/react'
+import { redirect, useLoaderData, useOutletContext } from 'react-router'
 import type { LoaderData } from './_app.games.$game'
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
 import type { ChangeEvent, ElementRef } from 'react'
 import { useEffect, useReducer, useState } from 'react'

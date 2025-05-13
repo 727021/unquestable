@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
-import { useLoaderData } from '@remix-run/react'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
+import { useLoaderData } from 'react-router'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
 import CollectionItem from '~/components/CollectionItem'

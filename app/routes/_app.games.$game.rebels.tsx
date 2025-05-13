@@ -1,14 +1,10 @@
-import {
-  useFormAction,
-  useLoaderData,
-  useOutletContext
-} from '@remix-run/react'
+import { useFormAction, useLoaderData, useOutletContext } from 'react-router'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
 import RebelSummaryManager from '~/components/RebelSummaryManager'
 import RebelClassManager from '~/components/RebelClassManager'
 import RebelRewardManager from '~/components/RebelRewardManager'
 import AllyManager from '~/components/AllyManager'
-import type { LoaderFunctionArgs } from '@remix-run/node'
+import type { LoaderFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
 import { Side } from '@prisma/client'
 import ItemManager from '~/components/ItemManager'

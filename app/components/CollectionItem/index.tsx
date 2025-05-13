@@ -1,5 +1,5 @@
 import type { BoxArt, Expansion } from '@prisma/client'
-import { useFetcher } from '@remix-run/react'
+import { useFetcher } from 'react-router'
 import clsx from 'clsx'
 
 import coreWebp from '/img/expansion/core.webp?url'

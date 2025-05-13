@@ -1,5 +1,5 @@
-import { json, redirect } from '@vercel/remix'
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
+import { redirect } from 'react-router'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { withZod } from '@remix-validated-form/with-zod'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
@@ -57,5 +57,5 @@ export const action = async (args: ActionFunctionArgs) => {
     }
   })
 
-  return json<ActionData>({ success: Date.now() })
+  return { success: Date.now() } satisfies ActionData
 }

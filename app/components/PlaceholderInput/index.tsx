@@ -3,7 +3,7 @@ import RequiredIndicator from '~/components/RequiredIndicator'
 import clsx from 'clsx'
 import { useState, type ChangeEventHandler, type ElementRef } from 'react'
 import type { loader as resolveLoader } from '~/routes/_app.games.$game.resolve.$mission._index'
-import type { useLoaderData } from '@remix-run/react'
+import type { useLoaderData } from 'react-router'
 import type { JsonObject } from '@prisma/client/runtime/library'
 
 type Placeholder = ReturnType<

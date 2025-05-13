@@ -4,8 +4,8 @@ import {
   SignInButton,
   UserButton,
   useUser
-} from '@clerk/remix'
-import { NavLink } from '@remix-run/react'
+} from '@clerk/react-router'
+import { NavLink } from 'react-router'
 import ThemePicker from '~/components/ThemePicker'
 
 const AppNav = ({ minimal = false }) => {

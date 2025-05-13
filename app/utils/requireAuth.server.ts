@@ -1,6 +1,6 @@
-import { getAuth } from '@clerk/remix/ssr.server'
-import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node'
-import { redirect } from '@remix-run/node'
+import { getAuth } from '@clerk/react-router/ssr.server'
+import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
 
 export const requireAuth = async (
   args: LoaderFunctionArgs | ActionFunctionArgs

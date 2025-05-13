@@ -1,4 +1,4 @@
-import type { FetcherWithComponents } from '@remix-run/react'
+import type { FetcherWithComponents } from 'react-router'
 import type { LoaderData } from '~/routes/_app.games.$game'
 import EditButton from '~/components/EditButton'
 import type { Reducer } from 'react'

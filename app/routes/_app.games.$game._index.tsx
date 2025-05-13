@@ -1,4 +1,4 @@
-import { Link, redirect, useOutletContext, useParams } from '@remix-run/react'
+import { Link, redirect, useOutletContext, useParams } from 'react-router'
 import clsx from 'clsx'
 import type { LoaderData } from './_app.games.$game'
 import {
@@ -15,7 +15,7 @@ import { zfd } from 'zod-form-data'
 import { z } from 'zod'
 import { withZod } from '@remix-validated-form/with-zod'
 import SelectInput from '~/components/SelectInput'
-import type { ActionFunctionArgs } from '@vercel/remix'
+import type { ActionFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
 
 const validator = withZod(

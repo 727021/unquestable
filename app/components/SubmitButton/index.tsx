@@ -1,4 +1,4 @@
-import type { Fetcher } from '@remix-run/react'
+import type { Fetcher } from 'react-router'
 import clsx from 'clsx'
 import type { ComponentProps, PropsWithChildren } from 'react'
 import { useIsSubmitting } from 'remix-validated-form'

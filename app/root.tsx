@@ -1,16 +1,17 @@
-import type { LinksFunction, LoaderFunction } from '@vercel/remix'
+import type { LinksFunction, LoaderFunction, Route } from 'react-router'
 import {
   Links,
   Meta,
   Outlet,
   Scripts,
-  ScrollRestoration
-} from '@remix-run/react'
-import { rootAuthLoader } from '@clerk/remix/ssr.server'
-
+  ScrollRestoration,
+  useLoaderData
+} from 'react-router'
+import { rootAuthLoader } from '@clerk/react-router/ssr.server'
 import stylesheet from '~/tailwind.css?url'
 import { useTheme } from './context/theme-context'
-import { ClerkApp } from '@clerk/remix'
+import { ClerkProvider } from '@clerk/react-router'
+import { Analytics } from '@vercel/analytics/react'
 
 export const loader: LoaderFunction = (args) => rootAuthLoader(args)
 
@@ -33,13 +34,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
+        <Analytics />
       </body>
     </html>
   )
 }
 
-function App() {
-  return <Outlet />
-}
+export default function App() {
+  const loaderData = useLoaderData()
 
-export default ClerkApp(App)
+  return (
+    <ClerkProvider loaderData={loaderData}>
+      <Outlet />
+    </ClerkProvider>
+  )
+}

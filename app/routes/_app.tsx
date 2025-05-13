@@ -1,8 +1,8 @@
-import type { LoaderFunction } from '@vercel/remix'
-import { Outlet } from '@remix-run/react'
+import type { LoaderFunction } from 'react-router'
+import { Outlet } from 'react-router'
 import Footer from '~/components/Footer'
 import AppNav from '~/components/AppNav'
-import { SignedIn } from '@clerk/remix'
+import { SignedIn } from '@clerk/react-router'
 import { requireAuth } from '~/utils/requireAuth.server'
 
 export const loader: LoaderFunction = async (args) => {

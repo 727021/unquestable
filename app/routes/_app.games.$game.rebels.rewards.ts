@@ -1,5 +1,5 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
 import { withZod } from '@remix-validated-form/with-zod'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
@@ -61,5 +61,5 @@ export const action = async (args: ActionFunctionArgs) => {
     }
   })
 
-  return json<ActionData>({ success: Date.now() })
+  return { success: Date.now() } satisfies ActionData
 }
