@@ -1,18 +1,12 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { redirect } from 'react-router'
 import { useLoaderData } from 'react-router'
-import type { Dispatch, SetStateAction } from 'react'
-import { useCallback, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { prisma } from '~/services/db.server'
-import { zfd } from 'zod-form-data'
 import { z } from 'zod'
 import { PlusIcon, MinusIcon } from '@heroicons/react/24/solid'
 import type { FieldErrors } from '@rvf/react-router'
-import {
-  parseFormData,
-  useForm,
-  validationError
-} from '@rvf/react-router'
+import { parseFormData, useForm, validationError } from '@rvf/react-router'
 import TextInput from '~/components/TextInput'
 import SelectInput from '~/components/SelectInput'
 import SubmitButton from '~/components/SubmitButton'
@@ -20,41 +14,33 @@ import GrayMissionsInput from '~/components/GrayMissionsInput'
 import { randomIndex } from '~/utils/randomIndex'
 import { requireAuth } from '~/utils/requireAuth.server'
 
-const schema = zfd.formData({
-  gameName: zfd.text(z.string().trim().min(1)),
-  campaign: zfd.numeric(z.number().int().positive()),
-  rebels: zfd.repeatable(
-    z
-      .array(
-        z.object({
-          name: zfd.text(z.string().trim().optional()),
-          hero: zfd.numeric(z.number().int().positive())
-        })
-      )
-      .min(1)
-      .max(4)
-  ),
-  greenMissions: zfd.repeatable(
-    z
-      .array(zfd.numeric(z.number().int().positive()))
-      .length(4, 'Choose exactly 4 green side missions')
-  ),
-  grayMissions: zfd
-    .text(z.literal('RANDOM'))
+const schema = z.object({
+  gameName: z.string().trim().min(1, 'Required'),
+  campaign: z.coerce.number().int().positive('Required'),
+  rebels: z
+    .array(
+      z.object({
+        name: z.string().trim().optional(),
+        hero: z.coerce.number().int().positive('Required')
+      })
+    )
+    .min(1)
+    .max(4),
+  greenMissions: z
+    .array(z.coerce.number().int().positive())
+    .length(4, 'Choose exactly 4 green side missions'),
+  grayMissions: z
+    .literal('RANDOM')
     .or(
-      zfd.repeatable(
-        z
-          .array(zfd.numeric(z.number().int().positive()))
-          .length(4, 'Choose exactly 4 gray side missions')
-      )
+      z
+        .array(z.coerce.number().int().positive())
+        .length(4, 'Choose exactly 4 gray side missions')
     ),
-  imperialName: zfd.text(z.string().trim().optional()),
-  imperialClass: zfd.numeric(z.number().int().positive()),
-  agendaDecks: zfd.repeatable(
-    z
-      .array(zfd.numeric(z.number().int().positive()))
-      .length(6, 'Choose exactly 6 agenda decks')
-  )
+  imperialName: z.string().trim().optional(),
+  imperialClass: z.coerce.number().int().positive('Required'),
+  agendaDecks: z
+    .array(z.coerce.number().int().positive())
+    .length(6, 'Choose exactly 6 agenda decks')
 })
 
 export const loader = async (args: LoaderFunctionArgs) => {
@@ -561,48 +547,56 @@ const NewGame = () => {
   const { campaigns, heroes, sideMissions, imperialClasses, agendas } =
     useLoaderData<typeof loader>()
 
+  const formId = useId()
+  const form = useForm({
+    submitSource: 'state',
+    id: formId,
+    schema,
+    action: '',
+    method: 'POST',
+    defaultValues: {
+      gameName: '',
+      campaign: -1,
+      rebels: [{ hero: -1 }],
+      grayMissions: 'RANDOM',
+      greenMissions: [],
+      agendaDecks: [],
+      imperialClass: -1
+    }
+  })
+
   const [gameName, setGameName] = useState('')
-  const [campaign, setCampaign] = useState(-1)
-  const [rebels, setRebels] = useState([-1])
   const [imperialClass, setImperialClass] = useState(-1)
 
   const campaignRef = useRef<HTMLSelectElement>(null)
 
   const addHero = () => {
-    setRebels((prev) => {
-      if (prev.length >= 4) {
-        return prev
-      }
-      return [...prev, -1]
-    })
+    const prev = form.value('rebels')
+    if (prev.length >= 4) {
+      return
+    }
+    form.setValue('rebels', [...prev, { hero: -1 }])
   }
   const removeHero = () => {
-    setRebels((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev))
+    const prev = form.value('rebels')
+    if (prev.length <= 1) {
+      return
+    }
+    form.setValue('rebels', prev.slice(0, -1))
   }
 
-  const setAtIndex = (
-    i: number,
-    val: number,
-    setter: Dispatch<SetStateAction<number[]>>
-  ) =>
-    setter((prev) => {
-      if (!prev) prev = []
-      prev[i] = val
-      return [...prev]
-    })
-
   const chosenCampaign = useMemo(() => {
-    return campaigns.find((c) => c.id === campaign)
-  }, [campaign, campaigns])
+    return campaigns.find((c) => c.id === +form.value('campaign'))
+  }, [campaigns, form.value('campaign')])
 
-  const availableHeroes = useCallback(
-    (i: number) => {
-      return heroes.filter(
-        (hero) => !rebels.includes(hero.id) || rebels[i] === hero.id
-      )
-    },
-    [heroes, rebels]
-  )
+  const availableHeroes = (i: number) => {
+    const result = heroes.filter(
+      (hero) =>
+        !form.value('rebels').some((rebel) => +rebel.hero === hero.id) ||
+        +form.value(`rebels[${i}].hero`) === hero.id
+    )
+    return result
+  }
 
   const availableMissions = useMemo(() => {
     const green: typeof sideMissions = []
@@ -621,24 +615,12 @@ const NewGame = () => {
     return { green, gray }
   }, [chosenCampaign, sideMissions])
 
-  const formId = useId()
-  const form = useForm({
-    id: formId,
-    schema,
-    action: '',
-    method: 'POST',
-    defaultValues: {
-      gameName: '',
-      campaign: -1,
-      rebels: [],
-      grayMissions: [],
-      greenMissions: [],
-      agendaDecks: [],
-      imperialClass: -1
+  useEffect(() => {
+    if (chosenCampaign) {
+      form.resetField('greenMissions')
+      form.resetField('grayMissions')
     }
-  })
-
-  console.log(form.formState)
+  }, [chosenCampaign])
 
   return (
     <div className="prose max-w-full">
@@ -658,16 +640,12 @@ const NewGame = () => {
             formApi={form}
             name="campaign"
             label="Campaign"
-            onChange={(e) => setCampaign(parseInt(e.target.value, 10))}
-            value={campaign}
             hintLeft={chosenCampaign?.startingMission.name}
             hintRight={chosenCampaign?.period}
             required
             ref={campaignRef}
           >
-            <option disabled value={-1}>
-              Choose a Campaign
-            </option>
+            <option value={-1}>Choose a Campaign</option>
             {campaigns.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -680,7 +658,7 @@ const NewGame = () => {
           <button
             className="btn btn-square btn-sm btn-outline btn-neutral"
             type="button"
-            disabled={rebels.length <= 1}
+            disabled={form.value('rebels').length <= 1}
             onClick={removeHero}
           >
             <MinusIcon />
@@ -688,13 +666,13 @@ const NewGame = () => {
           <button
             className="btn btn-square btn-sm btn-outline btn-neutral"
             type="button"
-            disabled={rebels.length >= 4}
+            disabled={form.value('rebels').length >= 4}
             onClick={addHero}
           >
             <PlusIcon />
           </button>
         </div>
-        {rebels.map((rebel, i) => (
+        {form.value('rebels').map((rebel, i) => (
           <div key={i} className="flex gap-x-2 flex-wrap">
             <TextInput
               formApi={form}
@@ -705,19 +683,14 @@ const NewGame = () => {
               formApi={form}
               name={`rebels[${i}].hero`}
               label={`Rebel ${i + 1} Hero`}
-              onChange={(e) =>
-                setAtIndex(i, parseInt(e.target.value, 10), setRebels)
-              }
-              value={rebels[i]}
               required
-              hintLeft={heroes.find((h) => h.id === rebel)?.tagline}
+              hintLeft={heroes.find((h) => h.id === +rebel.hero)?.tagline}
               hintRight={
-                heroes.find((h) => h.id === rebel)?.class?.cards?.[0]?.name
+                heroes.find((h) => h.id === +rebel.hero)?.class?.cards?.[0]
+                  ?.name
               }
             >
-              <option disabled value={-1}>
-                Choose a Hero
-              </option>
+              <option value={-1}>Choose a Hero</option>
               {availableHeroes(i).map((h) => (
                 <option key={h.id} value={h.id}>
                   {h.name}
@@ -762,7 +735,11 @@ const NewGame = () => {
         <h2 className="m-0">Imperial Player</h2>
         <div className="flex gap-x-2 flex-wrap">
           <div className="flex flex-col gap-x-2 max-w-full">
-            <TextInput formApi={form} name="imperialName" label="Imperial Name" />
+            <TextInput
+              formApi={form}
+              name="imperialName"
+              label="Imperial Name"
+            />
             <SelectInput
               formApi={form}
               name="imperialClass"
@@ -775,9 +752,7 @@ const NewGame = () => {
                   ?.name
               }
             >
-              <option disabled value={-1}>
-                Choose a Class
-              </option>
+              <option value={-1}>Choose a Class</option>
               {imperialClasses.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}

@@ -1,6 +1,5 @@
 import clsx from 'clsx'
 import type { ChangeEvent, PropsWithChildren } from 'react'
-import { useState } from 'react'
 import type { FormApi } from '@rvf/react-router'
 import RequiredIndicator from '../RequiredIndicator'
 
@@ -10,13 +9,12 @@ type Props = PropsWithChildren<{
 
 const GrayMissionsInput = ({ children, formApi }: Props) => {
   const name = 'grayMissions'
-  const error = formApi.error(name)
-
-  const [random, setRandom] = useState(true)
+  const field = formApi.field(name)
+  const error = field.error()
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setRandom(e.target.checked)
-    formApi.clearError(name)
+    field.setValue(e.target.checked ? 'RANDOM' : [])
+    field.clearError()
   }
 
   return (
@@ -33,7 +31,7 @@ const GrayMissionsInput = ({ children, formApi }: Props) => {
               <input
                 type="checkbox"
                 className="checkbox checkbox-sm"
-                checked={random}
+                checked={field.value() === 'RANDOM'}
                 onChange={onChange}
               />
             </label>
@@ -45,7 +43,7 @@ const GrayMissionsInput = ({ children, formApi }: Props) => {
         {...formApi.getInputProps(name, {
           id: 'grayMissions',
           multiple: true,
-          disabled: random
+          disabled: field.value() === 'RANDOM'
         })}
       >
         {children}
@@ -57,14 +55,7 @@ const GrayMissionsInput = ({ children, formApi }: Props) => {
           </>
         )}
       </div>
-      {random && (
-        <input
-          {...formApi.getInputProps(name, {
-            type: 'hidden',
-            value: 'RANDOM'
-          })}
-        />
-      )}
+      {field.value() === 'RANDOM' && <input {...field.getHiddenInputProps()} />}
     </label>
   )
 }
