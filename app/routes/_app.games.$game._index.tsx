@@ -15,15 +15,14 @@ import {
   validationError
 } from '@rvf/react-router'
 import SubmitButton from '~/components/SubmitButton'
-import { zfd } from 'zod-form-data'
 import { z } from 'zod'
 import SelectInput from '~/components/SelectInput'
 import type { ActionFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
 
-const schema = zfd.formData({
-  mission: zfd.numeric(z.number().int().positive()),
-  slot: zfd.numeric(z.number().int().positive())
+const schema = z.object({
+  mission: z.coerce.number().int().positive(),
+  slot: z.coerce.number().int().positive()
 })
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {

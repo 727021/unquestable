@@ -2,7 +2,6 @@ import { parseFormData } from '@rvf/react-router'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { redirect } from 'react-router'
 import { z } from 'zod'
-import { zfd } from 'zod-form-data'
 import { prisma } from '~/services/db.server'
 import { requireAuth } from '~/utils/requireAuth.server'
 
@@ -12,19 +11,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return redirect(`/games/${params.game}/empire`)
 }
 
-export const rewardSchema =
-  zfd.formData({
-    id: zfd.numeric(z.number().int().positive()),
-    rewardsToAdd: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    rewardsToRemove: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    )
-  })
+export const rewardSchema = z.object({
+  id: z.coerce.number().int().positive(),
+  rewardsToAdd: z.array(z.coerce.number().int().positive()),
+  rewardsToRemove: z.array(z.coerce.number().int().positive())
+})
 
 export const action = async (args: ActionFunctionArgs) => {
-  const { data } = await parseFormData(await args.request.formData(), rewardSchema)
+  const { data } = await parseFormData(
+    await args.request.formData(),
+    rewardSchema
+  )
 
   const { userId } = await requireAuth(args)
   const gameId = parseInt(args.params.game!, 10)

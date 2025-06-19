@@ -4,7 +4,6 @@ import { redirect } from 'react-router'
 import { useLoaderData, useOutletContext } from 'react-router'
 import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
-import { zfd } from 'zod-form-data'
 import { z } from 'zod'
 import { parseFormData, useForm, validationError } from '@rvf/react-router'
 import SubmitButton from '~/components/SubmitButton'
@@ -12,14 +11,10 @@ import BuyClassCard from '~/components/BuyClassCard'
 import BuyAgendaCard from '~/components/BuyAgendaCard'
 import { useId } from 'react'
 
-const schema =
-  zfd.formData({
-    classCards: zfd.repeatable(z.array(zfd.numeric(z.number().positive()))),
-    agendas: zfd
-      .repeatable(z.array(zfd.numeric(z.number().positive())))
-      .optional()
-      .default([])
-  })
+const schema = z.object({
+  classCards: z.array(z.coerce.number().positive()),
+  agendas: z.array(z.coerce.number().positive()).optional().default([])
+})
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const forcedMission = await prisma.gameMission.findFirst({
@@ -191,10 +186,7 @@ const BuyStage = () => {
       <h2 className="m-0">
         Imperial Buy for <em>{data.mission.name}</em>
       </h2>
-      <form
-        {...form.getFormProps()}
-        className="flex flex-col gap-3 w-fit"
-      >
+      <form {...form.getFormProps()} className="flex flex-col gap-3 w-fit">
         {form.renderFormIdInput()}
         <div className="flex flex-wrap gap-3">
           <BuyClassCard
@@ -212,7 +204,9 @@ const BuyStage = () => {
             label="Agenda Cards"
           />
         </div>
-        <SubmitButton formApi={form} className="w-fit">Buy</SubmitButton>
+        <SubmitButton formApi={form} className="w-fit">
+          Buy
+        </SubmitButton>
       </form>
     </>
   )

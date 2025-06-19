@@ -5,7 +5,6 @@ import { useLoaderData, useOutletContext } from 'react-router'
 import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
 import { parseFormData, useForm, validationError } from '@rvf/react-router'
-import { zfd } from 'zod-form-data'
 import BuyClassCard from '~/components/BuyClassCard'
 import { Fragment, useId } from 'react'
 import SubmitButton from '~/components/SubmitButton'
@@ -14,30 +13,21 @@ import BuyItemCard from '~/components/BuyItemCard'
 import { getSellPrice } from '~/utils/sellPrice'
 import { requireAuth } from '~/utils/requireAuth.server'
 
-const schema =
-  zfd.formData({
-    rebels: zfd.repeatable(
-      z.array(
-        z.object({
-          id: zfd.numeric(z.number().positive()),
-          cards: zfd.repeatable(z.array(zfd.numeric(z.number().positive())))
-        })
-      )
-    ),
-    items: z
-      .object({
-        bought: zfd
-          .repeatableOfType(zfd.numeric(z.number().positive()))
-          .optional()
-          .default([]),
-        sold: zfd
-          .repeatableOfType(zfd.numeric(z.number().positive()))
-          .optional()
-          .default([])
-      })
-      .optional()
-      .default({})
-  })
+const schema = z.object({
+  rebels: z.array(
+    z.object({
+      id: z.coerce.number().positive(),
+      cards: z.array(z.coerce.number().positive())
+    })
+  ),
+  items: z
+    .object({
+      bought: z.array(z.coerce.number().positive()).optional().default([]),
+      sold: z.array(z.coerce.number().positive()).optional().default([])
+    })
+    .optional()
+    .default({})
+})
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { userId } = await requireAuth(args)
@@ -227,10 +217,7 @@ const BuyStage = () => {
       <h2 className="m-0">
         Rebel Buy for <em>{data.mission.mission.name}</em>
       </h2>
-      <form
-        {...form.getFormProps()}
-        className="flex flex-col gap-3 w-fit"
-      >
+      <form {...form.getFormProps()} className="flex flex-col gap-3 w-fit">
         {form.renderFormIdInput()}
         <div className="flex flex-wrap gap-3">
           {ctx.game.rebelPlayers.map((rebel, i) => (
@@ -255,7 +242,9 @@ const BuyStage = () => {
           owned={ctx.game.items}
           cards={data.items}
         />
-        <SubmitButton formApi={form} className="w-fit">Buy</SubmitButton>
+        <SubmitButton formApi={form} className="w-fit">
+          Buy
+        </SubmitButton>
       </form>
     </>
   )

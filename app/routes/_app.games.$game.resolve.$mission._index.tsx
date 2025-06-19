@@ -10,7 +10,6 @@ import {
   MissionType,
   Side
 } from '@prisma/client'
-import { zfd } from 'zod-form-data'
 import { z } from 'zod'
 import type { FieldErrors } from '@rvf/react-router'
 import { validationError, parseFormData, useForm } from '@rvf/react-router'
@@ -22,23 +21,20 @@ import SubmitButton from '~/components/SubmitButton'
 import SelectInput from '~/components/SelectInput'
 import { requireAuth } from '~/utils/requireAuth.server'
 
-const schema =
-  zfd.formData({
-    win: zfd.text(z.enum([Side.IMPERIAL, Side.REBEL])),
-    crates: zfd.numeric(z.number().int().nonnegative()),
-    placeholders: zfd
-      .repeatable(
-        z.array(
-          z.object({
-            id: zfd.numeric(z.number().int().positive()),
-            name: zfd.text(z.string().min(1)),
-            value: zfd.text(z.string().min(1))
-          })
-        )
-      )
-      .optional(),
-    rewardedRebel: zfd.numeric(z.number().int().positive()).optional()
-  })
+const schema = z.object({
+  win: z.enum([Side.IMPERIAL, Side.REBEL]),
+  crates: z.coerce.number().int().nonnegative(),
+  placeholders: z
+    .array(
+      z.object({
+        id: z.coerce.number().int().positive(),
+        name: z.string().min(1),
+        value: z.string().min(1)
+      })
+    )
+    .optional(),
+  rewardedRebel: z.coerce.number().int().positive().optional()
+})
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const mission = await prisma.gameMission.findUnique({
@@ -763,10 +759,7 @@ const Resolve = () => {
         Resolving <em>{data.mission.name}</em>
       </h2>
       <div className="flex w-full flex-wrap max-w-full">
-        <form
-          {...form.getFormProps()}
-          className="flex-1 whitespace-nowrap"
-        >
+        <form {...form.getFormProps()} className="flex-1 whitespace-nowrap">
           <ButtonBar
             formApi={form}
             name="win"

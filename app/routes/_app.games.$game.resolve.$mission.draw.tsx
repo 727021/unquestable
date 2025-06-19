@@ -4,23 +4,17 @@ import { redirect } from 'react-router'
 import { useLoaderData } from 'react-router'
 import { parseFormData, useForm, validationError } from '@rvf/react-router'
 import { z } from 'zod'
-import { zfd } from 'zod-form-data'
 import SideMissionsInput from '~/components/SideMissionsInput'
 import SubmitButton from '~/components/SubmitButton'
 import { prisma } from '~/services/db.server'
 import { randomIndex } from '~/utils/randomIndex'
 import { useId } from 'react'
 
-const schema =
-  zfd.formData({
-    missions: zfd
-      .text(z.literal('RANDOM'))
-      .or(
-        zfd.repeatable(
-          z.array(zfd.numeric(z.number().int().positive())).min(1).max(2)
-        )
-      )
-  })
+const schema = z.object({
+  missions: z
+    .literal('RANDOM')
+    .or(z.array(z.coerce.number().int().positive()).min(1).max(2))
+})
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const mission = await prisma.gameMission.findUnique({
@@ -222,11 +216,13 @@ const ChooseStage = () => {
   return (
     <>
       <h2 className="m-0">Draw Side Missions</h2>
-      <form
-        {...form.getFormProps()}
-      >
+      <form {...form.getFormProps()}>
         {form.renderFormIdInput()}
-        <SideMissionsInput formApi={form} name="missions" count={data.missionsNeeded}>
+        <SideMissionsInput
+          formApi={form}
+          name="missions"
+          count={data.missionsNeeded}
+        >
           {data.sideMissionDeck.map((mission) => (
             <option key={mission.id} value={mission.id}>
               {mission.name}

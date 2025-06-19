@@ -2,7 +2,6 @@ import { parseFormData } from '@rvf/react-router'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { redirect } from 'react-router'
 import { z } from 'zod'
-import { zfd } from 'zod-form-data'
 import { prisma } from '~/services/db.server'
 import { requireAuth } from '~/utils/requireAuth.server'
 
@@ -12,19 +11,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return redirect(`/games/${params.game}/empire`)
 }
 
-export const allySchema =
-  zfd.formData({
-    alliesToAdd: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    alliesToRemove: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    )
-  })
-
+export const allySchema = z.object({
+  alliesToAdd: z.array(z.coerce.number().int().positive()),
+  alliesToRemove: z.array(z.coerce.number().int().positive())
+})
 
 export const action = async (args: ActionFunctionArgs) => {
-  const { data } = await parseFormData(await args.request.formData(), allySchema)
+  const { data } = await parseFormData(
+    await args.request.formData(),
+    allySchema
+  )
 
   const { userId } = await requireAuth(args)
   const gameId = parseInt(args.params.game!, 10)
