@@ -6,10 +6,11 @@ import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
-import { parseFormData, ValidatedForm, validationError } from '@rvf/react-router'
+import { parseFormData, useForm, validationError } from '@rvf/react-router'
 import SubmitButton from '~/components/SubmitButton'
 import BuyClassCard from '~/components/BuyClassCard'
 import BuyAgendaCard from '~/components/BuyAgendaCard'
+import { useId } from 'react'
 
 const schema =
   zfd.formData({
@@ -175,21 +176,29 @@ const BuyStage = () => {
     .flat()
     .filter((a) => !imperialPlayer.agendas.some((o) => o.agendaId === a.id))
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema,
+    method: 'POST',
+    defaultValues: {
+      classCards: []
+    }
+  })
+
   return (
     <>
       <h2 className="m-0">
         Imperial Buy for <em>{data.mission.name}</em>
       </h2>
-      <ValidatedForm
-        schema={schema}
-        method="POST"
+      <form
+        {...form.getFormProps()}
         className="flex flex-col gap-3 w-fit"
-        defaultValues={{
-          classCards: []
-        }}
       >
+        {form.renderFormIdInput()}
         <div className="flex flex-wrap gap-3">
           <BuyClassCard
+            formApi={form}
             xp={imperialPlayer.xp}
             cards={imperialPlayer.class.cards}
             label={imperialPlayer.class.name}
@@ -203,8 +212,8 @@ const BuyStage = () => {
             label="Agenda Cards"
           />
         </div>
-        <SubmitButton className="w-fit">Buy</SubmitButton>
-      </ValidatedForm>
+        <SubmitButton formApi={form} className="w-fit">Buy</SubmitButton>
+      </form>
     </>
   )
 }

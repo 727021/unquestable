@@ -2,13 +2,17 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { redirect } from 'react-router'
 import { useLoaderData } from 'react-router'
 import type { Dispatch, SetStateAction } from 'react'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useId, useMemo, useRef, useState } from 'react'
 import { prisma } from '~/services/db.server'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
 import { PlusIcon, MinusIcon } from '@heroicons/react/24/solid'
 import type { FieldErrors } from '@rvf/react-router'
-import { parseFormData, ValidatedForm, validationError } from '@rvf/react-router'
+import {
+  parseFormData,
+  useForm,
+  validationError
+} from '@rvf/react-router'
 import TextInput from '~/components/TextInput'
 import SelectInput from '~/components/SelectInput'
 import SubmitButton from '~/components/SubmitButton'
@@ -16,43 +20,42 @@ import GrayMissionsInput from '~/components/GrayMissionsInput'
 import { randomIndex } from '~/utils/randomIndex'
 import { requireAuth } from '~/utils/requireAuth.server'
 
-const schema =
-  zfd.formData({
-    gameName: zfd.text(z.string().trim().min(1)),
-    campaign: zfd.numeric(z.number().int().positive()),
-    rebels: zfd.repeatable(
-      z
-        .array(
-          z.object({
-            name: zfd.text(z.string().trim().optional()),
-            hero: zfd.numeric(z.number().int().positive())
-          })
-        )
-        .min(1)
-        .max(4)
+const schema = zfd.formData({
+  gameName: zfd.text(z.string().trim().min(1)),
+  campaign: zfd.numeric(z.number().int().positive()),
+  rebels: zfd.repeatable(
+    z
+      .array(
+        z.object({
+          name: zfd.text(z.string().trim().optional()),
+          hero: zfd.numeric(z.number().int().positive())
+        })
+      )
+      .min(1)
+      .max(4)
+  ),
+  greenMissions: zfd.repeatable(
+    z
+      .array(zfd.numeric(z.number().int().positive()))
+      .length(4, 'Choose exactly 4 green side missions')
+  ),
+  grayMissions: zfd
+    .text(z.literal('RANDOM'))
+    .or(
+      zfd.repeatable(
+        z
+          .array(zfd.numeric(z.number().int().positive()))
+          .length(4, 'Choose exactly 4 gray side missions')
+      )
     ),
-    greenMissions: zfd.repeatable(
-      z
-        .array(zfd.numeric(z.number().int().positive()))
-        .length(4, 'Choose exactly 4 green side missions')
-    ),
-    grayMissions: zfd
-      .text(z.literal('RANDOM'))
-      .or(
-        zfd.repeatable(
-          z
-            .array(zfd.numeric(z.number().int().positive()))
-            .length(4, 'Choose exactly 4 gray side missions')
-        )
-      ),
-    imperialName: zfd.text(z.string().trim().optional()),
-    imperialClass: zfd.numeric(z.number().int().positive()),
-    agendaDecks: zfd.repeatable(
-      z
-        .array(zfd.numeric(z.number().int().positive()))
-        .length(6, 'Choose exactly 6 agenda decks')
-    )
-  })
+  imperialName: zfd.text(z.string().trim().optional()),
+  imperialClass: zfd.numeric(z.number().int().positive()),
+  agendaDecks: zfd.repeatable(
+    z
+      .array(zfd.numeric(z.number().int().positive()))
+      .length(6, 'Choose exactly 6 agenda decks')
+  )
+})
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { userId } = await requireAuth(args)
@@ -150,7 +153,8 @@ export const action = async (args: ActionFunctionArgs) => {
   const { userId } = await requireAuth(args)
 
   const { data, error } = await parseFormData(
-    await args.request.formData(), schema
+    await args.request.formData(),
+    schema
   )
 
   if (error) {
@@ -617,26 +621,33 @@ const NewGame = () => {
     return { green, gray }
   }, [chosenCampaign, sideMissions])
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema,
+    action: '',
+    method: 'POST',
+    defaultValues: {
+      gameName: '',
+      campaign: -1,
+      rebels: [],
+      grayMissions: [],
+      greenMissions: [],
+      agendaDecks: [],
+      imperialClass: -1
+    }
+  })
+
+  console.log(form.formState)
+
   return (
     <div className="prose max-w-full">
       <h1 className="m-0">New Game</h1>
-      <ValidatedForm
-        schema={schema}
-        method="POST"
-        className="max-w-full p-3"
-        defaultValues={{
-          gameName: '',
-          campaign: -1,
-          agendaDecks: [],
-          rebels: [],
-          grayMissions: [],
-          greenMissions: [],
-          imperialClass: -1
-        }}
-      >
+      <form {...form.getFormProps()} className="max-w-full p-3">
         <h2 className="m-0">Campaign Info</h2>
         <div className="flex flex-row gap-x-2 flex-wrap">
           <TextInput
+            formApi={form}
             name="gameName"
             label="Game Name"
             required
@@ -644,6 +655,7 @@ const NewGame = () => {
             onChange={(e) => setGameName(e.target.value)}
           />
           <SelectInput
+            formApi={form}
             name="campaign"
             label="Campaign"
             onChange={(e) => setCampaign(parseInt(e.target.value, 10))}
@@ -685,10 +697,12 @@ const NewGame = () => {
         {rebels.map((rebel, i) => (
           <div key={i} className="flex gap-x-2 flex-wrap">
             <TextInput
+              formApi={form}
               name={`rebels[${i}].name`}
               label={`Rebel ${i + 1} Name`}
             />
             <SelectInput
+              formApi={form}
               name={`rebels[${i}].hero`}
               label={`Rebel ${i + 1} Hero`}
               onChange={(e) =>
@@ -716,6 +730,7 @@ const NewGame = () => {
         {chosenCampaign ? (
           <div className="flex gap-x-2 flex-wrap">
             <SelectInput
+              formApi={form}
               name="greenMissions"
               label="Green Side Missions"
               required
@@ -727,7 +742,7 @@ const NewGame = () => {
                 </option>
               ))}
             </SelectInput>
-            <GrayMissionsInput>
+            <GrayMissionsInput formApi={form}>
               {availableMissions.gray.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name}
@@ -747,8 +762,9 @@ const NewGame = () => {
         <h2 className="m-0">Imperial Player</h2>
         <div className="flex gap-x-2 flex-wrap">
           <div className="flex flex-col gap-x-2 max-w-full">
-            <TextInput name="imperialName" label="Imperial Name" />
+            <TextInput formApi={form} name="imperialName" label="Imperial Name" />
             <SelectInput
+              formApi={form}
               name="imperialClass"
               label="Imperial Class"
               required
@@ -770,6 +786,7 @@ const NewGame = () => {
             </SelectInput>
           </div>
           <SelectInput
+            formApi={form}
             name="agendaDecks"
             label="Agenda Decks"
             required
@@ -782,8 +799,8 @@ const NewGame = () => {
             ))}
           </SelectInput>
         </div>
-        <SubmitButton>Start Game</SubmitButton>
-      </ValidatedForm>
+        <SubmitButton formApi={form}>Start Game</SubmitButton>
+      </form>
     </div>
   )
 }

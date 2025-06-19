@@ -2,8 +2,8 @@ import type { FetcherWithComponents } from 'react-router'
 import type { LoaderData } from '~/routes/_app.games.$game'
 import EditButton from '~/components/EditButton'
 import type { Reducer } from 'react'
-import { useCallback, useEffect, useReducer } from 'react'
-import { ValidatedForm } from '@rvf/react-router'
+import { useCallback, useEffect, useId, useReducer } from 'react'
+import { useForm } from '@rvf/react-router'
 import { classSchema } from '~/routes/_app.games.$game.empire.class'
 import SubmitButton from '~/components/SubmitButton'
 
@@ -91,6 +91,19 @@ const ImperialClassManager = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetcher?.state])
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema: classSchema,
+    method: 'POST',
+    fetcher,
+    action: formAction,
+    defaultValues: {
+      cardsToAdd: [],
+      cardsToRemove: []
+    }
+  })
+
   return (
     <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
       <div className="flex justify-between items-center w-full">
@@ -104,17 +117,11 @@ const ImperialClassManager = ({
         />
       </div>
       {classState.editing ? (
-        <ValidatedForm
-          schema={classSchema}
-          method="POST"
+        <form
+          {...form.getFormProps()}
           className="flex flex-1 justify-between items-end"
-          fetcher={fetcher}
-          action={formAction}
-          defaultValues={{
-            cardsToAdd: [],
-            cardsToRemove: []
-          }}
         >
+          {form.renderFormIdInput()}
           <div className="form-control items-start w-fit py-2 self-start">
             {imperialPlayer.class.cards.map((card) => (
               <label key={card.id} className="label gap-2 flex py-1">
@@ -142,6 +149,7 @@ const ImperialClassManager = ({
           <SubmitButton
             className="btn btn-primary btn-outline"
             fetcher={fetcher}
+            formApi={form}
           >
             Save
           </SubmitButton>
@@ -161,7 +169,7 @@ const ImperialClassManager = ({
               value={card}
             />
           ))}
-        </ValidatedForm>
+        </form>
       ) : (
         <div className="form-control items-start w-fit py-2">
           {imperialPlayer.class.cards.map((card) => (

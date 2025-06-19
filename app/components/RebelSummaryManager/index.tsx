@@ -6,7 +6,7 @@ import SubmitButton from '../SubmitButton'
 import { useFetcher } from 'react-router'
 import type { ActionData } from '~/routes/_app.games.$game.rebels.summary'
 import { summarySchema } from '~/routes/_app.games.$game.rebels.summary'
-import { ValidatedForm } from '@rvf/react-router'
+import { useForm } from '@rvf/react-router'
 import TextInput from '../TextInput'
 
 type State = {
@@ -68,6 +68,16 @@ const RebelSummaryManager = ({ rebel, formAction }: Props) => {
   }, [fetcher?.state])
 
   const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema: summarySchema,
+    method: 'POST',
+    fetcher,
+    action: formAction,
+    defaultValues: {
+      id: rebel.id,
+    }
+  })
 
   return (
     <div className="flex flex-col">
@@ -77,8 +87,7 @@ const RebelSummaryManager = ({ rebel, formAction }: Props) => {
           {summary.editing && (
             <SubmitButton
               className="btn btn-sm btn-primary btn-outline"
-              formId={formId}
-              form={formId}
+              formApi={form}
               fetcher={fetcher}
               disabled={
                 fetcher?.state === 'loading' || fetcher?.state === 'submitting'
@@ -98,20 +107,15 @@ const RebelSummaryManager = ({ rebel, formAction }: Props) => {
         </div>
       </div>
       {summary.editing ? (
-        <ValidatedForm
-          schema={summarySchema}
-          method="POST"
+        <form
+          {...form.getFormProps()}
           className="flex flex-1 gap-2 items-start"
-          fetcher={fetcher}
-          action={formAction}
-          id={formId}
-          defaultValues={{
-            id: rebel.id
-          }}
         >
+          {form.renderFormIdInput()}
           <div className="flex flex-1 flex-wrap gap-2 justify-between items-center">
             <input type="hidden" name="id" value={rebel.id} />
             <TextInput
+              formApi={form}
               name="name"
               label={<span className="font-bold">Name:</span>}
               inline
@@ -121,6 +125,7 @@ const RebelSummaryManager = ({ rebel, formAction }: Props) => {
               }
             />
             <TextInput
+              formApi={form}
               type="number"
               name="xp"
               label={<span className="font-bold">XP:</span>}
@@ -135,7 +140,7 @@ const RebelSummaryManager = ({ rebel, formAction }: Props) => {
               min={0}
             />
           </div>
-        </ValidatedForm>
+        </form>
       ) : (
         <div className="flex flex-1 gap-2 justify-between items-baseline">
           <div className="min-w-4">

@@ -9,7 +9,7 @@ import type { ActionData } from '~/routes/_app.games.$game.rebels.items'
 import { itemSchema } from '~/routes/_app.games.$game.rebels.items'
 import SubmitButton from '../SubmitButton'
 import TextInput from '../TextInput'
-import { ValidatedForm } from '@rvf/react-router'
+import { useForm } from '@rvf/react-router'
 import { XCircleIcon } from '@heroicons/react/24/outline'
 import { PlusIcon } from '@heroicons/react/24/solid'
 
@@ -113,8 +113,6 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
 
   const fetcher = useFetcher<ActionData>()
 
-  const formId = useId()
-
   useEffect(() => {
     if (fetcher.data?.success && fetcher.state === 'idle') {
       updateItems({ type: 'STOP_EDITING' })
@@ -127,6 +125,19 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
     ...allItems.filter((i) => itemState.itemsToAdd.includes(i.id))
   ]
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema: itemSchema,
+    method: 'POST',
+    fetcher,
+    action: formAction,
+    defaultValues: {
+      itemsToAdd: [],
+      itemsToRemove: []
+    }
+  })
+
   return (
     <div className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded">
       <div className="flex flex-col">
@@ -136,8 +147,7 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
             {itemState.editing && (
               <SubmitButton
                 className="btn btn-sm btn-primary btn-outline"
-                formId={formId}
-                form={formId}
+                formApi={form}
                 fetcher={fetcher}
                 disabled={
                   fetcher.state === 'loading' || fetcher.state === 'submitting'
@@ -160,7 +170,7 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
           <TextInput
             type="number"
             name="credits"
-            formId={formId}
+            formApi={form}
             form={formId}
             label={<span className="font-bold">Credits:</span>}
             inline
@@ -180,18 +190,11 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
       </div>
       <hr className="border-gray-400 my-0" />
       {itemState.editing ? (
-        <ValidatedForm
-          schema={itemSchema}
-          method="POST"
+        <form
+          {...form.getFormProps()}
           className="flex flex-1 flex-col gap-2"
-          fetcher={fetcher}
-          action={formAction}
-          id={formId}
-          defaultValues={{
-            itemsToAdd: [],
-            itemsToRemove: []
-          }}
         >
+          {form.renderFormIdInput()}
           <div className="flex flex-col">
             {!itemsToShow.length ? (
               <p className="m-0">No Items</p>
@@ -264,7 +267,7 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
               value={id}
             />
           ))}
-        </ValidatedForm>
+        </form>
       ) : !items.length ? (
         <p className="m-0">No Items</p>
       ) : (

@@ -1,11 +1,11 @@
 import type { FetcherWithComponents } from 'react-router'
 import clsx from 'clsx'
 import type { Reducer } from 'react'
-import { useCallback, useEffect, useReducer } from 'react'
+import { useCallback, useEffect, useId, useReducer } from 'react'
 import type { LoaderData as GameLoaderData } from '~/routes/_app.games.$game'
 import type { LoaderData } from '~/routes/_app.games.$game.empire'
 import EditButton from '../EditButton'
-import { ValidatedForm } from '@rvf/react-router'
+import { useForm } from '@rvf/react-router'
 import { villainSchema } from '~/routes/_app.games.$game.empire.villains'
 import { XCircleIcon } from '@heroicons/react/24/outline'
 import { PlusIcon } from '@heroicons/react/24/solid'
@@ -125,6 +125,19 @@ const VillainManager = ({
     ...allVillains.filter((v) => villainState.villainsToAdd.includes(v.id))
   ]
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema: villainSchema,
+    method: 'POST',
+    fetcher,
+    action: formAction,
+    defaultValues: {
+      villainsToAdd: [],
+      villainsToRemove: []
+    }
+  })
+
   return (
     <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
       <div className="flex justify-between items-center w-full">
@@ -138,17 +151,11 @@ const VillainManager = ({
         />
       </div>
       {villainState.editing ? (
-        <ValidatedForm
-          schema={villainSchema}
-          method="POST"
+        <form
+          {...form.getFormProps()}
           className="flex flex-1 flex-col gap-2"
-          fetcher={fetcher}
-          action={formAction}
-          defaultValues={{
-            villainsToAdd: [],
-            villainsToRemove: []
-          }}
         >
+          {form.renderFormIdInput()}
           <div className="flex flex-col items-start w-fit py-2">
             {villainsToShow.length === 0 ? (
               <p className="m-0">No Villains</p>
@@ -221,6 +228,7 @@ const VillainManager = ({
             <SubmitButton
               className="btn btn-primary btn-outline"
               fetcher={fetcher}
+              formApi={form}
             >
               Save
             </SubmitButton>
@@ -241,7 +249,7 @@ const VillainManager = ({
               />
             ))}
           </div>
-        </ValidatedForm>
+        </form>
       ) : !imperialPlayer.villains.length ? (
         <p className="m-0 py-2">No Villains</p>
       ) : (

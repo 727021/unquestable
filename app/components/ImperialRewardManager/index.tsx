@@ -1,10 +1,10 @@
 import type { FetcherWithComponents } from 'react-router'
 import type { Reducer } from 'react'
-import { useCallback, useEffect, useReducer } from 'react'
+import { useCallback, useEffect, useId, useReducer } from 'react'
 import type { LoaderData as GameLoaderData } from '~/routes/_app.games.$game'
 import type { LoaderData } from '~/routes/_app.games.$game.empire'
 import EditButton from '../EditButton'
-import { ValidatedForm } from '@rvf/react-router'
+import { useForm } from '@rvf/react-router'
 import { rewardSchema } from '~/routes/_app.games.$game.empire.rewards'
 import SubmitButton from '../SubmitButton'
 import { PlusIcon } from '@heroicons/react/24/solid'
@@ -118,6 +118,19 @@ const ImperialRewardManager = ({
     ...allRewards.filter((r) => rewardState.rewardsToAdd.includes(r.id))
   ]
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema: rewardSchema,
+    method: 'POST',
+    fetcher,
+    action: formAction,
+    defaultValues: {
+      rewardsToAdd: [],
+      rewardsToRemove: []
+    }
+  })
+
   return (
     <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
       <div className="flex justify-between items-center w-full">
@@ -131,17 +144,11 @@ const ImperialRewardManager = ({
         />
       </div>
       {rewardState.editing ? (
-        <ValidatedForm
-          schema={rewardSchema}
-          method="POST"
+        <form
+          {...form.getFormProps()}
           className="flex flex-1 flex-col gap-2"
-          fetcher={fetcher}
-          action={formAction}
-          defaultValues={{
-            rewardsToAdd: [],
-            rewardsToRemove: []
-          }}
         >
+          {form.renderFormIdInput()}
           <div className="flex flex-col items-start w-fit py-2">
             {rewardsToShow.length === 0 ? (
               <p className="m-0">No Rewards</p>
@@ -209,6 +216,7 @@ const ImperialRewardManager = ({
             <SubmitButton
               className="btn btn-primary btn-outline"
               fetcher={fetcher}
+              formApi={form}
             >
               Save
             </SubmitButton>
@@ -229,7 +237,7 @@ const ImperialRewardManager = ({
               />
             ))}
           </div>
-        </ValidatedForm>
+        </form>
       ) : !imperialPlayer.rewards.length ? (
         <p className="m-0 py-2">No Rewards</p>
       ) : (

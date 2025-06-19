@@ -7,7 +7,7 @@ import { useFetcher } from 'react-router'
 import type { ActionData } from '~/routes/_app.games.$game.rebels.rewards'
 import { rewardSchema } from '~/routes/_app.games.$game.rebels.rewards'
 import SubmitButton from '../SubmitButton'
-import { ValidatedForm } from '@rvf/react-router'
+import { useForm } from '@rvf/react-router'
 import { XCircleIcon } from '@heroicons/react/24/outline'
 import { PlusIcon } from '@heroicons/react/24/solid'
 
@@ -103,8 +103,6 @@ const RebelRewardManager = ({ rebel, allRewards, formAction }: Props) => {
 
   const fetcher = useFetcher<ActionData>()
 
-  const formId = useId()
-
   useEffect(() => {
     if (fetcher.data?.success && fetcher.state === 'idle') {
       updateRewards({ type: 'STOP_EDITING' })
@@ -117,6 +115,20 @@ const RebelRewardManager = ({ rebel, allRewards, formAction }: Props) => {
     ...allRewards.filter((r) => rewardState.rewardsToAdd.includes(r.id))
   ]
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema: rewardSchema,
+    method: 'POST',
+    fetcher,
+    action: formAction,
+    defaultValues: {
+      rewardsToAdd: [],
+      rewardsToRemove: [],
+      id: rebel.id
+    }
+  })
+
   return (
     <div className="flex flex-col">
       <div className="flex justify-between items-center w-full">
@@ -125,8 +137,7 @@ const RebelRewardManager = ({ rebel, allRewards, formAction }: Props) => {
           {rewardState.editing && (
             <SubmitButton
               className="btn btn-sm btn-primary btn-outline"
-              formId={formId}
-              form={formId}
+              formApi={form}
               fetcher={fetcher}
               disabled={
                 fetcher.state === 'loading' || fetcher.state === 'submitting'
@@ -146,19 +157,11 @@ const RebelRewardManager = ({ rebel, allRewards, formAction }: Props) => {
         </div>
       </div>
       {rewardState.editing ? (
-        <ValidatedForm
-          schema={rewardSchema}
-          method="POST"
+        <form
+          {...form.getFormProps()}
           className="flex flex-1 flex-col gap-2"
-          fetcher={fetcher}
-          action={formAction}
-          id={formId}
-          defaultValues={{
-            rewardsToAdd: [],
-            rewardsToRemove: [],
-            id: rebel.id
-          }}
         >
+          {form.renderFormIdInput()}
           <div className="flex flex-col items-start w-fit">
             {!rewardsToShow.length ? (
               <p className="m-0">No Rewards</p>
@@ -239,7 +242,7 @@ const RebelRewardManager = ({ rebel, allRewards, formAction }: Props) => {
               value={id}
             />
           ))}
-        </ValidatedForm>
+        </form>
       ) : !rebel.rewards.length ? (
         <p className="m-0">No Rewards</p>
       ) : (

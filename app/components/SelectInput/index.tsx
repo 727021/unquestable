@@ -6,7 +6,7 @@ import type {
   ReactNode
 } from 'react'
 import { forwardRef } from 'react'
-import { useField } from '@rvf/react-router'
+import type { FormApi } from '@rvf/react-router'
 import RequiredIndicator from '../RequiredIndicator'
 
 type Props = PropsWithChildren<{
@@ -20,6 +20,7 @@ type Props = PropsWithChildren<{
   onChange?: ChangeEventHandler<HTMLSelectElement>
   multiple?: boolean
   disabled?: boolean
+  formApi: FormApi<any>
 }>
 
 const SelectInput = forwardRef(
@@ -35,11 +36,12 @@ const SelectInput = forwardRef(
       onChange,
       multiple,
       disabled,
-      labelRight
+      labelRight,
+      formApi
     }: Props,
     ref: ForwardedRef<HTMLSelectElement>
   ) => {
-    const { getInputProps, error } = useField(name)
+    const error = formApi.error(name)
 
     return (
       <label className="form-control max-w-full w-96">
@@ -55,14 +57,14 @@ const SelectInput = forwardRef(
             'select select-bordered grow',
             error && 'select-error'
           )}
-          {...getInputProps({
+          {...formApi.getInputProps(name, {
             id: name,
             value,
             onChange,
             multiple,
-            disabled
+            disabled,
+            ref
           })}
-          ref={ref}
         >
           {children}
         </select>

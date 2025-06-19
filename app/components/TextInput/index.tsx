@@ -1,4 +1,4 @@
-import { useField } from '@rvf/react-router'
+import { FormApi } from '@rvf/react-router'
 import RequiredIndicator from '~/components/RequiredIndicator'
 import clsx from 'clsx'
 import { forwardRef } from 'react'
@@ -18,7 +18,7 @@ type Props = {
   value?: string | number
   onChange?: ChangeEventHandler<HTMLInputElement>
   inline?: boolean
-  formId?: string
+  formApi: FormApi<any>
 } & ComponentProps<'input'>
 
 const TextInput = forwardRef(
@@ -33,12 +33,12 @@ const TextInput = forwardRef(
       onChange,
       type = 'text',
       inline,
-      formId,
+      formApi: form,
       ...props
     }: Props,
     ref: ForwardedRef<HTMLInputElement>
   ) => {
-    const { getInputProps, error } = useField(name, { formId })
+    const error = form.error(name)
 
     return (
       <label
@@ -60,14 +60,14 @@ const TextInput = forwardRef(
             error && 'input-error',
             inline && 'input-sm'
           )}
-          {...getInputProps({
+          {...form.getInputProps(name, {
             ...props,
             id: name,
             type,
             value,
-            onChange
+            onChange,
+            ref
           })}
-          ref={ref}
         />
         <div className="label">
           {error ? (

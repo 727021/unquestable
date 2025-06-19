@@ -2,13 +2,14 @@ import { MissionStage, MissionType } from '@prisma/client'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { redirect } from 'react-router'
 import { useLoaderData } from 'react-router'
-import { parseFormData, ValidatedForm, validationError } from '@rvf/react-router'
+import { parseFormData, useForm, validationError } from '@rvf/react-router'
 import { z } from 'zod'
 import { zfd } from 'zod-form-data'
 import SideMissionsInput from '~/components/SideMissionsInput'
 import SubmitButton from '~/components/SubmitButton'
 import { prisma } from '~/services/db.server'
 import { randomIndex } from '~/utils/randomIndex'
+import { useId } from 'react'
 
 const schema =
   zfd.formData({
@@ -208,28 +209,35 @@ type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>
 const ChooseStage = () => {
   const data = useLoaderData<LoaderData>()
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema,
+    method: 'POST',
+    defaultValues: {
+      missions: []
+    }
+  })
+
   return (
     <>
       <h2 className="m-0">Draw Side Missions</h2>
-      <ValidatedForm
-        schema={schema}
-        method="POST"
-        defaultValues={{
-          missions: []
-        }}
+      <form
+        {...form.getFormProps()}
       >
-        <SideMissionsInput name="missions" count={data.missionsNeeded}>
+        {form.renderFormIdInput()}
+        <SideMissionsInput formApi={form} name="missions" count={data.missionsNeeded}>
           {data.sideMissionDeck.map((mission) => (
             <option key={mission.id} value={mission.id}>
               {mission.name}
             </option>
           ))}
         </SideMissionsInput>
-        <SubmitButton>
+        <SubmitButton formApi={form}>
           Draw Mission
           {data.missionsNeeded > 1 && 's'}
         </SubmitButton>
-      </ValidatedForm>
+      </form>
     </>
   )
 }

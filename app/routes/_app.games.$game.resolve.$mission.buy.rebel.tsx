@@ -4,10 +4,10 @@ import { redirect } from 'react-router'
 import { useLoaderData, useOutletContext } from 'react-router'
 import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
-import { parseFormData, ValidatedForm, validationError } from '@rvf/react-router'
+import { parseFormData, useForm, validationError } from '@rvf/react-router'
 import { zfd } from 'zod-form-data'
 import BuyClassCard from '~/components/BuyClassCard'
-import { Fragment } from 'react'
+import { Fragment, useId } from 'react'
 import SubmitButton from '~/components/SubmitButton'
 import { z } from 'zod'
 import BuyItemCard from '~/components/BuyItemCard'
@@ -212,23 +212,31 @@ const BuyStage = () => {
   const data = useLoaderData<typeof loader>()
   const ctx = useOutletContext<GameLoaderData>()
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema,
+    method: 'POST',
+    defaultValues: {
+      rebels: []
+    }
+  })
+
   return (
     <>
       <h2 className="m-0">
         Rebel Buy for <em>{data.mission.mission.name}</em>
       </h2>
-      <ValidatedForm
-        schema={schema}
-        method="POST"
+      <form
+        {...form.getFormProps()}
         className="flex flex-col gap-3 w-fit"
-        defaultValues={{
-          rebels: []
-        }}
       >
+        {form.renderFormIdInput()}
         <div className="flex flex-wrap gap-3">
           {ctx.game.rebelPlayers.map((rebel, i) => (
             <Fragment key={rebel.id}>
               <BuyClassCard
+                formApi={form}
                 xp={rebel.xp}
                 cards={rebel.hero.class!.cards}
                 label={rebel.hero.name}
@@ -247,8 +255,8 @@ const BuyStage = () => {
           owned={ctx.game.items}
           cards={data.items}
         />
-        <SubmitButton className="w-fit">Buy</SubmitButton>
-      </ValidatedForm>
+        <SubmitButton formApi={form} className="w-fit">Buy</SubmitButton>
+      </form>
     </>
   )
 }

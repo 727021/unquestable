@@ -6,24 +6,25 @@ import type {
 } from 'react'
 import { useState } from 'react'
 import RequiredIndicator from '../RequiredIndicator'
-import { useField } from '@rvf/react-router'
+import type { FormApi } from '@rvf/react-router'
 import clsx from 'clsx'
 
 type Props = PropsWithChildren<
   {
     name: string
     count?: number
+    formApi: FormApi<any>
   } & ComponentProps<'input'>
 >
 
-const SideMissionsInput = ({ name, count = 1, children }: Props) => {
-  const { getInputProps, error, clearError } = useField(name)
+const SideMissionsInput = ({ name, count = 1, children, formApi }: Props) => {
+  const error = formApi.error(name)
 
   const [random, setRandom] = useState(true)
 
   const onChange = (e: ChangeEvent<ElementRef<'input'>>) => {
     setRandom(e.target.checked)
-    clearError()
+    formApi.clearError(name)
   }
 
   return (
@@ -49,7 +50,7 @@ const SideMissionsInput = ({ name, count = 1, children }: Props) => {
       </div>
       <select
         className={clsx('select select-bordered', error && 'select-error')}
-        {...getInputProps({
+        {...formApi.getInputProps(name, {
           id: name,
           multiple: count > 1,
           disabled: random
@@ -66,7 +67,7 @@ const SideMissionsInput = ({ name, count = 1, children }: Props) => {
       </div>
       {random && (
         <input
-          {...getInputProps({
+          {...formApi.getInputProps(name, {
             type: 'hidden',
             value: 'RANDOM'
           })}

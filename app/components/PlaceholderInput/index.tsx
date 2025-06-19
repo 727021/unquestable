@@ -1,4 +1,4 @@
-import { useField } from '@rvf/react-router'
+import type { FormApi } from '@rvf/react-router'
 import RequiredIndicator from '~/components/RequiredIndicator'
 import clsx from 'clsx'
 import { useState, type ChangeEventHandler, type ElementRef } from 'react'
@@ -14,10 +14,14 @@ type Props = {
   index: number
   placeholder: Placeholder
   onChange?: ChangeEventHandler<ElementRef<'input'>>
+  formApi: FormApi<any>
 }
 
-const PlaceholderInput = ({ index, placeholder, onChange }: Props) => {
-  const { getInputProps, error } = useField(`placeholders[${index}].value`)
+const PlaceholderInput = ({ index, placeholder, onChange, formApi }: Props) => {
+  const name = `placeholders[${index}].value`
+
+  const error = formApi.error(name)
+
   const [value, setValue] = useState(false)
 
   if (placeholder.type === 'boolean') {
@@ -39,7 +43,7 @@ const PlaceholderInput = ({ index, placeholder, onChange }: Props) => {
           </span>
         </div>
         <input
-          {...getInputProps({
+          {...formApi.getInputProps(name, {
             type: 'hidden',
             value: value ? 'true' : 'false'
           })}
@@ -68,7 +72,7 @@ const PlaceholderInput = ({ index, placeholder, onChange }: Props) => {
       </div>
       <input
         className={clsx('input input-bordered w-full', error && 'input-error')}
-        {...getInputProps({
+        {...formApi.getInputProps(name, {
           onChange,
           type: placeholder.type,
           ...((placeholder.validation as JsonObject) ?? {})

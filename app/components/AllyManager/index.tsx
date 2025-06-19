@@ -8,7 +8,7 @@ import { useFetcher } from 'react-router'
 import type { ActionData } from '~/routes/_app.games.$game.rebels.allies'
 import { allySchema } from '~/routes/_app.games.$game.rebels.allies'
 import SubmitButton from '../SubmitButton'
-import { ValidatedForm } from '@rvf/react-router'
+import { useForm } from '@rvf/react-router'
 import { XCircleIcon } from '@heroicons/react/24/outline'
 import { PlusIcon } from '@heroicons/react/24/solid'
 
@@ -107,8 +107,6 @@ const AllyManager = ({ allies, allAllies, formAction }: Props) => {
 
   const fetcher = useFetcher<ActionData>()
 
-  const formId = useId()
-
   useEffect(() => {
     if (fetcher.data?.success && fetcher.state === 'idle') {
       updateAllies({ type: 'STOP_EDITING' })
@@ -121,6 +119,19 @@ const AllyManager = ({ allies, allAllies, formAction }: Props) => {
     ...allAllies.filter((a) => allyState.alliesToAdd.includes(a.id))
   ]
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    defaultValues: {
+      alliesToAdd: allyState.alliesToAdd,
+      alliesToRemove: allyState.alliesToRemove
+    },
+    schema: allySchema,
+    fetcher,
+    action: formAction,
+    method: 'POST'
+  })
+
   return (
     <div className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded">
       <div className="flex justify-between items-center w-full">
@@ -129,8 +140,7 @@ const AllyManager = ({ allies, allAllies, formAction }: Props) => {
           {allyState.editing && (
             <SubmitButton
               className="btn btn-sm btn-primary btn-outline"
-              formId={formId}
-              form={formId}
+              formApi={form}
               fetcher={fetcher}
               disabled={
                 fetcher.state === 'loading' || fetcher.state === 'submitting'
@@ -150,18 +160,11 @@ const AllyManager = ({ allies, allAllies, formAction }: Props) => {
         </div>
       </div>
       {allyState.editing ? (
-        <ValidatedForm
-          schema={allySchema}
-          method="POST"
+        <form
+          {...form.getFormProps()}
           className="flex flex-1 flex-col gap-2"
-          fetcher={fetcher}
-          action={formAction}
-          id={formId}
-          defaultValues={{
-            alliesToAdd: [],
-            alliesToRemove: []
-          }}
         >
+          {form.renderFormIdInput()}
           <div className="flex flex-col items-start w-fit">
             {!alliesToShow.length ? (
               <p className="m-0">No Allies</p>
@@ -240,7 +243,7 @@ const AllyManager = ({ allies, allAllies, formAction }: Props) => {
               value={id}
             />
           ))}
-        </ValidatedForm>
+        </form>
       ) : !allies.length ? (
         <p className="m-0">No Allies</p>
       ) : (

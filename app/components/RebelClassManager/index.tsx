@@ -6,7 +6,7 @@ import { useFetcher } from 'react-router'
 import type { ActionData } from '~/routes/_app.games.$game.rebels.class'
 import { classSchema } from '~/routes/_app.games.$game.rebels.class'
 import SubmitButton from '../SubmitButton'
-import { ValidatedForm } from '@rvf/react-router'
+import { useForm } from '@rvf/react-router'
 
 type CardId = NonNullable<
   GameLoaderData['game']['rebelPlayers'][0]
@@ -82,14 +82,26 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
 
   const fetcher = useFetcher<ActionData>()
 
-  const formId = useId()
-
   useEffect(() => {
     if (fetcher.data?.success && fetcher.state === 'idle') {
       updateClass({ type: 'STOP_EDITING' })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetcher?.state])
+
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema: classSchema,
+    method: 'POST',
+    fetcher,
+    action: formAction,
+    defaultValues: {
+      cardsToAdd: [],
+      cardsToRemove: [],
+      id: rebel.id
+    }
+  })
 
   return (
     <div className="flex flex-col">
@@ -99,8 +111,7 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
           {classState.editing && (
             <SubmitButton
               className="btn btn-sm btn-primary btn-outline"
-              formId={formId}
-              form={formId}
+              formApi={form}
               fetcher={fetcher}
               disabled={
                 fetcher?.state === 'loading' || fetcher?.state === 'submitting'
@@ -120,14 +131,11 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
         </div>
       </div>
       {classState.editing ? (
-        <ValidatedForm
-          schema={classSchema}
-          method="POST"
+        <form
+          {...form.getFormProps()}
           className="flex flex-1 justify-between items-end"
-          fetcher={fetcher}
-          action={formAction}
-          id={formId}
         >
+          {form.renderFormIdInput()}
           <div className="form-control items-start w-fit py-2 self-start">
             {rebel.hero.class?.cards.map((card) => (
               <label key={card.id} className="label gap-2 flex py-1">
@@ -169,7 +177,7 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
               value={card}
             />
           ))}
-        </ValidatedForm>
+        </form>
       ) : (
         <div className="form-control items-start w-fit py-2">
           {rebel.hero.class?.cards.map((card) => (

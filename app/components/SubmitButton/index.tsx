@@ -1,11 +1,11 @@
 import type { Fetcher } from 'react-router'
 import clsx from 'clsx'
 import type { ComponentProps, PropsWithChildren } from 'react'
-import { useIsSubmitting } from '@rvf/react-router'
+import type { FormApi } from '@rvf/react-router'
 
 type Props = PropsWithChildren<
   Omit<ComponentProps<'button'>, 'type'> & {
-    formId?: string
+    formApi: FormApi<any>
     fetcher?: Fetcher
   }
 >
@@ -14,15 +14,16 @@ const SubmitButton = ({
   children,
   disabled,
   className,
-  formId,
+  formApi,
   fetcher,
   ...props
 }: Props) => {
-  const isSubmitting = useIsSubmitting(formId)
+  const isSubmitting = formApi.formState.isSubmitting
   const isLoading = isSubmitting || fetcher?.state === 'loading'
 
   return (
     <button
+      form={formApi.getFormProps().id}
       className={clsx('btn', className)}
       {...props}
       type="submit"

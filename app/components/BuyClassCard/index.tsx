@@ -2,7 +2,7 @@ import type { ClassCard } from '@prisma/client'
 import clsx from 'clsx'
 import type { ChangeEvent, ElementRef, ReactNode } from 'react'
 import { useState } from 'react'
-import { useField } from '@rvf/react-router'
+import type { FormApi } from '@rvf/react-router'
 
 type Props = {
   cards: ClassCard[]
@@ -10,11 +10,12 @@ type Props = {
   name: string
   label: ReactNode
   owned: ClassCard[]
+  formApi: FormApi<any>
 }
 
-const BuyClassCard = ({ cards, xp, name, label, owned }: Props) => {
+const BuyClassCard = ({ cards, xp, name, label, owned, formApi }: Props) => {
   const [checked, setChecked] = useState<number[]>([])
-  const { getInputProps, error } = useField(name)
+  const error = formApi.error(name)
 
   const handleCheck = (e: ChangeEvent<ElementRef<'input'>>) => {
     const value = parseInt(e.target.value, 10)
@@ -69,7 +70,7 @@ const BuyClassCard = ({ cards, xp, name, label, owned }: Props) => {
           data-tip={card.tagline}
         >
           <input
-            {...getInputProps({
+            {...formApi.getInputProps(name, {
               type: 'checkbox',
               className:
                 'checkbox checkbox-sm checkbox-primary border-neutral hover:border-neutral',

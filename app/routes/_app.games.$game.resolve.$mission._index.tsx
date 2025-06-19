@@ -3,7 +3,7 @@ import type { LoaderData } from './_app.games.$game'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
 import type { ChangeEvent, ElementRef } from 'react'
-import { useEffect, useReducer, useState } from 'react'
+import { useEffect, useId, useReducer, useState } from 'react'
 import {
   MissionRewardType,
   MissionStage,
@@ -13,7 +13,7 @@ import {
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
 import type { FieldErrors } from '@rvf/react-router'
-import { validationError, ValidatedForm, parseFormData } from '@rvf/react-router'
+import { validationError, parseFormData, useForm } from '@rvf/react-router'
 import TextInput from '~/components/TextInput'
 import ButtonBar from '~/components/ButtonBar'
 import { calculateRewards } from '~/utils/missionRewards'
@@ -746,22 +746,29 @@ const Resolve = () => {
     !!data.missionSlot?.index &&
     data.missionSlot.index === data.game.campaign.missionSlots[0].index
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema,
+    method: 'POST',
+    defaultValues: {
+      crates: 0,
+      win: Side.REBEL
+    }
+  })
+
   return (
     <>
       <h2 className="m-0">
         Resolving <em>{data.mission.name}</em>
       </h2>
       <div className="flex w-full flex-wrap max-w-full">
-        <ValidatedForm
-          schema={schema}
-          method="POST"
+        <form
+          {...form.getFormProps()}
           className="flex-1 whitespace-nowrap"
-          defaultValues={{
-            crates: 0,
-            win: Side.REBEL
-          }}
         >
           <ButtonBar
+            formApi={form}
             name="win"
             label="Winner"
             required
@@ -779,6 +786,7 @@ const Resolve = () => {
           />
           {!isFinale && (
             <TextInput
+              formApi={form}
               name="crates"
               label="Crates Collected"
               type="number"
@@ -798,6 +806,7 @@ const Resolve = () => {
             <>
               {rewards.rebelReward && !data.mission.hero && (
                 <SelectInput
+                  formApi={form}
                   name="rewardedRebel"
                   label={
                     <>
@@ -821,6 +830,7 @@ const Resolve = () => {
               )}
               {placeholders.map((placeholder, i) => (
                 <PlaceholderInput
+                  formApi={form}
                   key={placeholder.id}
                   index={i}
                   placeholder={placeholder}
@@ -835,8 +845,8 @@ const Resolve = () => {
               ))}
             </>
           )}
-          <SubmitButton>Resolve Mission</SubmitButton>
-        </ValidatedForm>
+          <SubmitButton formApi={form}>Resolve Mission</SubmitButton>
+        </form>
         <div className="flex flex-col gap-2 flex-1 whitespace-nowrap">
           {!!winner &&
             (isFinale ? (

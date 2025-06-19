@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import RequiredIndicator from '../RequiredIndicator'
-import { useField } from '@rvf/react-router'
+import type { FormApi } from '@rvf/react-router'
 import clsx from 'clsx'
 
 type Props = {
@@ -13,6 +13,7 @@ type Props = {
   }[]
   onChange?: (value: string | number) => any
   defaultValue?: string | number
+  formApi: FormApi<any>
 }
 
 const ButtonBar = ({
@@ -21,10 +22,12 @@ const ButtonBar = ({
   name,
   options,
   onChange,
-  defaultValue
+  defaultValue,
+  formApi
 }: Props) => {
   const [value, setValue] = useState<string | number | undefined>(defaultValue)
-  const { getInputProps, error } = useField(name)
+
+  const error = formApi.error(name)
 
   const handleClick = (value: string | number) => {
     setValue(value)
@@ -40,7 +43,7 @@ const ButtonBar = ({
         </span>
       </div>
       <input
-        {...getInputProps({
+        {...formApi.getInputProps(name, {
           id: name,
           type: 'hidden',
           value

@@ -1,8 +1,8 @@
 import type { FetcherWithComponents } from 'react-router'
-import { useCallback, useEffect, useReducer, type Reducer } from 'react'
+import { useCallback, useEffect, useId, useReducer, type Reducer } from 'react'
 import type { LoaderData } from '~/routes/_app.games.$game'
 import EditButton from '~/components/EditButton'
-import { ValidatedForm } from '@rvf/react-router'
+import { useForm } from '@rvf/react-router'
 import { agendaSchema } from '~/routes/_app.games.$game.empire.agendas'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import {
@@ -261,6 +261,21 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
     )
     .sort((a, b) => a.cost - b.cost)
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema: agendaSchema,
+    method: 'POST',
+    action: formAction,
+    fetcher,
+    defaultValues: {
+      agendasToAdd: [],
+      agendasToDiscard: [],
+      agendasToReshuffle: [],
+      agendasToRestore: []
+    }
+  })
+
   return (
     <div className="flex flex-col flex-1 px-2 pb-1 border rounded border-gray-400">
       <div className="flex justify-between items-center w-full">
@@ -274,19 +289,11 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
         />
       </div>
       {agendaState.editing ? (
-        <ValidatedForm
-          schema={agendaSchema}
-          method="POST"
+        <form
+          {...form.getFormProps()}
           className="flex flex-col flex-1"
-          fetcher={fetcher}
-          action={formAction}
-          defaultValues={{
-            agendasToAdd: [],
-            agendasToDiscard: [],
-            agendasToReshuffle: [],
-            agendasToRestore: []
-          }}
         >
+          {form.renderFormIdInput()}
           <div className="flex flex-wrap">
             <div className="flex flex-col flex-1">
               <h3 className="m-0">Owned</h3>
@@ -405,6 +412,7 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
             <SubmitButton
               className="btn btn-primary btn-outline"
               fetcher={fetcher}
+              formApi={form}
             >
               Save
             </SubmitButton>
@@ -441,7 +449,7 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
               value={agenda}
             />
           ))}
-        </ValidatedForm>
+        </form>
       ) : (
         <>
           <div className="flex flex-wrap">

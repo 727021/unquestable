@@ -2,8 +2,8 @@ import type { FetcherWithComponents } from 'react-router'
 import type { LoaderData } from '~/routes/_app.games.$game'
 import EditButton from '~/components/EditButton'
 import type { Reducer } from 'react'
-import { useCallback, useEffect, useReducer } from 'react'
-import { ValidatedForm } from '@rvf/react-router'
+import { useCallback, useEffect, useId, useReducer } from 'react'
+import { useForm } from '@rvf/react-router'
 import { summarySchema } from '~/routes/_app.games.$game.empire.summary'
 import SubmitButton from '~/components/SubmitButton'
 import TextInput from '~/components/TextInput'
@@ -76,19 +76,27 @@ const ImperialSummaryManager = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetcher?.state])
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema: summarySchema,
+    method: 'POST',
+    fetcher,
+    action: formAction,
+    defaultValues: {}
+  })
+
   return (
     <div className="flex flex-1 px-2 py-1 gap-2 border border-gray-400 rounded items-start">
       {summary.editing ? (
-        <ValidatedForm
-          schema={summarySchema}
-          method="POST"
+        <form
+          {...form.getFormProps()}
           className="flex flex-1 gap-2 items-start"
-          fetcher={fetcher}
-          action={formAction}
-          defaultValues={{}}
         >
+          {form.renderFormIdInput()}
           <div className="flex flex-1 flex-wrap gap-2 justify-between items-center">
             <TextInput
+              formApi={form}
               name="name"
               label={<span className="font-bold">Name:</span>}
               inline
@@ -98,6 +106,7 @@ const ImperialSummaryManager = ({
               }
             />
             <TextInput
+              formApi={form}
               type="number"
               name="xp"
               label={<span className="font-bold">XP:</span>}
@@ -112,6 +121,7 @@ const ImperialSummaryManager = ({
               min={0}
             />
             <TextInput
+              formApi={form}
               type="number"
               name="influence"
               label={<span className="font-bold">Influence:</span>}
@@ -129,10 +139,11 @@ const ImperialSummaryManager = ({
           <SubmitButton
             className="btn btn-sm btn-primary btn-outline"
             fetcher={fetcher}
+            formApi={form}
           >
             Save
           </SubmitButton>
-        </ValidatedForm>
+        </form>
       ) : (
         <div className="flex flex-1 gap-2 justify-between items-center my-auto">
           <div className="min-w-4">

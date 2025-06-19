@@ -7,9 +7,13 @@ import {
   MissionType,
   Side
 } from '@prisma/client'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import Modal from '~/components/Modal'
-import { parseFormData, ValidatedForm, validationError } from '@rvf/react-router'
+import {
+  parseFormData,
+  ValidatedForm,
+  validationError
+} from '@rvf/react-router'
 import SubmitButton from '~/components/SubmitButton'
 import { zfd } from 'zod-form-data'
 import { z } from 'zod'
@@ -17,12 +21,10 @@ import SelectInput from '~/components/SelectInput'
 import type { ActionFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
 
-const schema =
-  zfd.formData({
-    mission: zfd.numeric(z.number().int().positive()),
-    slot: zfd.numeric(z.number().int().positive())
-  })
-
+const schema = zfd.formData({
+  mission: zfd.numeric(z.number().int().positive()),
+  slot: zfd.numeric(z.number().int().positive())
+})
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const game = await prisma.game.findUnique({
@@ -124,6 +126,8 @@ const Game = () => {
     .toSorted((a, b) => +!!b.stage - +!!a.stage)
   const hasActiveForcedMission = forcedMissions.some((m) => !m.stage)
 
+  const formId = useId()
+
   return (
     <>
       <div className="flex gap-2 flex-wrap">
@@ -185,6 +189,7 @@ const Game = () => {
                             >
                               <h2 className="m-0">Choose Side Mission</h2>
                               <ValidatedForm
+                                id={`${formId}-${slot.id}`}
                                 schema={schema}
                                 defaultValues={{
                                   slot: slot.id,
@@ -192,41 +197,46 @@ const Game = () => {
                                 }}
                                 method="POST"
                               >
-                                <input
-                                  type="hidden"
-                                  name="action"
-                                  value="choose"
-                                />
-                                <input
-                                  type="hidden"
-                                  name="slot"
-                                  value={slot.id}
-                                />
-                                <SelectInput
-                                  name="mission"
-                                  label="Mission"
-                                  required
-                                >
-                                  <option selected disabled></option>
-                                  {activeSideMissions.map((m) => (
-                                    <option key={m.id} value={m.id}>
-                                      {m.mission.name}
-                                      {m.mission.type ===
-                                        MissionType.IMPERIAL &&
-                                        ' (IMPERIAL AGENDA)'}
-                                    </option>
-                                  ))}
-                                </SelectInput>
-                                <div className="flex gap-2">
-                                  <SubmitButton>Start Mission</SubmitButton>
-                                  <button
-                                    type="button"
-                                    className="btn"
-                                    onClick={() => setChoosing(null)}
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
+                                {(form) => (
+                                  <>
+                                    <input
+                                      type="hidden"
+                                      name="action"
+                                      value="choose"
+                                    />
+                                    <input
+                                      type="hidden"
+                                      name="slot"
+                                      value={slot.id}
+                                    />
+                                    <SelectInput
+                                      formApi={form}
+                                      name="mission"
+                                      label="Mission"
+                                      required
+                                    >
+                                      <option selected disabled></option>
+                                      {activeSideMissions.map((m) => (
+                                        <option key={m.id} value={m.id}>
+                                          {m.mission.name}
+                                          {m.mission.type ===
+                                            MissionType.IMPERIAL &&
+                                            ' (IMPERIAL AGENDA)'}
+                                        </option>
+                                      ))}
+                                    </SelectInput>
+                                    <div className="flex gap-2">
+                                      <SubmitButton formApi={form}>Start Mission</SubmitButton>
+                                      <button
+                                        type="button"
+                                        className="btn"
+                                        onClick={() => setChoosing(null)}
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
                               </ValidatedForm>
                             </Modal>
                           </>

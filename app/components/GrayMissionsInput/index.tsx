@@ -1,17 +1,22 @@
 import clsx from 'clsx'
 import type { ChangeEvent, PropsWithChildren } from 'react'
 import { useState } from 'react'
-import { useField } from '@rvf/react-router'
+import type { FormApi } from '@rvf/react-router'
 import RequiredIndicator from '../RequiredIndicator'
 
-const GrayMissionsInput = ({ children }: PropsWithChildren) => {
-  const { getInputProps, error, clearError } = useField('grayMissions')
+type Props = PropsWithChildren<{
+  formApi: FormApi<any>
+}>
+
+const GrayMissionsInput = ({ children, formApi }: Props) => {
+  const name = 'grayMissions'
+  const error = formApi.error(name)
 
   const [random, setRandom] = useState(true)
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     setRandom(e.target.checked)
-    clearError()
+    formApi.clearError(name)
   }
 
   return (
@@ -37,7 +42,7 @@ const GrayMissionsInput = ({ children }: PropsWithChildren) => {
       </div>
       <select
         className={clsx('select select-bordered', error && 'select-error')}
-        {...getInputProps({
+        {...formApi.getInputProps(name, {
           id: 'grayMissions',
           multiple: true,
           disabled: random
@@ -52,7 +57,14 @@ const GrayMissionsInput = ({ children }: PropsWithChildren) => {
           </>
         )}
       </div>
-      {random && <input type="hidden" value="RANDOM" {...getInputProps()} />}
+      {random && (
+        <input
+          {...formApi.getInputProps(name, {
+            type: 'hidden',
+            value: 'RANDOM'
+          })}
+        />
+      )}
     </label>
   )
 }
