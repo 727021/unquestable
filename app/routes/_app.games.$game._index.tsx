@@ -10,7 +10,9 @@ import {
 import { useId, useState } from 'react'
 import Modal from '~/components/Modal'
 import {
+  FormApi,
   parseFormData,
+  useForm,
   ValidatedForm,
   validationError
 } from '@rvf/react-router'
@@ -19,9 +21,10 @@ import { z } from 'zod'
 import SelectInput from '~/components/SelectInput'
 import type { ActionFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
+import { f } from 'node_modules/react-router/dist/development/lib-CCSAGgcP.mjs'
 
 const schema = z.object({
-  mission: z.coerce.number().int().positive(),
+  mission: z.coerce.number().int().positive('Required'),
   slot: z.coerce.number().int().positive()
 })
 
@@ -112,8 +115,6 @@ const Game = () => {
   const params = useParams()
   const data = useOutletContext<LoaderData>()
 
-  const [choosing, setChoosing] = useState<number | null>(null)
-
   const activeSideMissions = data.game.missions.filter(
     (m) => !m.forced && !m.stage && m.mission.type !== MissionType.STORY
   )
@@ -126,6 +127,25 @@ const Game = () => {
   const hasActiveForcedMission = forcedMissions.some((m) => !m.stage)
 
   const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema,
+    method: 'POST',
+    defaultValues: {
+      slot: -1,
+      mission: -1
+    }
+  })
+
+  const [choosing, setChoosing] = useState(false)
+  const openChoosing = (slotId: number) => {
+    form.setValue('slot', slotId)
+    setChoosing(true)
+  }
+  const closeChoosing = () => {
+    form.resetForm()
+    setChoosing(false)
+  }
 
   return (
     <>
@@ -177,66 +197,48 @@ const Game = () => {
                             <button
                               type="button"
                               className="btn btn-sm"
-                              onClick={() => setChoosing(slot.id)}
+                              onClick={() => openChoosing(slot.id)}
                               disabled={hasActiveForcedMission}
                             >
                               Choose Mission
                             </button>
                             <Modal
-                              open={choosing !== null}
-                              onClose={() => setChoosing(null)}
+                              open={choosing}
+                              onClose={() => closeChoosing()}
                             >
                               <h2 className="m-0">Choose Side Mission</h2>
-                              <ValidatedForm
-                                id={`${formId}-${slot.id}`}
-                                schema={schema}
-                                defaultValues={{
-                                  slot: slot.id,
-                                  mission: -1
-                                }}
-                                method="POST"
-                              >
-                                {(form) => (
-                                  <>
-                                    <input
-                                      type="hidden"
-                                      name="action"
-                                      value="choose"
-                                    />
-                                    <input
-                                      type="hidden"
-                                      name="slot"
-                                      value={slot.id}
-                                    />
-                                    <SelectInput
-                                      formApi={form}
-                                      name="mission"
-                                      label="Mission"
-                                      required
-                                    >
-                                      <option selected disabled></option>
-                                      {activeSideMissions.map((m) => (
-                                        <option key={m.id} value={m.id}>
-                                          {m.mission.name}
-                                          {m.mission.type ===
-                                            MissionType.IMPERIAL &&
-                                            ' (IMPERIAL AGENDA)'}
-                                        </option>
-                                      ))}
-                                    </SelectInput>
-                                    <div className="flex gap-2">
-                                      <SubmitButton formApi={form}>Start Mission</SubmitButton>
-                                      <button
-                                        type="button"
-                                        className="btn"
-                                        onClick={() => setChoosing(null)}
-                                      >
-                                        Cancel
-                                      </button>
-                                    </div>
-                                  </>
-                                )}
-                              </ValidatedForm>
+                              <form {...form.getFormProps()}>
+                                {form.renderFormIdInput()}
+                                <input {...form.getHiddenInputProps('slot')} />
+                                <SelectInput
+                                  formApi={form}
+                                  name="mission"
+                                  label="Mission"
+                                  required
+                                >
+                                  <option value={-1}></option>
+                                  {activeSideMissions.map((m) => (
+                                    <option key={m.id} value={m.id}>
+                                      {m.mission.name}
+                                      {m.mission.type ===
+                                        MissionType.IMPERIAL &&
+                                        ' (IMPERIAL AGENDA)'}
+                                    </option>
+                                  ))}
+                                </SelectInput>
+                                <div className="flex gap-2">
+                                  <SubmitButton formApi={form}>
+                                    Start Mission
+                                  </SubmitButton>
+                                  <button
+                                    type="button"
+                                    className="btn"
+                                    onClick={() => closeChoosing()}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </form>
                             </Modal>
                           </>
                         )}
