@@ -12,7 +12,7 @@ import BuyAgendaCard from '~/components/BuyAgendaCard'
 import { useId } from 'react'
 
 const schema = z.object({
-  classCards: z.array(z.coerce.number().positive()),
+  classCards: z.array(z.coerce.number().positive()).optional().default([]),
   agendas: z.array(z.coerce.number().positive()).optional().default([])
 })
 
@@ -173,11 +173,13 @@ const BuyStage = () => {
 
   const formId = useId()
   const form = useForm({
+    submitSource: 'state',
     id: formId,
     schema,
     method: 'POST',
     defaultValues: {
-      classCards: []
+      classCards: [],
+      agendas: []
     }
   })
 
@@ -198,6 +200,7 @@ const BuyStage = () => {
             name="classCards"
           />
           <BuyAgendaCard
+            formApi={form}
             influence={imperialPlayer.influence}
             cards={unownedAgendas}
             name="agendas"

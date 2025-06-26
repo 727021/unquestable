@@ -1,5 +1,6 @@
 import { TrashIcon } from '@heroicons/react/24/outline'
 import type { Agenda } from '@prisma/client'
+import { FieldApi, FormApi } from '@rvf/react-router'
 import { useState, type ReactNode } from 'react'
 
 type Props = {
@@ -7,13 +8,16 @@ type Props = {
   influence: number
   name: string
   label: ReactNode
+  formApi: FormApi<any>
 }
 
-const BuyAgendaCard = ({ cards, influence, label, name }: Props) => {
-  const [bought, setBought] = useState<Agenda[]>([])
+const BuyAgendaCard = ({ cards, influence, label, name, formApi }: Props) => {
+  const bought: FieldApi<number[]> = formApi.field(name)
+
+  const boughtCards = cards.filter((c) => bought.value().includes(c.id))
 
   const canBuy = cards
-    .filter((c) => !bought.some((s) => s.id === c.id))
+    .filter((c) => !bought.value().includes(c.id))
     .toSorted((a, b) => a.cost - b.cost)
 
   const [buying, setBuying] = useState(-1)
@@ -21,19 +25,20 @@ const BuyAgendaCard = ({ cards, influence, label, name }: Props) => {
   const buyingCard = cards.find(({ id }) => id === buying)
 
   const handleBuy = () => {
-    if (!buyingCard || bought.some((s) => s.id === buying)) {
+    if (!buyingCard || bought.value().includes(buying)) {
       return
     }
 
-    setBought((prev) => [...prev, buyingCard])
+    bought.setValue([...bought.value(), buying])
     setBuying(-1)
   }
   const handleRemove = (id: Agenda['id']) => {
-    setBought((prev) => prev.filter((s) => s.id !== id))
+    bought.setValue(bought.value().filter((b) => b !== id))
     setBuying(id)
   }
 
-  const balance = influence - bought.reduce((acc, cur) => acc + cur.cost, 0)
+  const balance =
+    influence - boughtCards.reduce((acc, cur) => acc + cur.cost, 0)
 
   return (
     <div className="flex flex-col">
@@ -76,7 +81,7 @@ const BuyAgendaCard = ({ cards, influence, label, name }: Props) => {
           </div>
         </div>
         <div className="flex flex-col gap-1">
-          {bought
+          {boughtCards
             .toSorted((a, b) => a.cost - b.cost)
             .map((b) => (
               <div className="inline-flex gap-1 items-center" key={b.id}>
@@ -90,9 +95,11 @@ const BuyAgendaCard = ({ cards, influence, label, name }: Props) => {
                 <span>
                   {b.cost} - {b.name}
                 </span>
-                <input type="hidden" name={name} value={b.id} />
               </div>
             ))}
+          {bought.value().map((_, i) => (
+            <input {...formApi.getHiddenInputProps(`${name}[${i}]`)} />
+          ))}
         </div>
       </div>
     </div>
