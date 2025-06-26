@@ -1,7 +1,6 @@
 import type { ClassCard } from '@prisma/client'
 import clsx from 'clsx'
-import type { ChangeEvent, ElementRef, ReactNode } from 'react'
-import { useState } from 'react'
+import type { ReactNode } from 'react'
 import type { FormApi } from '@rvf/react-router'
 
 type Props = {
@@ -14,22 +13,13 @@ type Props = {
 }
 
 const BuyClassCard = ({ cards, xp, name, label, owned, formApi }: Props) => {
-  const [checked, setChecked] = useState<number[]>([])
-  const error = formApi.error(name)
-
-  const handleCheck = (e: ChangeEvent<ElementRef<'input'>>) => {
-    const value = parseInt(e.target.value, 10)
-    if (e.target.checked) {
-      setChecked((prev) => [...prev, value])
-    } else {
-      setChecked((prev) => prev.filter((v) => v !== value))
-    }
-  }
+  const field = formApi.field(name)
+  const error = field.error()
 
   const buyable = cards.filter((c) => !owned.some((o) => o.id === c.id))
 
   const balance = cards
-    .filter((c) => checked.includes(c.id))
+    .filter((c) => field.value().some((v: string) => +v === c.id))
     .map((c) => c.cost)
     .reduce((acc, cur) => acc - cur, xp)
 
@@ -70,14 +60,14 @@ const BuyClassCard = ({ cards, xp, name, label, owned, formApi }: Props) => {
           data-tip={card.tagline}
         >
           <input
-            {...formApi.getInputProps(name, {
+            {...field.getInputProps({
               type: 'checkbox',
               className:
                 'checkbox checkbox-sm checkbox-primary border-neutral hover:border-neutral',
               value: card.id,
-              checked: checked.includes(card.id),
-              onChange: handleCheck,
-              disabled: !checked.includes(card.id) && card.cost > balance
+              disabled:
+                !field.value().some((c: string) => +c === card.id) &&
+                card.cost > balance
             })}
             data-cost={card.cost}
           />

@@ -4,7 +4,6 @@ import type {
   ComponentProps,
   PropsWithChildren
 } from 'react'
-import { useState } from 'react'
 import RequiredIndicator from '../RequiredIndicator'
 import type { FormApi } from '@rvf/react-router'
 import clsx from 'clsx'
@@ -18,13 +17,13 @@ type Props = PropsWithChildren<
 >
 
 const SideMissionsInput = ({ name, count = 1, children, formApi }: Props) => {
-  const error = formApi.error(name)
-
-  const [random, setRandom] = useState(true)
+  const field = formApi.field(name)
+  const error = field.error()
+  const random = field.value() === 'RANDOM'
 
   const onChange = (e: ChangeEvent<ElementRef<'input'>>) => {
-    setRandom(e.target.checked)
-    formApi.clearError(name)
+    field.setValue(e.target.checked ? 'RANDOM' : [])
+    field.clearError()
   }
 
   return (
@@ -32,7 +31,7 @@ const SideMissionsInput = ({ name, count = 1, children, formApi }: Props) => {
       <div className="label">
         <span className="label-text">
           <RequiredIndicator />
-          Side Missions
+          Side Mission{count > 1 ? 's' : ''}
         </span>
         <span className="label-text-alt">
           <div className="form-control">
@@ -50,29 +49,23 @@ const SideMissionsInput = ({ name, count = 1, children, formApi }: Props) => {
       </div>
       <select
         className={clsx('select select-bordered', error && 'select-error')}
-        {...formApi.getInputProps(name, {
-          id: name,
-          multiple: count > 1,
-          disabled: random
-        })}
+        {...(random
+          ? { multiple: count > 1, disabled: true }
+          : field.getInputProps({
+              id: name,
+              multiple: count > 1
+            }))}
       >
         {children}
       </select>
       <div className="label">
-        {(error || !random) && (
+        {(error || (field.value() !== 'RANDOM' && count > 1)) && (
           <span className={clsx('label-text-alt', error && 'text-error')}>
             Choose exactly {count} mission{count > 1 ? 's' : ''}
           </span>
         )}
       </div>
-      {random && (
-        <input
-          {...formApi.getInputProps(name, {
-            type: 'hidden',
-            value: 'RANDOM'
-          })}
-        />
-      )}
+      {random && <input {...field.getHiddenInputProps()} />}
     </label>
   )
 }

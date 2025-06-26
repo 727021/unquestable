@@ -17,7 +17,7 @@ const schema = z.object({
   rebels: z.array(
     z.object({
       id: z.coerce.number().positive(),
-      cards: z.array(z.coerce.number().positive())
+      cards: z.array(z.coerce.number().positive()).optional().default([])
     })
   ),
   items: z
@@ -204,11 +204,19 @@ const BuyStage = () => {
 
   const formId = useId()
   const form = useForm({
+    submitSource: 'state',
     id: formId,
     schema,
     method: 'POST',
     defaultValues: {
-      rebels: []
+      rebels: ctx.game.rebelPlayers.map((rebel) => ({
+        id: rebel.id,
+        cards: []
+      })),
+      items: {
+        bought: [],
+        sold: []
+      }
     }
   })
 
@@ -230,7 +238,7 @@ const BuyStage = () => {
                 name={`rebels[${i}].cards`}
                 owned={rebel.classCards}
               />
-              <input type="hidden" name={`rebels[${i}].id`} value={rebel.id} />
+              <input {...form.getHiddenInputProps(`rebels[${i}].id`)} />
             </Fragment>
           ))}
         </div>
@@ -241,6 +249,7 @@ const BuyStage = () => {
           credits={ctx.game.credits}
           owned={ctx.game.items}
           cards={data.items}
+          formApi={form}
         />
         <SubmitButton formApi={form} className="w-fit">
           Buy

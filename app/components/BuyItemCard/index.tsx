@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { TrashIcon } from '@heroicons/react/24/outline'
 import { getSellPrice } from '~/utils/sellPrice'
 import { sortItems } from '~/utils/sortItems'
+import type { FieldApi, FormApi } from '@rvf/react-router'
 
 type Props = {
   cards: Item[]
@@ -12,6 +13,7 @@ type Props = {
   nameBought: string
   nameSold: string
   label: ReactNode
+  formApi: FormApi<any>
 }
 
 const BuyItemCard = ({
@@ -20,17 +22,19 @@ const BuyItemCard = ({
   nameSold,
   cards,
   owned,
-  label
+  label,
+  formApi
 }: Props) => {
-  const [bought, setBought] = useState<Item[]>([])
-  const [sold, setSold] = useState<Item[]>([])
+  const bought: FieldApi<number[]> = formApi.field(nameBought)
+  const sold: FieldApi<number[]> = formApi.field(nameSold)
 
-  const canBuy = sortItems(
-    cards.filter((c) => !bought.some((b) => b.id === c.id))
+  const boughtItems = sortItems(
+    cards.filter((c) => bought.value().includes(c.id))
   )
-  const canSell = sortItems(
-    owned.filter((o) => !sold.some((s) => s.id === o.id))
-  )
+  const soldItems = sortItems(owned.filter((o) => sold.value().includes(o.id)))
+
+  const canBuy = sortItems(cards.filter((c) => !bought.value().includes(c.id)))
+  const canSell = sortItems(owned.filter((o) => !sold.value().includes(o.id)))
 
   const [buying, setBuying] = useState(-1)
   const [selling, setSelling] = useState(-1)
@@ -39,34 +43,34 @@ const BuyItemCard = ({
   const sellingItem = owned.find(({ id }) => id === selling)
 
   const handleBuy = () => {
-    if (!buyingItem || bought.some((b) => b.id === buying)) {
+    if (!buyingItem || bought.value().includes(buying)) {
       return
     }
 
-    setBought((prev) => [...prev, buyingItem])
+    bought.setValue([...bought.value(), buying])
     setBuying(-1)
   }
   const handleBuyRemove = (id: Item['id']) => {
-    setBought((prev) => prev.filter((b) => b.id !== id))
+    bought.setValue(bought.value().filter((b) => b !== id))
     setBuying(id)
   }
   const handleSell = () => {
-    if (!sellingItem || sold.some((s) => s.id === selling)) {
+    if (!sellingItem || sold.value().includes(selling)) {
       return
     }
 
-    setSold((prev) => [...prev, sellingItem])
+    sold.setValue([...sold.value(), selling])
     setSelling(-1)
   }
   const handleSellRemove = (id: Item['id']) => {
-    setSold((prev) => prev.filter((s) => s.id !== id))
+    sold.setValue(sold.value().filter((s) => s !== id))
     setSelling(id)
   }
 
   const balance =
     credits -
-    bought.reduce((acc, cur) => acc + cur.cost, 0) +
-    sold.reduce((acc, cur) => acc + (cur.cost ? getSellPrice(cur.cost) : 50), 0)
+    boughtItems.reduce((acc, cur) => acc + cur.cost, 0) +
+    soldItems.reduce((acc, cur) => acc + (cur.cost ? getSellPrice(cur.cost) : 50), 0)
 
   return (
     <div className="flex flex-col">
@@ -110,7 +114,7 @@ const BuyItemCard = ({
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            {sortItems(bought).map((b) => (
+            {boughtItems.map((b) => (
               <div className="inline-flex gap-1 items-center" key={b.id}>
                 <button
                   type="button"
@@ -122,8 +126,10 @@ const BuyItemCard = ({
                 <span>
                   {b.cost} CR - {b.name} ({'I'.repeat(b.tier)})
                 </span>
-                <input type="hidden" name={nameBought} value={b.id} />
               </div>
+            ))}
+            {bought.value().map((_, i) => (
+              <input {...formApi.getHiddenInputProps(`${nameBought}[${i}]`)} />
             ))}
           </div>
         </div>
@@ -160,7 +166,7 @@ const BuyItemCard = ({
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            {sortItems(sold).map((s) => (
+            {soldItems.map((s) => (
               <div className="inline-flex gap-1 items-center" key={s.id}>
                 <button
                   type="button"
@@ -173,8 +179,10 @@ const BuyItemCard = ({
                   {s.cost} ({getSellPrice(s.cost)}) CR - {s.name} (
                   {'I'.repeat(s.tier)})
                 </span>
-                <input type="hidden" name={nameSold} value={s.id} />
               </div>
+            ))}
+            {sold.value().map((_, i) => (
+              <input {...formApi.getHiddenInputProps(`${nameSold}[${i}]`)} />
             ))}
           </div>
         </div>

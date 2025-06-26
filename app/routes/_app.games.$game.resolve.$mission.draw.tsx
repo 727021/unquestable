@@ -209,7 +209,7 @@ const ChooseStage = () => {
     schema,
     method: 'POST',
     defaultValues: {
-      missions: []
+      missions: 'RANDOM'
     }
   })
 

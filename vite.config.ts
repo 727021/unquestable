@@ -1,6 +1,7 @@
 import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import devtoolsJson from 'vite-plugin-devtools-json'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 
@@ -14,7 +15,7 @@ export default defineConfig({
   server: {
     port: 3000
   },
-  plugins: [reactRouter(), tsconfigPaths()],
+  plugins: [reactRouter(), tsconfigPaths(), devtoolsJson()],
   resolve: {
     alias: {
       '.prisma/client/index-browser': path.relative(
