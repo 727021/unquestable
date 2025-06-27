@@ -1,32 +1,12 @@
 import type { LoaderData as GameLoaderData } from '~/routes/_app.games.$game'
 import EditButton from '../EditButton'
 import type { Reducer } from 'react'
-import { useCallback, useEffect, useId, useReducer } from 'react'
+import { useCallback, useEffect, useId, useReducer, useState } from 'react'
 import { useFetcher } from 'react-router'
 import type { ActionData } from '~/routes/_app.games.$game.rebels.class'
 import { classSchema } from '~/routes/_app.games.$game.rebels.class'
 import SubmitButton from '../SubmitButton'
 import { useForm } from '@rvf/react-router'
-
-type CardId = NonNullable<
-  GameLoaderData['game']['rebelPlayers'][0]
->['classCards'][0]['id']
-
-type State = {
-  editing: boolean
-  cardsToAdd: CardId[]
-  cardsToRemove: CardId[]
-}
-
-type Action =
-  | { type: 'TOGGLE_EDITING' | 'STOP_EDITING' }
-  | { type: 'ADD_CARD' | 'REMOVE_CARD'; cardId: CardId }
-
-const initialState: State = {
-  editing: false,
-  cardsToAdd: [],
-  cardsToRemove: []
-}
 
 type Props = {
   rebel: GameLoaderData['game']['rebelPlayers'][0]
@@ -34,60 +14,9 @@ type Props = {
 }
 
 const RebelClassManager = ({ rebel, formAction }: Props) => {
-  const reducer: Reducer<State, Action> = useCallback(
-    (state, action) => {
-      switch (action.type) {
-        case 'TOGGLE_EDITING':
-          return { ...initialState, editing: !state.editing }
-        case 'STOP_EDITING':
-          return { ...initialState, editing: false }
-        case 'ADD_CARD':
-          if (rebel.classCards.some((c) => c.id === action.cardId)) {
-            return {
-              ...state,
-              cardsToAdd: state.cardsToAdd.filter((id) => id !== action.cardId),
-              cardsToRemove: state.cardsToRemove.filter(
-                (id) => id !== action.cardId
-              )
-            }
-          }
-          return {
-            ...state,
-            cardsToAdd: [...state.cardsToAdd, action.cardId],
-            cardsToRemove: state.cardsToRemove.filter(
-              (id) => id !== action.cardId
-            )
-          }
-        case 'REMOVE_CARD':
-          if (!rebel.classCards.some((c) => c.id === action.cardId)) {
-            return {
-              ...state,
-              cardsToAdd: state.cardsToAdd.filter((id) => id !== action.cardId),
-              cardsToRemove: state.cardsToRemove.filter(
-                (id) => id !== action.cardId
-              )
-            }
-          }
-          return {
-            ...state,
-            cardsToAdd: state.cardsToAdd.filter((id) => id !== action.cardId),
-            cardsToRemove: [...state.cardsToRemove, action.cardId]
-          }
-      }
-    },
-    [rebel.classCards]
-  )
-
-  const [classState, updateClass] = useReducer(reducer, initialState)
-
   const fetcher = useFetcher<ActionData>()
 
-  useEffect(() => {
-    if (fetcher.data?.success && fetcher.state === 'idle') {
-      updateClass({ type: 'STOP_EDITING' })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetcher?.state])
+  const [editing, setEditing] = useState(false)
 
   const formId = useId()
   const form = useForm({
@@ -97,18 +26,51 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
     fetcher,
     action: formAction,
     defaultValues: {
-      cardsToAdd: [],
-      cardsToRemove: [],
-      id: rebel.id
+      id: rebel.id,
+      classCards: rebel.classCards.map((c) => c.id)
     }
   })
+
+  const cancel = () => {
+    setEditing(false)
+    form.resetForm({
+      id: rebel.id,
+      classCards: rebel.classCards.map((c) => c.id)
+    })
+  }
+
+  const toggle = () => {
+    setEditing((prev) => !prev)
+    form.resetForm({
+      id: rebel.id,
+      classCards: rebel.classCards.map((c) => c.id)
+    })
+  }
+
+  const add = (cardId: number) => {
+    form.setValue('classCards', [...form.value('classCards'), cardId])
+  }
+
+  const remove = (cardId: number) => {
+    form.setValue(
+      'classCards',
+      form.value('classCards').filter((id) => id !== cardId)
+    )
+  }
+
+  useEffect(() => {
+    if (fetcher.data?.success && fetcher.state === 'idle') {
+      cancel()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetcher?.state])
 
   return (
     <div className="flex flex-col">
       <div className="flex justify-between items-center w-full">
         <h3 className="m-0">Class</h3>
         <div className="flex gap-2">
-          {classState.editing && (
+          {editing && (
             <SubmitButton
               className="btn btn-sm btn-primary btn-outline"
               formApi={form}
@@ -121,8 +83,8 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
             </SubmitButton>
           )}
           <EditButton
-            active={classState.editing}
-            onClick={() => updateClass({ type: 'TOGGLE_EDITING' })}
+            active={editing}
+            onClick={() => toggle()}
             disabled={
               fetcher.state === 'loading' || fetcher.state === 'submitting'
             }
@@ -130,7 +92,7 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
           />
         </div>
       </div>
-      {classState.editing ? (
+      {editing ? (
         <form
           {...form.getFormProps()}
           className="flex flex-1 justify-between items-end"
@@ -142,16 +104,9 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
                 <input
                   type="checkbox"
                   className="checkbox checkbox-sm checkbox-primary"
-                  checked={
-                    (rebel.classCards.some((c) => c.id === card.id) ||
-                      classState.cardsToAdd.includes(card.id)) &&
-                    !classState.cardsToRemove.includes(card.id)
-                  }
+                  checked={form.value('classCards').includes(card.id)}
                   onChange={(e) =>
-                    updateClass({
-                      type: e.target.checked ? 'ADD_CARD' : 'REMOVE_CARD',
-                      cardId: card.id
-                    })
+                    e.target.checked ? add(card.id) : remove(card.id)
                   }
                 />
                 <span className="label-text">
@@ -160,22 +115,9 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
               </label>
             ))}
           </div>
-          <input type="hidden" name="id" value={rebel.id} />
-          {classState.cardsToAdd.map((card, i) => (
-            <input
-              key={`cardsToAdd-${card}`}
-              type="hidden"
-              name={`cardsToAdd[${i}]`}
-              value={card}
-            />
-          ))}
-          {classState.cardsToRemove.map((card, i) => (
-            <input
-              key={`cardsToRemove-${card}`}
-              type="hidden"
-              name={`cardsToRemove[${i}]`}
-              value={card}
-            />
+          <input {...form.getHiddenInputProps('id')} />
+          {form.value('classCards').map((_, i) => (
+            <input {...form.getHiddenInputProps(`classCards[${i}]`)} />
           ))}
         </form>
       ) : (

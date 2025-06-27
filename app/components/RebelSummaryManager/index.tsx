@@ -17,6 +17,8 @@ type Props = {
 const RebelSummaryManager = ({ rebel, formAction }: Props) => {
   const fetcher = useFetcher<ActionData>()
 
+  const [editing, setEditing] = useState(false)
+
   const formId = useId()
   const form = useForm({
     id: formId,
@@ -30,8 +32,6 @@ const RebelSummaryManager = ({ rebel, formAction }: Props) => {
       xp: rebel.xp
     }
   })
-
-  const [editing, setEditing] = useState(false)
 
   const cancel = () => {
     setEditing(false)
@@ -49,7 +49,6 @@ const RebelSummaryManager = ({ rebel, formAction }: Props) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetcher?.state])
-
 
   return (
     <div className="flex flex-col">

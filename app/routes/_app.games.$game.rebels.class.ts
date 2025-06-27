@@ -8,13 +8,12 @@ import { requireAuth } from '~/utils/requireAuth.server'
 export type ActionData = { success?: number }
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  return redirect(`/games/${params.game}/empire`)
+  return redirect(`/games/${params.game}/rebels`)
 }
 
 export const classSchema = z.object({
   id: z.coerce.number().int().positive(),
-  cardsToAdd: z.array(z.coerce.number().int().positive()),
-  cardsToRemove: z.array(z.coerce.number().int().positive())
+  classCards: z.array(z.coerce.number().int().positive())
 })
 
 export const action = async (args: ActionFunctionArgs) => {
@@ -56,8 +55,7 @@ export const action = async (args: ActionFunctionArgs) => {
     where: { id: player.id },
     data: {
       classCards: {
-        connect: data.cardsToAdd.map((id) => ({ id })),
-        disconnect: data.cardsToRemove.map((id) => ({ id }))
+        set: data.classCards.map((id) => ({ id }))
       }
     }
   })
