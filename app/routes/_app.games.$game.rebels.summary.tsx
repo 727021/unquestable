@@ -14,11 +14,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 export const summarySchema = z.object({
   id: z.coerce.number().int().positive(),
   name: z
-    .ostring()
+    .string()
     .optional()
     .default('')
     .transform((input) => input?.trim() || null),
-  xp: z.optional(z.coerce.number().int().nonnegative()).optional().default(0)
+  xp: z.coerce.number().int().nonnegative().optional().default(0)
 })
 
 export const action = async (args: ActionFunctionArgs) => {
