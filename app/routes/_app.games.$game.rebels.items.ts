@@ -8,7 +8,7 @@ import { requireAuth } from '~/utils/requireAuth.server'
 export type ActionData = { success?: number }
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  return redirect(`/games/${params.game}/empire`)
+  return redirect(`/games/${params.game}/rebels`)
 }
 
 export const itemSchema = z.object({
@@ -16,8 +16,7 @@ export const itemSchema = z.object({
     .optional(z.coerce.number().int().nonnegative())
     .optional()
     .default(0),
-  itemsToAdd: z.array(z.coerce.number().int().positive()),
-  itemsToRemove: z.array(z.coerce.number().int().positive())
+  items: z.array(z.coerce.number().int().positive()).default([])
 })
 
 export const action = async (args: ActionFunctionArgs) => {
@@ -47,8 +46,7 @@ export const action = async (args: ActionFunctionArgs) => {
     where: { id: game.id },
     data: {
       items: {
-        connect: data.itemsToAdd.map((id) => ({ id })),
-        disconnect: data.itemsToRemove.map((id) => ({ id }))
+        set: data.items.map((id) => ({ id }))
       },
       credits: data.credits
     }
