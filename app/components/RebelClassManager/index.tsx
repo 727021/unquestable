@@ -48,13 +48,13 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
   }
 
   const add = (cardId: number) => {
-    form.setValue('classCards', [...form.value('classCards'), cardId])
+    form.setValue('classCards', [...(form.value('classCards') ?? []), cardId])
   }
 
   const remove = (cardId: number) => {
     form.setValue(
       'classCards',
-      form.value('classCards').filter((id) => id !== cardId)
+      form.value('classCards')?.filter((id) => id !== cardId)
     )
   }
 
@@ -104,7 +104,7 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
                 <input
                   type="checkbox"
                   className="checkbox checkbox-sm checkbox-primary"
-                  checked={form.value('classCards').includes(card.id)}
+                  checked={form.value('classCards')?.includes(card.id)}
                   onChange={(e) =>
                     e.target.checked ? add(card.id) : remove(card.id)
                   }
@@ -116,7 +116,7 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
             ))}
           </div>
           <input {...form.getHiddenInputProps('id')} />
-          {form.value('classCards').map((_, i) => (
+          {form.value('classCards')?.map((_, i) => (
             <input {...form.getHiddenInputProps(`classCards[${i}]`)} />
           ))}
         </form>
