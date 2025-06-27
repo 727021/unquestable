@@ -12,8 +12,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 }
 
 export const rewardSchema = z.object({
-  rewardsToAdd: z.array(z.coerce.number().int().positive()),
-  rewardsToRemove: z.array(z.coerce.number().int().positive())
+  rewards: z.array(z.coerce.number().int().positive()).default([])
 })
 
 export const action = async (args: ActionFunctionArgs) => {
@@ -45,8 +44,7 @@ export const action = async (args: ActionFunctionArgs) => {
     where: { id: player.id },
     data: {
       rewards: {
-        connect: data.rewardsToAdd.map((id) => ({ id })),
-        disconnect: data.rewardsToRemove.map((id) => ({ id }))
+        set: data.rewards.map((id) => ({ id }))
       }
     }
   })

@@ -1,11 +1,5 @@
-import {
-  useFetcher,
-  useFormAction,
-  useLoaderData,
-  useOutletContext
-} from 'react-router'
+import { useFormAction, useLoaderData, useOutletContext } from 'react-router'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
-import type { ActionData } from './_app.games.$game.empire.agendas'
 import AgendaManager from '~/components/AgendaManager'
 import ImperialClassManager from '~/components/ImperialClassManager'
 import ImperialSummaryManager from '~/components/ImperialSummaryManager'
@@ -48,11 +42,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
       side: {
         in: [Side.ALL, Side.IMPERIAL]
       }
-    },
-    select: {
-      id: true,
-      name: true,
-      tagline: true
     }
   })
 

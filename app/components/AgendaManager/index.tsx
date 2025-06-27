@@ -42,8 +42,6 @@ const AgendaManager = ({ imperialPlayer, formAction }: Props) => {
     }
   })
 
-  console.log(form.value())
-
   const cancel = () => {
     setEditing(false)
     form.resetForm({
