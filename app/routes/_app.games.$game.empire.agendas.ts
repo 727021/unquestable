@@ -12,17 +12,26 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 }
 
 export const agendaSchema = z.object({
-  agendasToAdd: z.array(z.coerce.number().int().positive()),
-  agendasToDiscard: z.array(z.coerce.number().int().positive()),
-  agendasToRestore: z.array(z.coerce.number().int().positive()),
-  agendasToReshuffle: z.array(z.coerce.number().int().positive())
+  agendas: z
+    .array(
+      z.object({
+        id: z.coerce.number().int().positive(),
+        discarded: z.preprocess(
+          (val) => val === 'true' || val === true,
+          z.boolean()
+        )
+      })
+    )
+    .default([])
 })
 
 export const action = async (args: ActionFunctionArgs) => {
-  const { data } = await parseFormData(
+  const { data, submittedData, error } = await parseFormData(
     await args.request.formData(),
     agendaSchema
   )
+
+  console.log({ data, submittedData, error })
 
   const { userId } = await requireAuth(args)
   const gameId = parseInt(args.params.game!, 10)
@@ -60,61 +69,28 @@ export const action = async (args: ActionFunctionArgs) => {
     },
     data: {
       agendas: {
-        create: [
-          ...data.agendasToAdd.map((agendaId) => ({
-            agenda: {
-              connect: {
-                id: agendaId
-              }
-            }
-          })),
-          ...data.agendasToDiscard
-            .filter(
-              (agendaId) =>
-                !player.agendas.some((a) => a.agenda.id === agendaId)
-            )
-            .map((agendaId) => ({
-              agenda: {
-                connect: {
-                  id: agendaId
-                }
-              },
-              discarded: true
-            }))
-        ],
-        update: [
-          ...data.agendasToDiscard
-            .filter((agendaId) =>
-              player.agendas.some((a) => a.agenda.id === agendaId)
-            )
-            .map((agendaId) => ({
-              where: {
-                imperialId_agendaId: {
-                  imperialId: player.id,
-                  agendaId
-                }
-              },
-              data: {
-                discarded: true
-              }
-            })),
-          ...data.agendasToRestore.map((agendaId) => ({
-            where: {
-              imperialId_agendaId: {
-                imperialId: player.id,
-                agendaId
-              }
-            },
-            data: {
-              discarded: false
-            }
-          }))
-        ],
         deleteMany: {
           agendaId: {
-            in: data.agendasToReshuffle
+            in: player.agendas
+              .map((a) => a.agenda.id)
+              .filter((id) => !data.agendas.some((a) => a.id === id))
           }
-        }
+        },
+        upsert: data.agendas.map((agenda) => ({
+          create: {
+            agendaId: agenda.id,
+            discarded: agenda.discarded
+          },
+          update: {
+            discarded: agenda.discarded
+          },
+          where: {
+            imperialId_agendaId: {
+              agendaId: agenda.id,
+              imperialId: player.id
+            }
+          }
+        }))
       }
     }
   })

@@ -1,9 +1,12 @@
-import type { FetcherWithComponents } from 'react-router'
-import { useCallback, useEffect, useId, useReducer, type Reducer } from 'react'
+import { useFetcher } from 'react-router'
+import { useEffect, useId, useState } from 'react'
 import type { LoaderData } from '~/routes/_app.games.$game'
 import EditButton from '~/components/EditButton'
 import { useForm } from '@rvf/react-router'
-import { agendaSchema } from '~/routes/_app.games.$game.empire.agendas'
+import {
+  ActionData,
+  agendaSchema
+} from '~/routes/_app.games.$game.empire.agendas'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import {
   ArrowDownCircleIcon,
@@ -11,363 +14,198 @@ import {
   ArrowRightCircleIcon
 } from '@heroicons/react/24/outline'
 import SubmitButton from '~/components/SubmitButton'
-
-type AgendaId = NonNullable<
-  LoaderData['game']['imperialPlayer']
->['agendas'][0]['agenda']['id']
-
-type State = {
-  editing: boolean
-  agendasToAdd: AgendaId[]
-  agendasToDiscard: AgendaId[]
-  agendasToRestore: AgendaId[]
-  agendasToReshuffle: AgendaId[]
-  chosenAgenda: AgendaId
-}
-
-type Action =
-  | { type: 'TOGGLE_EDITING' | 'STOP_EDITING' }
-  | {
-      type:
-        | 'ADD_AGENDA'
-        | 'DISCARD_AGENDA'
-        | 'RESTORE_AGENDA'
-        | 'RESHUFFLE_AGENDA'
-        | 'CHOOSE_AGENDA'
-      agenda: AgendaId
-    }
-
-const initialAgendaState: State = {
-  editing: false,
-  agendasToAdd: [],
-  agendasToDiscard: [],
-  agendasToRestore: [],
-  agendasToReshuffle: [],
-  chosenAgenda: -1
-}
+import { Agenda } from '@prisma/client'
 
 type Props = {
   imperialPlayer: NonNullable<LoaderData['game']['imperialPlayer']>
-  fetcher?: FetcherWithComponents<any>
   formAction?: string
 }
 
-const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
-  const allAgendas = imperialPlayer.agendaDecks
-    .map((deck) => deck.agendas)
-    .flat()
+const AgendaManager = ({ imperialPlayer, formAction }: Props) => {
+  const fetcher = useFetcher<ActionData>()
 
-  const initialOwnedAgendas = allAgendas
-    .filter((agenda) =>
-      imperialPlayer.agendas.some(
-        (a) => a.agendaId === agenda.id && !a.discarded
-      )
-    )
-    .map((a) => a.id)
-  const initialDiscardedAgendas = allAgendas
-    .filter((agenda) =>
-      imperialPlayer.agendas.some(
-        (a) => a.agendaId === agenda.id && a.discarded
-      )
-    )
-    .map((a) => a.id)
-
-  const reducer: Reducer<State, Action> = useCallback(
-    (state, action) => {
-      switch (action.type) {
-        case 'ADD_AGENDA': // unowned -> owned
-          if (initialOwnedAgendas.includes(action.agenda)) {
-            return {
-              ...state,
-              agendasToAdd: state.agendasToAdd.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              agendasToReshuffle: state.agendasToReshuffle.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              chosenAgenda: initialAgendaState.chosenAgenda
-            }
-          }
-          if (initialDiscardedAgendas.includes(action.agenda)) {
-            return {
-              ...state,
-              agendasToAdd: state.agendasToAdd.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              agendasToReshuffle: state.agendasToReshuffle.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              agendasToRestore: [...state.agendasToRestore, action.agenda],
-              chosenAgenda: initialAgendaState.chosenAgenda
-            }
-          }
-          return {
-            ...state,
-            agendasToReshuffle: state.agendasToReshuffle.filter(
-              (agenda) => agenda !== action.agenda
-            ),
-            agendasToAdd: [...state.agendasToAdd, action.agenda],
-            chosenAgenda: initialAgendaState.chosenAgenda
-          }
-        case 'DISCARD_AGENDA': // owned -> discarded
-          if (initialDiscardedAgendas.includes(action.agenda)) {
-            return {
-              ...state,
-              agendasToRestore: state.agendasToRestore.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              agendasToAdd: state.agendasToAdd.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              agendasToDiscard: state.agendasToDiscard.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              chosenAgenda: initialAgendaState.chosenAgenda
-            }
-          }
-          return {
-            ...state,
-            agendasToDiscard: [...state.agendasToDiscard, action.agenda],
-            agendasToAdd: state.agendasToAdd.filter(
-              (agenda) => agenda !== action.agenda
-            ),
-            agendasToRestore: state.agendasToRestore.filter(
-              (agenda) => agenda !== action.agenda
-            )
-          }
-        case 'RESTORE_AGENDA': // discarded -> owned
-          if (initialOwnedAgendas.includes(action.agenda)) {
-            return {
-              ...state,
-              agendasToRestore: state.agendasToRestore.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              agendasToAdd: state.agendasToAdd.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              agendasToDiscard: state.agendasToDiscard.filter(
-                (agenda) => agenda !== action.agenda
-              )
-            }
-          }
-          if (initialDiscardedAgendas.includes(action.agenda)) {
-            return {
-              ...state,
-              agendasToRestore: [...state.agendasToRestore, action.agenda],
-              agendasToDiscard: state.agendasToDiscard.filter(
-                (agenda) => agenda !== action.agenda
-              )
-            }
-          }
-          return {
-            ...state,
-            agendasToAdd: [...state.agendasToAdd, action.agenda],
-            agendasToReshuffle: state.agendasToReshuffle.filter(
-              (agenda) => agenda !== action.agenda
-            )
-          }
-        case 'RESHUFFLE_AGENDA': // owned|discarded -> unowned
-          if (
-            !initialOwnedAgendas.includes(action.agenda) &&
-            !initialDiscardedAgendas.includes(action.agenda)
-          ) {
-            return {
-              ...state,
-              agendasToReshuffle: state.agendasToReshuffle.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              agendasToAdd: state.agendasToAdd.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              agendasToDiscard: state.agendasToDiscard.filter(
-                (agenda) => agenda !== action.agenda
-              ),
-              agendasToRestore: state.agendasToRestore.filter(
-                (agenda) => agenda !== action.agenda
-              )
-            }
-          }
-          return {
-            ...state,
-            agendasToReshuffle: [...state.agendasToReshuffle, action.agenda],
-            agendasToAdd: state.agendasToAdd.filter(
-              (agenda) => agenda !== action.agenda
-            ),
-            agendasToDiscard: state.agendasToDiscard.filter(
-              (agenda) => agenda !== action.agenda
-            ),
-            agendasToRestore: state.agendasToRestore.filter(
-              (agenda) => agenda !== action.agenda
-            )
-          }
-        case 'CHOOSE_AGENDA':
-          return {
-            ...state,
-            chosenAgenda: action.agenda
-          }
-        case 'TOGGLE_EDITING':
-          return {
-            ...initialAgendaState,
-            editing: !state.editing
-          }
-        case 'STOP_EDITING':
-          return {
-            ...state,
-            editing: false
-          }
-      }
-    },
-    [initialDiscardedAgendas, initialOwnedAgendas]
-  )
-
-  const [agendaState, changeAgenda] = useReducer(reducer, initialAgendaState)
-
-  useEffect(() => {
-    if (fetcher?.data?.success && fetcher.state === 'idle') {
-      // Exit edit mode after data is refreshed if the last submission was successful
-      changeAgenda({ type: 'STOP_EDITING' })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetcher?.state])
-
-  const ownedAgendas = allAgendas
-    .filter(
-      (agenda) =>
-        (imperialPlayer.agendas.some(
-          (a) => a.agendaId === agenda.id && !a.discarded
-        ) &&
-          !agendaState.agendasToDiscard.includes(agenda.id) &&
-          !agendaState.agendasToReshuffle.includes(agenda.id)) ||
-        agendaState.agendasToAdd.includes(agenda.id) ||
-        agendaState.agendasToRestore.includes(agenda.id)
-    )
-    .sort((a, b) => a.cost - b.cost)
-  const discardedAgendas = allAgendas
-    .filter(
-      (agenda) =>
-        (imperialPlayer.agendas.some(
-          (a) => a.agendaId === agenda.id && a.discarded
-        ) &&
-          !agendaState.agendasToReshuffle.includes(agenda.id) &&
-          !agendaState.agendasToRestore.includes(agenda.id)) ||
-        agendaState.agendasToDiscard.includes(agenda.id)
-    )
-    .sort((a, b) => a.cost - b.cost)
-  const unownedAgendas = allAgendas
-    .filter(
-      (agenda) =>
-        !ownedAgendas.some((a) => a.id === agenda.id) &&
-        !discardedAgendas.some((a) => a.id === agenda.id)
-    )
-    .sort((a, b) => a.cost - b.cost)
+  const [editing, setEditing] = useState(false)
 
   const formId = useId()
   const form = useForm({
+    submitSource: 'state',
     id: formId,
     schema: agendaSchema,
     method: 'POST',
     action: formAction,
     fetcher,
     defaultValues: {
-      agendasToAdd: [],
-      agendasToDiscard: [],
-      agendasToReshuffle: [],
-      agendasToRestore: []
+      agendas: imperialPlayer.agendas.map((agenda) => ({
+        id: agenda.agendaId,
+        discarded: agenda.discarded
+      }))
     }
   })
+
+  console.log(form.value())
+
+  const cancel = () => {
+    setEditing(false)
+    form.resetForm({
+      agendas: imperialPlayer.agendas.map((agenda) => ({
+        id: agenda.agendaId,
+        discarded: agenda.discarded
+      }))
+    })
+  }
+
+  const toggle = () => {
+    setEditing((prev) => !prev)
+    form.resetForm({
+      agendas: imperialPlayer.agendas.map((agenda) => ({
+        id: agenda.agendaId,
+        discarded: agenda.discarded
+      }))
+    })
+  }
+
+  const allAgendas = imperialPlayer.agendaDecks.flatMap((deck) => deck.agendas)
+
+  const [availableAgendas, ownedAgendas, discardedAgendas] = allAgendas.reduce<
+    [Agenda[], Agenda[], Agenda[]]
+  >(
+    ([available, owned, discarded], agenda) => {
+      const foundAgenda = form.value('agendas')?.find((a) => a.id === agenda.id)
+      if (foundAgenda?.discarded) {
+        discarded.push(agenda)
+      } else if (foundAgenda) {
+        owned.push(agenda)
+      } else {
+        available.push(agenda)
+      }
+      return [available, owned, discarded]
+    },
+    [[], [], []]
+  )
+
+  const [agenda, setAgenda] = useState(-1)
+
+  const add = () => {
+    if (!availableAgendas.some((a) => a.id === agenda)) {
+      return
+    }
+    form.setValue('agendas', [
+      ...(form.value('agendas') ?? []),
+      { id: agenda, discarded: false }
+    ])
+    setAgenda(-1)
+  }
+
+  const discard = (agendaId: number) => {
+    form.setValue(
+      'agendas',
+      form
+        .value('agendas')
+        ?.map((a) =>
+          a.id === agendaId ? { id: agendaId, discarded: true } : a
+        )
+    )
+  }
+
+  const restore = (agendaId: number) => {
+    form.setValue(
+      'agendas',
+      form
+        .value('agendas')
+        ?.map((a) =>
+          a.id === agendaId ? { id: agendaId, discarded: false } : a
+        )
+    )
+  }
+
+  const reshuffle = (agendaId: number) => {
+    form.setValue(
+      'agendas',
+      form.value('agendas')?.filter((a) => a.id !== agendaId)
+    )
+  }
+
+  useEffect(() => {
+    if (fetcher?.data?.success && fetcher.state === 'idle') {
+      // Exit edit mode after data is refreshed if the last submission was successful
+      cancel()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetcher?.state])
 
   return (
     <div className="flex flex-col flex-1 px-2 pb-1 border rounded border-gray-400">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">Agendas</h2>
         <EditButton
-          active={agendaState.editing}
-          onClick={() => changeAgenda({ type: 'TOGGLE_EDITING' })}
+          active={editing}
+          onClick={() => toggle()}
           disabled={
             fetcher?.state === 'loading' || fetcher?.state === 'submitting'
           }
         />
       </div>
-      {agendaState.editing ? (
-        <form
-          {...form.getFormProps()}
-          className="flex flex-col flex-1"
-        >
+      {editing ? (
+        <form {...form.getFormProps()} className="flex flex-col flex-1">
           {form.renderFormIdInput()}
           <div className="flex flex-wrap">
             <div className="flex flex-col flex-1">
               <h3 className="m-0">Owned</h3>
               {!ownedAgendas.length && <p className="m-0">No Agendas</p>}
-              {ownedAgendas.map((agenda) => (
-                <div key={agenda.id} className="flex gap-1 items-center">
-                  <p className="m-0">
-                    {agenda.cost} - {agenda.name}
-                  </p>
-                  <button
-                    className="btn btn-xs btn-circle btn-ghost tooltip"
-                    data-tip="Reshuffle"
-                    type="button"
-                    onClick={() =>
-                      changeAgenda({
-                        type: 'RESHUFFLE_AGENDA',
-                        agenda: agenda.id
-                      })
-                    }
-                  >
-                    <ArrowDownCircleIcon className="w-5 h-5" />
-                  </button>
-                  <button
-                    className="btn btn-xs btn-circle btn-ghost tooltip"
-                    data-tip="Discard"
-                    type="button"
-                    onClick={() =>
-                      changeAgenda({
-                        type: 'DISCARD_AGENDA',
-                        agenda: agenda.id
-                      })
-                    }
-                  >
-                    <ArrowRightCircleIcon className="w-5 h-5" />
-                  </button>
-                </div>
-              ))}
+              {ownedAgendas
+                .toSorted((a, b) => a.cost - b.cost)
+                .map((agenda) => (
+                  <div key={agenda.id} className="flex gap-1 items-center">
+                    <p className="m-0">
+                      {agenda.cost} - {agenda.name}
+                    </p>
+                    <button
+                      className="btn btn-xs btn-circle btn-ghost tooltip"
+                      data-tip="Reshuffle"
+                      type="button"
+                      onClick={() => reshuffle(agenda.id)}
+                    >
+                      <ArrowDownCircleIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      className="btn btn-xs btn-circle btn-ghost tooltip"
+                      data-tip="Discard"
+                      type="button"
+                      onClick={() => discard(agenda.id)}
+                    >
+                      <ArrowRightCircleIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
             </div>
             <div className="flex flex-col flex-1">
               <h3 className="m-0">Discarded</h3>
               {!discardedAgendas.length && <p className="m-0">No Agendas</p>}
-              {discardedAgendas.map((agenda) => (
-                <div key={agenda.id} className="flex gap-1 items-center">
-                  <p className="m-0">
-                    {agenda.cost} - {agenda.name}
-                  </p>
-                  <button
-                    className="btn btn-xs btn-circle btn-ghost tooltip"
-                    data-tip="Restore"
-                    type="button"
-                    onClick={() =>
-                      changeAgenda({
-                        type: 'RESTORE_AGENDA',
-                        agenda: agenda.id
-                      })
-                    }
-                  >
-                    <ArrowLeftCircleIcon className="w-5 h-5" />
-                  </button>
-                  <button
-                    className="btn btn-xs btn-circle btn-ghost tooltip"
-                    data-tip="Reshuffle"
-                    type="button"
-                    onClick={() =>
-                      changeAgenda({
-                        type: 'RESHUFFLE_AGENDA',
-                        agenda: agenda.id
-                      })
-                    }
-                  >
-                    <ArrowDownCircleIcon className="w-5 h-5" />
-                  </button>
-                </div>
-              ))}
+              {discardedAgendas
+                .toSorted((a, b) => a.cost - b.cost)
+                .map((agenda) => (
+                  <div key={agenda.id} className="flex gap-1 items-center">
+                    <p className="m-0">
+                      {agenda.cost} - {agenda.name}
+                    </p>
+                    <button
+                      className="btn btn-xs btn-circle btn-ghost tooltip"
+                      data-tip="Restore"
+                      type="button"
+                      onClick={() => restore(agenda.id)}
+                    >
+                      <ArrowLeftCircleIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      className="btn btn-xs btn-circle btn-ghost tooltip"
+                      data-tip="Reshuffle"
+                      type="button"
+                      onClick={() => reshuffle(agenda.id)}
+                    >
+                      <ArrowDownCircleIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
             </div>
           </div>
           <div className="flex flex-1 items-end justify-between">
@@ -376,34 +214,25 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
               <div className="join">
                 <select
                   className="join-item select select-bordered"
-                  value={agendaState.chosenAgenda}
-                  onChange={(e) =>
-                    changeAgenda({
-                      type: 'CHOOSE_AGENDA',
-                      agenda: parseInt(e.target.value, 10)
-                    })
-                  }
+                  value={agenda}
+                  onChange={(e) => setAgenda(parseInt(e.target.value, 10))}
                 >
                   <option value={-1} disabled>
                     Choose an Agenda
                   </option>
-                  {unownedAgendas.map((agenda) => (
-                    <option key={agenda.id} value={agenda.id}>
-                      {agenda.cost} - {agenda.name}
-                    </option>
-                  ))}
+                  {availableAgendas
+                    .toSorted((a, b) => a.cost - b.cost)
+                    .map((agenda) => (
+                      <option key={agenda.id} value={agenda.id}>
+                        {agenda.cost} - {agenda.name}
+                      </option>
+                    ))}
                 </select>
                 <button
                   className="btn join-item btn-outline"
                   type="button"
-                  onClick={() =>
-                    agendaState.chosenAgenda > -1 &&
-                    changeAgenda({
-                      type: 'ADD_AGENDA',
-                      agenda: agendaState.chosenAgenda
-                    })
-                  }
-                  disabled={agendaState.chosenAgenda === -1}
+                  onClick={() => add()}
+                  disabled={agenda === -1}
                 >
                   <PlusIcon className="w-5 h-5" />
                 </button>
@@ -417,37 +246,11 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
               Save
             </SubmitButton>
           </div>
-          {agendaState.agendasToAdd.map((agenda, i) => (
-            <input
-              key={`agendasToAdd-${agenda}`}
-              type="hidden"
-              name={`agendasToAdd[${i}]`}
-              value={agenda}
-            />
-          ))}
-          {agendaState.agendasToDiscard.map((agenda, i) => (
-            <input
-              key={`agendasToDiscard-${agenda}`}
-              type="hidden"
-              name={`agendasToDiscard[${i}]`}
-              value={agenda}
-            />
-          ))}
-          {agendaState.agendasToReshuffle.map((agenda, i) => (
-            <input
-              key={`agendasToReshuffle-${agenda}`}
-              type="hidden"
-              name={`agendasToReshuffle[${i}]`}
-              value={agenda}
-            />
-          ))}
-          {agendaState.agendasToRestore.map((agenda, i) => (
-            <input
-              key={`agendasToRestore-${agenda}`}
-              type="hidden"
-              name={`agendasToRestore[${i}]`}
-              value={agenda}
-            />
+          {form.value('agendas')?.map((_, i) => (
+            <>
+              <input {...form.getHiddenInputProps(`agendas[${i}].id`)} />
+              <input {...form.getHiddenInputProps(`agendas[${i}].discarded`)} />
+            </>
           ))}
         </form>
       ) : (
@@ -458,11 +261,13 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
               {!ownedAgendas.length ? (
                 <p className="m-0">No Agendas</p>
               ) : (
-                ownedAgendas.map((agenda) => (
-                  <p className="m-0" key={agenda.id}>
-                    {agenda.cost} - {agenda.name}
-                  </p>
-                ))
+                ownedAgendas
+                  .toSorted((a, b) => a.cost - b.cost)
+                  .map((agenda) => (
+                    <p className="m-0" key={agenda.id}>
+                      {agenda.cost} - {agenda.name}
+                    </p>
+                  ))
               )}
             </div>
             <div className="flex flex-col flex-1">
@@ -470,11 +275,13 @@ const AgendaManager = ({ imperialPlayer, fetcher, formAction }: Props) => {
               {!discardedAgendas.length ? (
                 <p className="m-0">No Agendas</p>
               ) : (
-                discardedAgendas.map((agenda) => (
-                  <p className="m-0" key={agenda.id}>
-                    {agenda.cost} - {agenda.name}
-                  </p>
-                ))
+                discardedAgendas
+                  .toSorted((a, b) => a.cost - b.cost)
+                  .map((agenda) => (
+                    <p className="m-0" key={agenda.id}>
+                      {agenda.cost} - {agenda.name}
+                    </p>
+                  ))
               )}
             </div>
           </div>
