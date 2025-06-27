@@ -84,19 +84,10 @@ const Empire = () => {
 
   const loaderData = useLoaderData<LoaderData>()
 
-  const summaryFetcher = useFetcher<ActionData>()
   const summaryFormAction = useFormAction('summary')
-
-  const classFetcher = useFetcher<ActionData>()
   const classFormAction = useFormAction('class')
-
-  const agendaFetcher = useFetcher<ActionData>()
   const agendasFormAction = useFormAction('agendas')
-
-  const rewardsFetcher = useFetcher<ActionData>()
   const rewardsFormAction = useFormAction('rewards')
-
-  const villainsFetcher = useFetcher<ActionData>()
   const villainsFormAction = useFormAction('villains')
 
   return (
@@ -107,18 +98,15 @@ const Empire = () => {
         </div>
         <ImperialSummaryManager
           imperialPlayer={imperialPlayer}
-          fetcher={summaryFetcher}
           formAction={summaryFormAction}
         />
         <div className="flex flex-wrap gap-2">
           <ImperialClassManager
             imperialPlayer={imperialPlayer}
-            fetcher={classFetcher}
             formAction={classFormAction}
           />
           <AgendaManager
             imperialPlayer={imperialPlayer}
-            fetcher={agendaFetcher}
             formAction={agendasFormAction}
           />
         </div>
@@ -126,13 +114,11 @@ const Empire = () => {
           <ImperialRewardManager
             imperialPlayer={imperialPlayer}
             allRewards={loaderData.rewards}
-            fetcher={rewardsFetcher}
             formAction={rewardsFormAction}
           />
           <VillainManager
             imperialPlayer={imperialPlayer}
             allVillains={loaderData.troops}
-            fetcher={villainsFetcher}
             formAction={villainsFormAction}
           />
         </div>

@@ -1,80 +1,22 @@
-import type { FetcherWithComponents } from 'react-router'
+import { useFetcher } from 'react-router'
 import type { LoaderData } from '~/routes/_app.games.$game'
 import EditButton from '~/components/EditButton'
-import type { Reducer } from 'react'
-import { useCallback, useEffect, useId, useReducer } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useForm } from '@rvf/react-router'
 import { summarySchema } from '~/routes/_app.games.$game.empire.summary'
+import type { ActionData } from '~/routes/_app.games.$game.empire.summary'
 import SubmitButton from '~/components/SubmitButton'
 import TextInput from '~/components/TextInput'
 
-type State = {
-  editing: boolean
-  name: string
-  xp: number
-  influence: number
-}
-
-type Action =
-  | { type: 'TOGGLE_EDITING' | 'STOP_EDITING' }
-  | { type: 'SET_NAME'; name: string }
-  | { type: 'SET_XP'; xp: number }
-  | { type: 'SET_INFLUENCE'; influence: number }
-
 type Props = {
   imperialPlayer: NonNullable<LoaderData['game']['imperialPlayer']>
-  fetcher?: FetcherWithComponents<any>
   formAction?: string
 }
 
-const ImperialSummaryManager = ({
-  imperialPlayer,
-  fetcher,
-  formAction
-}: Props) => {
-  const reducer: Reducer<State, Action> = useCallback(
-    (state, action) => {
-      switch (action.type) {
-        case 'TOGGLE_EDITING':
-          return {
-            name: imperialPlayer.name ?? '',
-            xp: imperialPlayer.xp,
-            influence: imperialPlayer.influence,
-            editing: !state.editing
-          }
-        case 'STOP_EDITING':
-          return {
-            name: imperialPlayer.name ?? '',
-            xp: imperialPlayer.xp,
-            influence: imperialPlayer.influence,
-            editing: false
-          }
-        case 'SET_NAME':
-          return { ...state, name: action.name }
-        case 'SET_XP':
-          return { ...state, xp: action.xp }
-        case 'SET_INFLUENCE':
-          return { ...state, influence: action.influence }
-        default:
-          return state
-      }
-    },
-    [imperialPlayer]
-  )
+const ImperialSummaryManager = ({ imperialPlayer, formAction }: Props) => {
+  const fetcher = useFetcher<ActionData>()
 
-  const [summary, update] = useReducer(reducer, {
-    editing: false,
-    name: imperialPlayer.name ?? '',
-    xp: imperialPlayer.xp,
-    influence: imperialPlayer.influence
-  })
-
-  useEffect(() => {
-    if (fetcher?.data?.success && fetcher.state === 'idle') {
-      update({ type: 'STOP_EDITING' })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetcher?.state])
+  const [editing, setEditing] = useState(false)
 
   const formId = useId()
   const form = useForm({
@@ -83,12 +25,41 @@ const ImperialSummaryManager = ({
     method: 'POST',
     fetcher,
     action: formAction,
-    defaultValues: {}
+    defaultValues: {
+      name: imperialPlayer.name ?? '',
+      xp: imperialPlayer.xp,
+      influence: imperialPlayer.influence
+    }
   })
+
+  const cancel = () => {
+    setEditing(false)
+    form.resetForm({
+      name: imperialPlayer.name ?? '',
+      xp: imperialPlayer.xp,
+      influence: imperialPlayer.influence
+    })
+  }
+
+  const toggle = () => {
+    setEditing((prev) => !prev)
+    form.resetForm({
+      name: imperialPlayer.name ?? '',
+      xp: imperialPlayer.xp,
+      influence: imperialPlayer.influence
+    })
+  }
+
+  useEffect(() => {
+    if (fetcher?.data?.success && fetcher.state === 'idle') {
+      cancel()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetcher?.state])
 
   return (
     <div className="flex flex-1 px-2 py-1 gap-2 border border-gray-400 rounded items-start">
-      {summary.editing ? (
+      {editing ? (
         <form
           {...form.getFormProps()}
           className="flex flex-1 gap-2 items-start"
@@ -100,10 +71,6 @@ const ImperialSummaryManager = ({
               name="name"
               label={<span className="font-bold">Name:</span>}
               inline
-              value={summary.name}
-              onChange={(e) =>
-                update({ type: 'SET_NAME', name: e.target.value })
-              }
             />
             <TextInput
               formApi={form}
@@ -111,13 +78,6 @@ const ImperialSummaryManager = ({
               name="xp"
               label={<span className="font-bold">XP:</span>}
               inline
-              value={summary.xp.toString()}
-              onChange={(e) =>
-                update({
-                  type: 'SET_XP',
-                  xp: parseInt(e.target.value, 10) || 0
-                })
-              }
               min={0}
             />
             <TextInput
@@ -126,13 +86,6 @@ const ImperialSummaryManager = ({
               name="influence"
               label={<span className="font-bold">Influence:</span>}
               inline
-              value={summary.influence.toString()}
-              onChange={(e) =>
-                update({
-                  type: 'SET_INFLUENCE',
-                  influence: parseInt(e.target.value, 10) || 0
-                })
-              }
               min={0}
             />
           </div>
@@ -161,8 +114,8 @@ const ImperialSummaryManager = ({
         </div>
       )}
       <EditButton
-        active={summary.editing}
-        onClick={() => update({ type: 'TOGGLE_EDITING' })}
+        active={editing}
+        onClick={() => toggle()}
         hideLabel
         disabled={
           fetcher?.state === 'loading' || fetcher?.state === 'submitting'
