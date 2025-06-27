@@ -8,12 +8,11 @@ import { requireAuth } from '~/utils/requireAuth.server'
 export type ActionData = { success?: number }
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  return redirect(`/games/${params.game}/empire`)
+  return redirect(`/games/${params.game}/rebels`)
 }
 
 export const allySchema = z.object({
-  alliesToAdd: z.array(z.coerce.number().int().positive()),
-  alliesToRemove: z.array(z.coerce.number().int().positive())
+  allies: z.array(z.coerce.number().int().positive()).default([])
 })
 
 export const action = async (args: ActionFunctionArgs) => {
@@ -43,8 +42,7 @@ export const action = async (args: ActionFunctionArgs) => {
     where: { id: game.id },
     data: {
       allies: {
-        connect: data.alliesToAdd.map((id) => ({ id })),
-        disconnect: data.alliesToRemove.map((id) => ({ id }))
+        set: data.allies.map((id) => ({ id }))
       }
     }
   })

@@ -179,6 +179,7 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
               className="join-item btn btn-outline"
               type="button"
               onClick={() => add()}
+              disabled={item === -1}
             >
               <PlusIcon className="h-5 w-5" />
             </button>
