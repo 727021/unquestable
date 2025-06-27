@@ -12,8 +12,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 }
 
 export const classSchema = z.object({
-  cardsToAdd: z.array(z.coerce.number().int().positive()),
-  cardsToRemove: z.array(z.coerce.number().int().positive())
+  cards: z.array(z.coerce.number().int().positive()).default([])
 })
 
 export const action = async (args: ActionFunctionArgs) => {
@@ -50,8 +49,7 @@ export const action = async (args: ActionFunctionArgs) => {
     where: { id: player.id },
     data: {
       classCards: {
-        connect: data.cardsToAdd.map((id) => ({ id })),
-        disconnect: data.cardsToRemove.map((id) => ({ id }))
+        set: data.cards.map((id) => ({ id }))
       }
     }
   })
