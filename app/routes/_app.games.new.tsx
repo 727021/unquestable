@@ -565,9 +565,6 @@ const NewGame = () => {
     }
   })
 
-  const [gameName, setGameName] = useState('')
-  const [imperialClass, setImperialClass] = useState(-1)
-
   const campaignRef = useRef<HTMLSelectElement>(null)
 
   const addHero = () => {
@@ -633,8 +630,6 @@ const NewGame = () => {
             name="gameName"
             label="Game Name"
             required
-            value={gameName}
-            onChange={(e) => setGameName(e.target.value)}
           />
           <SelectInput
             formApi={form}
@@ -745,10 +740,8 @@ const NewGame = () => {
               name="imperialClass"
               label="Imperial Class"
               required
-              value={imperialClass}
-              onChange={(e) => setImperialClass(parseInt(e.target.value, 10))}
               hintRight={
-                imperialClasses.find((c) => c.id === imperialClass)?.cards?.[0]
+                imperialClasses.find((c) => c.id === +form.value('imperialClass'))?.cards?.[0]
                   ?.name
               }
             >
