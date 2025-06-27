@@ -12,8 +12,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 }
 
 export const villainSchema = z.object({
-  villainsToAdd: z.array(z.coerce.number().int().positive()),
-  villainsToRemove: z.array(z.coerce.number().int().positive())
+  villains: z.array(z.coerce.number().int().positive()).default([])
 })
 
 export const action = async (args: ActionFunctionArgs) => {
@@ -45,8 +44,7 @@ export const action = async (args: ActionFunctionArgs) => {
     where: { id: player.id },
     data: {
       villains: {
-        connect: data.villainsToAdd.map((id) => ({ id })),
-        disconnect: data.villainsToRemove.map((id) => ({ id }))
+        set: data.villains.map((id) => ({ id }))
       }
     }
   })

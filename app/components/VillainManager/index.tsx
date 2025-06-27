@@ -1,129 +1,29 @@
-import type { FetcherWithComponents } from 'react-router'
+import { useFetcher } from 'react-router'
 import clsx from 'clsx'
-import type { Reducer } from 'react'
-import { useCallback, useEffect, useId, useReducer } from 'react'
+import { useEffect, useId, useState } from 'react'
 import type { LoaderData as GameLoaderData } from '~/routes/_app.games.$game'
 import type { LoaderData } from '~/routes/_app.games.$game.empire'
 import EditButton from '../EditButton'
 import { useForm } from '@rvf/react-router'
-import { villainSchema } from '~/routes/_app.games.$game.empire.villains'
+import {
+  ActionData,
+  villainSchema
+} from '~/routes/_app.games.$game.empire.villains'
 import { XCircleIcon } from '@heroicons/react/24/outline'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import SubmitButton from '../SubmitButton'
-
-type VillainId = NonNullable<
-  GameLoaderData['game']['imperialPlayer']
->['villains'][0]['id']
-
-type State = {
-  editing: boolean
-  villainsToAdd: VillainId[]
-  villainsToRemove: VillainId[]
-  chosenVillain: VillainId
-}
-
-type Action =
-  | { type: 'TOGGLE_EDITING' | 'STOP_EDITING' }
-  | {
-      type: 'ADD_VILLAIN' | 'REMOVE_VILLAIN' | 'CHOOSE_VILLAIN'
-      villainId: VillainId
-    }
-
-const initialState: State = {
-  editing: false,
-  villainsToAdd: [],
-  villainsToRemove: [],
-  chosenVillain: -1
-}
+import { Troop } from '@prisma/client'
 
 type Props = {
   imperialPlayer: NonNullable<GameLoaderData['game']['imperialPlayer']>
   allVillains: LoaderData['troops']
-  fetcher?: FetcherWithComponents<any>
   formAction?: string
 }
 
-const VillainManager = ({
-  imperialPlayer,
-  allVillains,
-  fetcher,
-  formAction
-}: Props) => {
-  const reducer: Reducer<State, Action> = useCallback(
-    (state, action) => {
-      switch (action.type) {
-        case 'TOGGLE_EDITING':
-          return { ...initialState, editing: !state.editing }
-        case 'STOP_EDITING':
-          return { ...initialState, editing: false }
-        case 'ADD_VILLAIN':
-          if (imperialPlayer.villains.some((v) => v.id === action.villainId)) {
-            return {
-              ...state,
-              villainsToAdd: state.villainsToAdd.filter(
-                (id) => id !== action.villainId
-              ),
-              villainsToRemove: state.villainsToRemove.filter(
-                (id) => id !== action.villainId
-              ),
-              chosenVillain: initialState.chosenVillain
-            }
-          } else {
-            return {
-              ...state,
-              villainsToAdd: [...state.villainsToAdd, action.villainId],
-              villainsToRemove: state.villainsToRemove.filter(
-                (id) => id !== action.villainId
-              ),
-              chosenVillain: initialState.chosenVillain
-            }
-          }
-        case 'REMOVE_VILLAIN':
-          if (!imperialPlayer.villains.some((v) => v.id === action.villainId)) {
-            return {
-              ...state,
-              villainsToAdd: state.villainsToAdd.filter(
-                (id) => id !== action.villainId
-              ),
-              villainsToRemove: state.villainsToRemove.filter(
-                (id) => id !== action.villainId
-              ),
-              chosenVillain: initialState.chosenVillain
-            }
-          }
-          return {
-            ...state,
-            villainsToAdd: state.villainsToAdd.filter(
-              (id) => id !== action.villainId
-            ),
-            villainsToRemove: [...state.villainsToRemove, action.villainId],
-            chosenVillain: initialState.chosenVillain
-          }
-        case 'CHOOSE_VILLAIN':
-          return {
-            ...state,
-            chosenVillain: action.villainId
-          }
-      }
-    },
-    [imperialPlayer.villains]
-  )
+const VillainManager = ({ imperialPlayer, allVillains, formAction }: Props) => {
+  const fetcher = useFetcher<ActionData>()
 
-  const [villainState, updateVillains] = useReducer(reducer, initialState)
-
-  useEffect(() => {
-    if (fetcher?.data?.success && fetcher.state === 'idle') {
-      updateVillains({ type: 'STOP_EDITING' })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetcher?.state])
-
-  const villainsToShow = [
-    ...imperialPlayer.villains.filter(
-      (v) => !villainState.villainsToRemove.includes(v.id)
-    ),
-    ...allVillains.filter((v) => villainState.villainsToAdd.includes(v.id))
-  ]
+  const [editing, setEditing] = useState(false)
 
   const formId = useId()
   const form = useForm({
@@ -133,34 +33,79 @@ const VillainManager = ({
     fetcher,
     action: formAction,
     defaultValues: {
-      villainsToAdd: [],
-      villainsToRemove: []
+      villains: imperialPlayer.villains.map((v) => v.id)
     }
   })
+
+  const cancel = () => {
+    setEditing(false)
+    form.resetForm({ villains: imperialPlayer.villains.map((v) => v.id) })
+  }
+
+  const toggle = () => {
+    setEditing((prev) => !prev)
+    if (!editing) {
+      form.resetForm({ villains: imperialPlayer.villains.map((v) => v.id) })
+    }
+  }
+
+  const [villain, setVillain] = useState(-1)
+
+  const [availableVillains, ownedVillains] = allVillains.reduce<
+    [Troop[], Troop[]]
+  >(
+    ([available, owned], villain) => {
+      if (form.value('villains')?.includes(villain.id)) {
+        owned.push(villain)
+      } else {
+        available.push(villain)
+      }
+      return [available, owned]
+    },
+    [[], []]
+  )
+
+  const add = () => {
+    if (!availableVillains.some((v) => v.id === villain)) return
+    form.setValue('villains', [...(form.value('villains') ?? []), villain])
+    setVillain(-1)
+  }
+
+  const remove = (villainId: number) => {
+    form.setValue(
+      'villains',
+      form.value('villains')?.filter((id) => id !== villainId)
+    )
+    setVillain(villainId)
+  }
+
+  useEffect(() => {
+    if (fetcher?.data?.success && fetcher.state === 'idle') {
+      cancel()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetcher?.state])
 
   return (
     <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">Villains</h2>
         <EditButton
-          active={villainState.editing}
-          onClick={() => updateVillains({ type: 'TOGGLE_EDITING' })}
+          active={editing}
+          onClick={() => toggle()}
           disabled={
             fetcher?.state === 'loading' || fetcher?.state === 'submitting'
           }
         />
       </div>
-      {villainState.editing ? (
-        <form
-          {...form.getFormProps()}
-          className="flex flex-1 flex-col gap-2"
-        >
+      {editing ? (
+        <form {...form.getFormProps()} className="flex flex-1 flex-col gap-2">
           {form.renderFormIdInput()}
           <div className="flex flex-col items-start w-fit py-2">
-            {villainsToShow.length === 0 ? (
+            {ownedVillains.length === 0 ? (
               <p className="m-0">No Villains</p>
             ) : (
-              villainsToShow.map((villain) => (
+              ownedVillains.map((villain) => (
                 <div key={villain.id} className="flex gap-1 items-center">
                   <p className={clsx('m-0', villain.elite && 'text-red-600')}>
                     {villain.name}
@@ -169,12 +114,7 @@ const VillainManager = ({
                     className="btn btn-xs btn-circle btn-ghost tooltip"
                     data-tip="Remove"
                     type="button"
-                    onClick={() =>
-                      updateVillains({
-                        type: 'REMOVE_VILLAIN',
-                        villainId: villain.id
-                      })
-                    }
+                    onClick={() => remove(villain.id)}
                   >
                     <XCircleIcon className="h-5 w-5" />
                   </button>
@@ -186,41 +126,25 @@ const VillainManager = ({
             <div className="join">
               <select
                 className="join-item select select-bordered"
-                value={villainState.chosenVillain}
-                onChange={(e) =>
-                  updateVillains({
-                    type: 'CHOOSE_VILLAIN',
-                    villainId: parseInt(e.target.value, 10)
-                  })
-                }
+                value={villain}
+                onChange={(e) => setVillain(parseInt(e.target.value, 10))}
               >
                 <option value="-1" disabled>
                   Choose a Villain
                 </option>
-                {allVillains
-                  .filter(
-                    (villain) =>
-                      !villainsToShow.some((vt) => vt.id === villain.id)
-                  )
-                  .map((villain) => (
-                    <option key={villain.id} value={villain.id}>
-                      {villain.unique && '* '}
-                      {villain.name}
-                      {villain.elite && ' (Elite)'}
-                    </option>
-                  ))}
+                {availableVillains.map((villain) => (
+                  <option key={villain.id} value={villain.id}>
+                    {villain.unique && '* '}
+                    {villain.name}
+                    {villain.elite && ' (Elite)'}
+                  </option>
+                ))}
               </select>
               <button
                 className="join-item btn btn-outline"
                 type="button"
-                onClick={() =>
-                  villainState.chosenVillain > -1 &&
-                  updateVillains({
-                    type: 'ADD_VILLAIN',
-                    villainId: villainState.chosenVillain
-                  })
-                }
-                disabled={villainState.chosenVillain === -1}
+                onClick={() => add()}
+                disabled={villain === -1}
               >
                 <PlusIcon className="h-5 w-5" />
               </button>
@@ -232,22 +156,11 @@ const VillainManager = ({
             >
               Save
             </SubmitButton>
-            {villainState.villainsToAdd.map((id, i) => (
-              <input
-                key={`villainsToAdd-${id}`}
-                type="hidden"
-                name={`villainsToAdd[${i}]`}
-                value={id}
-              />
-            ))}
-            {villainState.villainsToRemove.map((id, i) => (
-              <input
-                key={`villainsToRemove-${id}`}
-                type="hidden"
-                name={`villainsToRemove[${i}]`}
-                value={id}
-              />
-            ))}
+            {form
+              .value('villains')
+              ?.map((_, i) => (
+                <input {...form.getHiddenInputProps(`villains[${i}]`)} />
+              ))}
           </div>
         </form>
       ) : !imperialPlayer.villains.length ? (
