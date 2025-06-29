@@ -61,7 +61,7 @@ const ImperialClassManager = ({ imperialPlayer, formAction }: Props) => {
   }, [fetcher?.state])
 
   return (
-    <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
+    <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded-xs">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">{imperialPlayer.class.name}</h2>
         <EditButton
@@ -102,11 +102,9 @@ const ImperialClassManager = ({ imperialPlayer, formAction }: Props) => {
           >
             Save
           </SubmitButton>
-          {form
-            .value('cards')
-            ?.map((_, i) => (
-              <input {...form.getHiddenInputProps(`cards[${i}]`)} />
-            ))}
+          {form.value('cards')?.map((_, i) => (
+            <input {...form.getHiddenInputProps(`cards[${i}]`)} />
+          ))}
         </form>
       ) : (
         <div className="form-control items-start w-fit py-2">

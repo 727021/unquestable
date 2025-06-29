@@ -110,7 +110,7 @@ const Rebels = () => {
           {data.game.rebelPlayers.map((rebel) => (
             <div
               key={rebel.id}
-              className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded"
+              className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded-xs"
             >
               <RebelSummaryManager
                 rebel={rebel}

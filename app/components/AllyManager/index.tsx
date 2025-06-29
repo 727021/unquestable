@@ -81,7 +81,7 @@ const AllyManager = ({ allies, allAllies, formAction }: Props) => {
   }, [fetcher.state])
 
   return (
-    <div className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded">
+    <div className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded-xs">
       <div className="flex justify-between items-center w-full">
         <h3 className="m-0">Allies</h3>
         <div className="flex gap-2">
@@ -157,11 +157,9 @@ const AllyManager = ({ allies, allAllies, formAction }: Props) => {
               <PlusIcon className="h-5 w-5" />
             </button>
           </div>
-          {form
-            .value('allies')
-            ?.map((_, i) => (
-              <input {...form.getHiddenInputProps(`allies[${i}]`)} />
-            ))}
+          {form.value('allies')?.map((_, i) => (
+            <input {...form.getHiddenInputProps(`allies[${i}]`)} />
+          ))}
         </form>
       ) : !allies.length ? (
         <p className="m-0">No Allies</p>

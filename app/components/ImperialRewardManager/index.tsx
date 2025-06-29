@@ -92,7 +92,7 @@ const ImperialRewardManager = ({
   }, [fetcher?.state])
 
   return (
-    <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
+    <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded-xs">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">Rewards</h2>
         <EditButton
@@ -157,11 +157,9 @@ const ImperialRewardManager = ({
             >
               Save
             </SubmitButton>
-            {form
-              .value('rewards')
-              ?.map((_, i) => (
-                <input {...form.getHiddenInputProps(`rewards[${i}]`)} />
-              ))}
+            {form.value('rewards')?.map((_, i) => (
+              <input {...form.getHiddenInputProps(`rewards[${i}]`)} />
+            ))}
           </div>
         </form>
       ) : !imperialPlayer.rewards.length ? (

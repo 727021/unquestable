@@ -14,7 +14,7 @@ const App = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <AppNav />
-      <main className="grow max-w-screen-xl w-full mx-auto">
+      <main className="grow max-w-(--breakpoint-xl) w-full mx-auto">
         <SignedIn>
           <Outlet />
         </SignedIn>

@@ -6,7 +6,7 @@ export default function Page() {
   return (
     <div className="min-h-screen flex flex-col">
       <AppNav minimal />
-      <main className="grow max-w-screen-xl w-full mx-auto">
+      <main className="grow max-w-(--breakpoint-xl) w-full mx-auto">
         <Outlet />
       </main>
       <Footer />

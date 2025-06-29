@@ -14,7 +14,7 @@ const Footer = () => {
           Privacy Policy
         </Link>
       </nav>
-      <div className="text-left max-w-screen-lg">
+      <div className="text-left max-w-(--breakpoint-lg)">
         {/* Disclaimer copied from https://cards.boardwars.eu/ */}
         This website is not produced, endorsed, supported, or affiliated with
         Fantasy Flight Games. The copyrightable portions of Star Wars: Imperial

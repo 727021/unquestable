@@ -132,7 +132,7 @@ const AgendaManager = ({ imperialPlayer, formAction }: Props) => {
   }, [fetcher?.state])
 
   return (
-    <div className="flex flex-col flex-1 px-2 pb-1 border rounded border-gray-400">
+    <div className="flex flex-col flex-1 px-2 pb-1 border rounded-xs border-gray-400">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">Agendas</h2>
         <EditButton

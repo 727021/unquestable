@@ -24,7 +24,7 @@ const BuyClassCard = ({ cards, xp, name, label, owned, formApi }: Props) => {
     .reduce((acc, cur) => acc - cur, xp)
 
   return (
-    <div className="form-control items-start w-fit border px-2 py-0 rounded">
+    <div className="form-control items-start w-fit border px-2 py-0 rounded-xs">
       <div className="label w-full gap-1">
         <span className="label-text">{label}</span>
         <span className="label-text-alt">Available XP: {balance}</span>

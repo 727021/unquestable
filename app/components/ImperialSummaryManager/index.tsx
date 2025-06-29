@@ -58,7 +58,7 @@ const ImperialSummaryManager = ({ imperialPlayer, formAction }: Props) => {
   }, [fetcher?.state])
 
   return (
-    <div className="flex flex-1 px-2 py-1 gap-2 border border-gray-400 rounded items-start">
+    <div className="flex flex-1 px-2 py-1 gap-2 border border-gray-400 rounded-xs items-start">
       {editing ? (
         <form
           {...form.getFormProps()}

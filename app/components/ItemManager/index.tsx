@@ -92,7 +92,7 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
   }, [fetcher.state])
 
   return (
-    <div className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded">
+    <div className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded-xs">
       <div className="flex flex-col">
         <div className="flex justify-between items-center w-full">
           <h3 className="m-0">Items</h3>
@@ -184,11 +184,9 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
               <PlusIcon className="h-5 w-5" />
             </button>
           </div>
-          {form
-            .value('items')
-            ?.map((_, i) => (
-              <input {...form.getHiddenInputProps(`items[${i}]`)} />
-            ))}
+          {form.value('items')?.map((_, i) => (
+            <input {...form.getHiddenInputProps(`items[${i}]`)} />
+          ))}
         </form>
       ) : !items.length ? (
         <p className="m-0">No Items</p>

@@ -87,7 +87,7 @@ const VillainManager = ({ imperialPlayer, allVillains, formAction }: Props) => {
   }, [fetcher?.state])
 
   return (
-    <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
+    <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded-xs">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">Villains</h2>
         <EditButton
@@ -156,11 +156,9 @@ const VillainManager = ({ imperialPlayer, allVillains, formAction }: Props) => {
             >
               Save
             </SubmitButton>
-            {form
-              .value('villains')
-              ?.map((_, i) => (
-                <input {...form.getHiddenInputProps(`villains[${i}]`)} />
-              ))}
+            {form.value('villains')?.map((_, i) => (
+              <input {...form.getHiddenInputProps(`villains[${i}]`)} />
+            ))}
           </div>
         </form>
       ) : !imperialPlayer.villains.length ? (

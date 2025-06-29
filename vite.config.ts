@@ -2,6 +2,7 @@ import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import devtoolsJson from 'vite-plugin-devtools-json'
+import tailwindcss from '@tailwindcss/vite'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 
@@ -15,7 +16,7 @@ export default defineConfig({
   server: {
     port: 3000
   },
-  plugins: [reactRouter(), tsconfigPaths(), devtoolsJson()],
+  plugins: [reactRouter(), tsconfigPaths(), devtoolsJson(), tailwindcss()],
   resolve: {
     alias: {
       '.prisma/client/index-browser': path.relative(
