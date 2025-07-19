@@ -44,7 +44,7 @@ const SelectInput = forwardRef(
     const error = formApi.error(name)
 
     return (
-      <fieldset className="fieldset max-w-full w-96">
+      <div className="fieldset max-w-full w-96">
         <label className="label flex justify-between">
           <span className="text-base-content">
             {required && <RequiredIndicator />}
@@ -80,7 +80,7 @@ const SelectInput = forwardRef(
             </>
           )}
         </label>
-      </fieldset>
+      </div>
     )
   }
 )

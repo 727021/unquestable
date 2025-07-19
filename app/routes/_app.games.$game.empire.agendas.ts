@@ -31,8 +31,6 @@ export const action = async (args: ActionFunctionArgs) => {
     agendaSchema
   )
 
-  console.log({ data, submittedData, error })
-
   const { userId } = await requireAuth(args)
   const gameId = parseInt(args.params.game!, 10)
 

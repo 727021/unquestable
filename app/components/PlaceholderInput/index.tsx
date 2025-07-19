@@ -62,8 +62,6 @@ const PlaceholderInput = ({ index, placeholder, onChange, formApi }: Props) => {
     )
   }
 
-  console.log(placeholder)
-
   return (
     <fieldset className="fieldset max-w-full w-96">
       <label className="label">

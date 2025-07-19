@@ -42,7 +42,7 @@ const TextInput = forwardRef(
     const id = useId()
 
     return (
-      <fieldset
+      <div
         className={clsx(
           'fieldset max-w-full w-fit sm:w-96',
           inline && 'flex flex-row items-center',
@@ -80,7 +80,7 @@ const TextInput = forwardRef(
             </>
           )}
         </label>
-      </fieldset>
+      </div>
     )
   }
 )
