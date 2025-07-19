@@ -13,7 +13,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 export const summarySchema = z.object({
   name: z
-    .ostring()
+    .string()
     .optional()
     .default('')
     .transform((input) => input?.trim() || null),

@@ -12,10 +12,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 }
 
 export const itemSchema = z.object({
-  credits: z
-    .optional(z.coerce.number().int().nonnegative())
-    .optional()
-    .default(0),
+  credits: z.coerce.number().int().nonnegative().optional().default(0),
   items: z.array(z.coerce.number().int().positive()).default([])
 })
 

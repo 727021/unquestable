@@ -26,7 +26,7 @@ const schema = z.object({
       sold: z.array(z.coerce.number().positive()).optional().default([])
     })
     .optional()
-    .default({})
+    .default({ bought: [], sold: [] })
 })
 
 export const loader = async (args: LoaderFunctionArgs) => {
