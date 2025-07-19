@@ -47,10 +47,10 @@ const BuyAgendaCard = ({ cards, influence, label, name, formApi }: Props) => {
         <span>Influence: {balance}</span>
       </div>
       <div className="flex-1">
-        <div className="form-control w-full">
+        <fieldset className="fieldset w-full">
           <div className="join">
             <select
-              className="select select-bordered join-item w-full"
+              className="select join-item w-full"
               value={buying}
               onChange={(e) => setBuying(parseInt(e.target.value, 10))}
             >
@@ -68,18 +68,18 @@ const BuyAgendaCard = ({ cards, influence, label, name, formApi }: Props) => {
             </select>
             <button
               type="button"
-              className="btn btn-outline join-item"
+              className="btn btn-outline join-item border-l-2"
               onClick={handleBuy}
             >
               Buy
             </button>
           </div>
-          <div className="label">
-            <div className="label-text-alt whitespace-break-spaces">
+          <label className="label">
+            <div className="whitespace-break-spaces">
               <i>{buyingCard?.tagline}&nbsp;</i>
             </div>
-          </div>
-        </div>
+          </label>
+        </fieldset>
         <div className="flex flex-col gap-1">
           {boughtCards
             .toSorted((a, b) => a.cost - b.cost)

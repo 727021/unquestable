@@ -128,7 +128,7 @@ const ImperialRewardManager = ({
           <div className="flex justify-between items-end flex-1">
             <div className="join">
               <select
-                className="join-item select select-bordered"
+                className="join-item select"
                 value={reward}
                 onChange={(e) => setReward(parseInt(e.target.value, 10))}
               >
@@ -142,7 +142,7 @@ const ImperialRewardManager = ({
                 ))}
               </select>
               <button
-                className="join-item btn btn-outline"
+                className="join-item btn btn-outline border-l-2"
                 type="button"
                 onClick={() => add()}
                 disabled={reward === -1}

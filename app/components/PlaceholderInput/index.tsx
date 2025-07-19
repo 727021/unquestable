@@ -26,8 +26,8 @@ const PlaceholderInput = ({ index, placeholder, onChange, formApi }: Props) => {
 
   if (placeholder.type === 'boolean') {
     return (
-      <label className="form-control max-w-full w-96">
-        <div className="label justify-start gap-1">
+      <fieldset className="fieldset max-w-full w-96">
+        <label className="label justify-start gap-1">
           <input
             className={clsx('checkbox', error && 'checkbox-error')}
             type="checkbox"
@@ -37,11 +37,11 @@ const PlaceholderInput = ({ index, placeholder, onChange, formApi }: Props) => {
               onChange?.(e)
             }}
           />
-          <span className="label-text">
+          <span className="text-base-content">
             <RequiredIndicator />
             {placeholder.label}
           </span>
-        </div>
+        </label>
         <input
           {...formApi.getInputProps(name, {
             type: 'hidden',
@@ -58,20 +58,22 @@ const PlaceholderInput = ({ index, placeholder, onChange, formApi }: Props) => {
           name={`placeholders[${index}].name`}
           value={placeholder.name}
         />
-      </label>
+      </fieldset>
     )
   }
 
+  console.log(placeholder)
+
   return (
-    <label className="form-control max-w-full w-96">
-      <div className="label">
-        <span className="label-text">
+    <fieldset className="fieldset max-w-full w-96">
+      <label className="label">
+        <span className="text-base-content">
           <RequiredIndicator />
           {placeholder.label}
         </span>
-      </div>
+      </label>
       <input
-        className={clsx('input input-bordered w-full', error && 'input-error')}
+        className={clsx('input w-full', error && 'input-error')}
         {...formApi.getInputProps(name, {
           onChange,
           type: placeholder.type,
@@ -88,10 +90,10 @@ const PlaceholderInput = ({ index, placeholder, onChange, formApi }: Props) => {
         name={`placeholders[${index}].name`}
         value={placeholder.name}
       />
-      <div className="label">
+      <label className="label">
         {error && <span className="label-text-alt text-error">{error}</span>}
-      </div>
-    </label>
+      </label>
+    </fieldset>
   )
 }
 

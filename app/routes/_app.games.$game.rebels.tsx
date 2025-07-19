@@ -116,9 +116,9 @@ const Rebels = () => {
                 rebel={rebel}
                 formAction={summaryFormAction}
               />
-              <hr className="border-gray-400 my-0" />
+              <hr className="border-gray-400 my-0 not-prose" />
               <RebelClassManager rebel={rebel} formAction={classFormAction} />
-              <hr className="border-gray-400 my-0" />
+              <hr className="border-gray-400 my-0 not-prose" />
               <RebelRewardManager
                 rebel={rebel}
                 formAction={rewardFormAction}

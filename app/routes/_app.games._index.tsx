@@ -42,7 +42,7 @@ const Games = () => {
               <Link
                 key={game.id}
                 to={`/games/${game.id}`}
-                className="card card-compact card-bordered no-underline shadow-md hover:shadow-lg w-64 max-w-full"
+                className="card card-sm card-border no-underline shadow-md hover:shadow-lg w-64 max-w-full"
               >
                 <div className="card-body w-full">
                   <h2 className="card-title m-0">{game.name}</h2>

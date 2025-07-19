@@ -24,37 +24,40 @@ const BuyClassCard = ({ cards, xp, name, label, owned, formApi }: Props) => {
     .reduce((acc, cur) => acc - cur, xp)
 
   return (
-    <div className="form-control items-start w-fit border px-2 py-0 rounded-xs">
-      <div className="label w-full gap-1">
-        <span className="label-text">{label}</span>
-        <span className="label-text-alt">Available XP: {balance}</span>
-      </div>
+    <fieldset className="fieldset items-start w-fit border px-2 py-0 rounded-xs gap-0">
+      <label className="label w-full gap-4 flex justify-between text-base-content">
+        <span>{label}</span>
+        <span>Available XP: {balance}</span>
+      </label>
       {owned.map((card) => (
         <label
           className={clsx(
             // card.tagline && 'tooltip before:whitespace-break-spaces',
-            'label cursor-pointer gap-1 flex py-1'
+            'label cursor-default! gap-1 flex py-1'
           )}
           key={card.id}
           data-tip={card.tagline}
         >
           <input
             type="checkbox"
-            className="checkbox checkbox-sm"
+            className="checkbox checkbox-neutral checkbox-sm cursor-default!"
             checked={true}
             onChange={(e) => e.preventDefault()}
           />
-          <span className="label-text">
+          <span className="text-base-content">
             {card.cost} XP - {card.name}
           </span>
         </label>
       ))}
       <div className="divider m-0"></div>
-      {buyable.map((card) => (
+      {buyable.map((card) => {
+        const disabled = !field.value().some((v: string) => +v === card.id) && card.cost > balance
+        return (
         <label
           className={clsx(
             // card.tagline && 'tooltip before:whitespace-break-spaces',
-            'label cursor-pointer gap-1 flex py-1'
+            'label gap-1 flex py-1',
+            disabled ? 'cursor-not-allowed!' : 'cursor-pointer'
           )}
           key={card.id}
           data-tip={card.tagline}
@@ -65,21 +68,19 @@ const BuyClassCard = ({ cards, xp, name, label, owned, formApi }: Props) => {
               className:
                 'checkbox checkbox-sm checkbox-primary border-neutral hover:border-neutral',
               value: card.id,
-              disabled:
-                !field.value().some((c: string) => +c === card.id) &&
-                card.cost > balance
+              disabled
             })}
             data-cost={card.cost}
           />
-          <span className="label-text">
+          <span className={clsx(!disabled && 'text-base-content')}>
             {card.cost} XP - {card.name}
           </span>
         </label>
-      ))}
+      )})}
       <div className="label">
-        {error && <span className="label-text-alt text-error">{error}</span>}
+        {error && <span className="text-error">{error}</span>}
       </div>
-    </div>
+    </fieldset>
   )
 }
 

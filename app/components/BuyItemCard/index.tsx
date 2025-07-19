@@ -80,10 +80,10 @@ const BuyItemCard = ({
       </div>
       <div className="flex gap-3">
         <div className="flex-1">
-          <div className="form-control w-full">
+          <fieldset className="fieldset w-full">
             <div className="join">
               <select
-                className="select select-bordered join-item w-full"
+                className="select join-item w-full"
                 value={buying}
                 onChange={(e) => setBuying(parseInt(e.target.value, 10))}
               >
@@ -101,18 +101,18 @@ const BuyItemCard = ({
               </select>
               <button
                 type="button"
-                className="btn btn-outline join-item"
+                className="btn btn-outline join-item border-l-2"
                 onClick={handleBuy}
               >
                 Buy
               </button>
             </div>
-            <div className="label">
-              <div className="label-text-alt whitespace-break-spaces">
+            <label className="label">
+              <div className="whitespace-break-spaces">
                 <i>{buyingItem?.tagline}&nbsp;</i>
               </div>
-            </div>
-          </div>
+            </label>
+          </fieldset>
           <div className="flex flex-col gap-1">
             {boughtItems.map((b) => (
               <div className="inline-flex gap-1 items-center" key={b.id}>
@@ -134,10 +134,10 @@ const BuyItemCard = ({
           </div>
         </div>
         <div className="flex-1">
-          <div className="form-control w-full">
+          <fieldset className="fieldset w-full">
             <div className="join">
               <select
-                className="select select-bordered join-item w-full"
+                className="select join-item w-full"
                 value={selling}
                 onChange={(e) => setSelling(parseInt(e.target.value, 10))}
               >
@@ -153,18 +153,18 @@ const BuyItemCard = ({
               </select>
               <button
                 type="button"
-                className="btn btn-outline join-item"
+                className="btn btn-outline join-item border-l-2"
                 onClick={handleSell}
               >
                 Sell
               </button>
             </div>
-            <div className="label">
-              <div className="label-text-alt whitespace-break-spaces">
+            <label className="label">
+              <div className="whitespace-break-spaces">
                 <i>{sellingItem?.tagline}&nbsp;</i>
               </div>
-            </div>
-          </div>
+            </label>
+          </fieldset>
           <div className="flex flex-col gap-1">
             {soldItems.map((s) => (
               <div className="inline-flex gap-1 items-center" key={s.id}>

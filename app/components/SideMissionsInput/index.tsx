@@ -1,8 +1,9 @@
-import type {
-  ChangeEvent,
-  ElementRef,
-  ComponentProps,
-  PropsWithChildren
+import {
+  type ChangeEvent,
+  type ElementRef,
+  type ComponentProps,
+  type PropsWithChildren,
+  useId
 } from 'react'
 import RequiredIndicator from '../RequiredIndicator'
 import type { FormApi } from '@rvf/react-router'
@@ -26,33 +27,35 @@ const SideMissionsInput = ({ name, count = 1, children, formApi }: Props) => {
     field.clearError()
   }
 
+  const id = useId()
+
   return (
-    <label className="form-control w-full max-w-xs">
-      <div className="label">
-        <span className="label-text">
+    <fieldset className="fieldset max-w-full w-96">
+      <label className="label flex justify-between" htmlFor={`${id}-${name}`}>
+        <span className="text-base-content">
           <RequiredIndicator />
           Side Mission{count > 1 ? 's' : ''}
         </span>
-        <span className="label-text-alt">
-          <div className="form-control">
-            <label className="label cursor-pointer p-0 gap-1">
-              <span className="label-text">Random?</span>
-              <input
-                type="checkbox"
-                className="checkbox checkbox-sm"
-                checked={random}
-                onChange={onChange}
-              />
-            </label>
-          </div>
-        </span>
-      </div>
+        <label
+          className="label cursor-pointer p-0 gap-1"
+          htmlFor={`${id}-${name}-random`}
+        >
+          <span className="text-base-content">Random?</span>
+          <input
+            type="checkbox"
+            className="checkbox checkbox-sm"
+            checked={random}
+            onChange={onChange}
+            id={`${id}-${name}-random`}
+          />
+        </label>
+      </label>
       <select
-        className={clsx('select select-bordered', error && 'select-error')}
+        className={clsx('select w-full', error && 'select-error')}
         {...(random
           ? { multiple: count > 1, disabled: true }
           : field.getInputProps({
-              id: name,
+              id: `${id}-${name}`,
               multiple: count > 1
             }))}
       >
@@ -66,7 +69,7 @@ const SideMissionsInput = ({ name, count = 1, children, formApi }: Props) => {
         )}
       </div>
       {random && <input {...field.getHiddenInputProps()} />}
-    </label>
+    </fieldset>
   )
 }
 

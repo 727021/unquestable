@@ -9,19 +9,12 @@ import {
 } from '@prisma/client'
 import { useId, useState } from 'react'
 import Modal from '~/components/Modal'
-import {
-  FormApi,
-  parseFormData,
-  useForm,
-  ValidatedForm,
-  validationError
-} from '@rvf/react-router'
+import { parseFormData, useForm, validationError } from '@rvf/react-router'
 import SubmitButton from '~/components/SubmitButton'
 import { z } from 'zod'
 import SelectInput from '~/components/SelectInput'
 import type { ActionFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
-import { f } from 'node_modules/react-router/dist/development/lib-CCSAGgcP.mjs'
 
 const schema = z.object({
   mission: z.coerce.number().int().positive('Required'),
@@ -152,7 +145,7 @@ const Game = () => {
       <div className="flex gap-2 flex-wrap">
         <div className="flex flex-col flex-1">
           <h2 className="m-0">Campaign Log</h2>
-          <table className="table m-0">
+          <table className="table m-0 not-prose">
             <thead>
               <tr>
                 <td></td>
@@ -170,7 +163,7 @@ const Game = () => {
                       arr[i - 1]?.gameMissions?.[0]?.stage !==
                         MissionStage.RESOLVED
                       ? 'bg-base-300'
-                      : 'hover'
+                      : 'hover:bg-base-200'
                   )}
                 >
                   <td>
@@ -339,7 +332,7 @@ const Game = () => {
                 </thead>
                 <tbody>
                   {forcedMissions.map((m) => (
-                    <tr key={m.id} className="hover">
+                    <tr key={m.id} className="hover:bg-base-200">
                       <td>{m.mission.name}</td>
                       <td className="text-center">{m.threat}</td>
                       <td className="text-center">

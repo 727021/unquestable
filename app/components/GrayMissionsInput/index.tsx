@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import type { ChangeEvent, PropsWithChildren } from 'react'
+import { useId, type ChangeEvent, type PropsWithChildren } from 'react'
 import type { FormApi } from '@rvf/react-router'
 import RequiredIndicator from '../RequiredIndicator'
 
@@ -17,31 +17,36 @@ const GrayMissionsInput = ({ children, formApi }: Props) => {
     field.clearError()
   }
 
+  const id = useId()
+
   return (
-    <label className="form-control w-full max-w-xs">
-      <div className="label">
-        <span className="label-text">
+    <div className="fieldset max-w-full w-96">
+      <label
+        className="label flex justify-between"
+        htmlFor={`${id}-grayMissions`}
+      >
+        <span className="text-base-content">
           <RequiredIndicator />
           Gray Side Missions
         </span>
-        <span className="label-text-alt">
-          <div className="form-control">
-            <label className="label cursor-pointer p-0 gap-1">
-              <span className="label-text">Random?</span>
-              <input
-                type="checkbox"
-                className="checkbox checkbox-sm"
-                checked={field.value() === 'RANDOM'}
-                onChange={onChange}
-              />
-            </label>
-          </div>
-        </span>
-      </div>
+        <label
+          className="label cursor-pointer p-0 gap-1"
+          htmlFor={`${id}-random`}
+        >
+          <span className="text-base-content">Random?</span>
+          <input
+            type="checkbox"
+            className="checkbox checkbox-sm"
+            checked={field.value() === 'RANDOM'}
+            onChange={onChange}
+            id={`${id}-random`}
+          />
+        </label>
+      </label>
       <select
-        className={clsx('select select-bordered', error && 'select-error')}
+        className={clsx('select w-full', error && 'select-error')}
         {...formApi.getInputProps(name, {
-          id: 'grayMissions',
+          id: `${id}-grayMissions`,
           multiple: true,
           disabled: field.value() === 'RANDOM'
         })}
@@ -56,7 +61,7 @@ const GrayMissionsInput = ({ children, formApi }: Props) => {
         )}
       </div>
       {field.value() === 'RANDOM' && <input {...field.getHiddenInputProps()} />}
-    </label>
+    </div>
   )
 }
 

@@ -136,7 +136,7 @@ const RebelRewardManager = ({ rebel, allRewards, formAction }: Props) => {
           </div>
           <div className="join">
             <select
-              className="join-item select select-bordered"
+              className="join-item select"
               value={reward}
               onChange={(e) => setReward(parseInt(e.target.value, 10))}
             >
@@ -148,7 +148,7 @@ const RebelRewardManager = ({ rebel, allRewards, formAction }: Props) => {
               ))}
             </select>
             <button
-              className="join-item btn btn-outline"
+              className="join-item btn btn-outline border-l-2"
               type="button"
               onClick={() => add()}
               disabled={reward === -1}

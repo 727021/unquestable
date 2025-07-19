@@ -32,6 +32,7 @@
 - [x] Clerk auth
 - [ ] Default theme picker to "os"
 - [ ] Rework win/loss logic into arbitrary conditions
+- [ ] BUG - fix validation messages for placeholder inputs
 
 # Stretch
 

@@ -133,7 +133,7 @@ const AllyManager = ({ allies, allAllies, formAction }: Props) => {
           </div>
           <div className="join">
             <select
-              className="join-item select select-bordered"
+              className="join-item select"
               value={ally}
               onChange={(e) => setAlly(parseInt(e.target.value, 10))}
             >
@@ -149,7 +149,7 @@ const AllyManager = ({ allies, allAllies, formAction }: Props) => {
               ))}
             </select>
             <button
-              className="join-item btn btn-outline"
+              className="join-item btn btn-outline border-l-2"
               type="button"
               onClick={() => add()}
               disabled={ally === -1}

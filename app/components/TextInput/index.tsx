@@ -1,7 +1,7 @@
 import { FormApi } from '@rvf/react-router'
 import RequiredIndicator from '~/components/RequiredIndicator'
 import clsx from 'clsx'
-import { forwardRef } from 'react'
+import { forwardRef, useId } from 'react'
 import type {
   ChangeEventHandler,
   ReactNode,
@@ -39,49 +39,48 @@ const TextInput = forwardRef(
     ref: ForwardedRef<HTMLInputElement>
   ) => {
     const error = form.error(name)
+    const id = useId()
 
     return (
-      <label
+      <fieldset
         className={clsx(
-          'form-control max-w-full w-fit sm:w-96',
-          inline && 'flex-row items-center',
+          'fieldset max-w-full w-fit sm:w-96',
+          inline && 'flex flex-row items-center',
           type === 'number' && 'sm:w-fit'
         )}
       >
-        <div className={clsx('label', inline && 'py-0')}>
-          <span className={clsx(typeof label === 'string' && 'label-text')}>
+        <label className={clsx('label text-base-content', inline && 'py-0')} htmlFor={id}>
             {required && <RequiredIndicator />}
             {label}
-          </span>
-        </div>
+        </label>
         <input
           className={clsx(
-            'input input-bordered w-full',
+            'input w-full',
             error && 'input-error',
             inline && 'input-sm'
           )}
           {...form.getInputProps(name, {
             ...props,
-            id: name,
+            id,
             type,
             value,
             onChange,
             ref
           })}
         />
-        <div className="label">
+        <label className="label flex justify-between">
           {error ? (
             <>
-              <span className="label-text-alt text-error">{error}</span>
+              <span className="text-error">{error}</span>
             </>
           ) : (
             <>
-              <span className="label-text-alt">{hintLeft}</span>
-              <span className="label-text-alt">{hintRight}</span>
+              <span>{hintLeft}</span>
+              <span>{hintRight}</span>
             </>
           )}
-        </div>
-      </label>
+        </label>
+      </fieldset>
     )
   }
 )

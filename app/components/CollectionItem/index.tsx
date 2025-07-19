@@ -21,7 +21,7 @@ const CollectionItem = ({ expansion, owned }: Props) => {
   const alt = expansion.boxArt.find((art) => art.alt)?.alt ?? ''
 
   return expansion.defaultOwned ? (
-    <div className="w-96 max-w-full card card-compact card-bordered">
+    <div className="w-96 max-w-full card card-sm card-border">
       <figure>
         {png ? (
           <>
@@ -45,7 +45,7 @@ const CollectionItem = ({ expansion, owned }: Props) => {
     <fetcher.Form method="POST" className="w-96 max-w-full">
       <input type="hidden" name="expansionId" value={expansion.id} />
       <button
-        className="card card-compact card-bordered w-full"
+        className="card card-sm card-border w-full"
         type="submit"
         name="action"
         value={isOwned ? 'remove' : 'add'}

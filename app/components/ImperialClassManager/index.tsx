@@ -78,7 +78,7 @@ const ImperialClassManager = ({ imperialPlayer, formAction }: Props) => {
           className="flex flex-1 justify-between items-end"
         >
           {form.renderFormIdInput()}
-          <div className="form-control items-start w-fit py-2 self-start">
+          <fieldset className="fieldset items-start w-fit py-2 self-start">
             {imperialPlayer.class.cards.map((card) => (
               <label key={card.id} className="label gap-2 flex py-1">
                 <input
@@ -89,12 +89,12 @@ const ImperialClassManager = ({ imperialPlayer, formAction }: Props) => {
                     e.target.checked ? add(card.id) : remove(card.id)
                   }
                 />
-                <span className="label-text">
+                <span className="text-base-content">
                   {card.cost} XP - {card.name}
                 </span>
               </label>
             ))}
-          </div>
+          </fieldset>
           <SubmitButton
             className="btn btn-primary btn-outline"
             fetcher={fetcher}
@@ -107,7 +107,7 @@ const ImperialClassManager = ({ imperialPlayer, formAction }: Props) => {
           ))}
         </form>
       ) : (
-        <div className="form-control items-start w-fit py-2">
+        <fieldset className="fieldset items-start w-fit py-2">
           {imperialPlayer.class.cards.map((card) => (
             <label
               key={card.id}
@@ -121,12 +121,12 @@ const ImperialClassManager = ({ imperialPlayer, formAction }: Props) => {
                 )}
                 readOnly
               />
-              <span className="label-text">
+              <span className="text-base-content">
                 {card.cost} XP - {card.name}
               </span>
             </label>
           ))}
-        </div>
+        </fieldset>
       )}
     </div>
   )

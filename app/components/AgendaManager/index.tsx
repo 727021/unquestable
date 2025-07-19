@@ -211,7 +211,7 @@ const AgendaManager = ({ imperialPlayer, formAction }: Props) => {
               <h3 className="m-0">Agenda Decks</h3>
               <div className="join">
                 <select
-                  className="join-item select select-bordered"
+                  className="join-item select"
                   value={agenda}
                   onChange={(e) => setAgenda(parseInt(e.target.value, 10))}
                 >
@@ -227,7 +227,7 @@ const AgendaManager = ({ imperialPlayer, formAction }: Props) => {
                     ))}
                 </select>
                 <button
-                  className="btn join-item btn-outline"
+                  className="btn join-item btn-outline border-l-2"
                   type="button"
                   onClick={() => add()}
                   disabled={agenda === -1}

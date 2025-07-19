@@ -135,7 +135,7 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
           </div>
         )}
       </div>
-      <hr className="border-gray-400 my-0" />
+      <hr className="border-gray-400 my-0 not-prose" />
       {editing ? (
         <form {...form.getFormProps()} className="flex flex-1 flex-col gap-2">
           {form.renderFormIdInput()}
@@ -162,7 +162,7 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
           </div>
           <div className="join">
             <select
-              className="join-item select select-bordered"
+              className="join-item select"
               value={item}
               onChange={(e) => setItem(parseInt(e.target.value, 10))}
             >
@@ -176,7 +176,7 @@ const ItemManager = ({ items, allItems, credits, formAction }: Props) => {
               ))}
             </select>
             <button
-              className="join-item btn btn-outline"
+              className="join-item btn btn-outline border-l-2"
               type="button"
               onClick={() => add()}
               disabled={item === -1}

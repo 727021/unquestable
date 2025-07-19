@@ -44,17 +44,17 @@ const SelectInput = forwardRef(
     const error = formApi.error(name)
 
     return (
-      <label className="form-control max-w-full w-96">
-        <div className="label">
-          <span className="label-text">
+      <fieldset className="fieldset max-w-full w-96">
+        <label className="label flex justify-between">
+          <span className="text-base-content">
             {required && <RequiredIndicator />}
             {label}
           </span>
-          <span className="label-text-alt">{labelRight}</span>
-        </div>
+          <span>{labelRight}</span>
+        </label>
         <select
           className={clsx(
-            'select select-bordered grow',
+            'select w-full',
             error && 'select-error'
           )}
           {...formApi.getInputProps(name, {
@@ -68,19 +68,19 @@ const SelectInput = forwardRef(
         >
           {children}
         </select>
-        <div className="label">
+        <label className="label flex justify-between">
           {error ? (
             <>
-              <span className="label-text-alt text-error">{error}</span>
+              <span className="text-error">{error}</span>
             </>
           ) : (
             <>
-              <span className="label-text-alt">{hintLeft}</span>
-              <span className="label-text-alt">{hintRight}</span>
+              <span>{hintLeft}</span>
+              <span>{hintRight}</span>
             </>
           )}
-        </div>
-      </label>
+        </label>
+      </fieldset>
     )
   }
 )

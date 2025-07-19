@@ -98,7 +98,7 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
           className="flex flex-1 justify-between items-end"
         >
           {form.renderFormIdInput()}
-          <div className="form-control items-start w-fit py-2 self-start">
+          <fieldset className="fieldset items-start w-fit py-2 self-start">
             {rebel.hero.class?.cards.map((card) => (
               <label key={card.id} className="label gap-2 flex py-1">
                 <input
@@ -109,23 +109,23 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
                     e.target.checked ? add(card.id) : remove(card.id)
                   }
                 />
-                <span className="label-text">
+                <span className="text-base-content">
                   {card.cost} XP - {card.name}
                 </span>
               </label>
             ))}
-          </div>
+          </fieldset>
           <input {...form.getHiddenInputProps('id')} />
           {form.value('classCards')?.map((_, i) => (
             <input {...form.getHiddenInputProps(`classCards[${i}]`)} />
           ))}
         </form>
       ) : (
-        <div className="form-control items-start w-fit py-2">
+        <fieldset className="fieldset items-start w-fit py-2">
           {rebel.hero.class?.cards.map((card) => (
             <label
               key={card.id}
-              className="label cursor-default gap-2 flex py-1"
+              className="label cursor-default! gap-2 flex py-1"
             >
               <input
                 type="checkbox"
@@ -133,12 +133,12 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
                 checked={rebel.classCards.some((c) => c.id === card.id)}
                 readOnly
               />
-              <span className="label-text">
+              <span className="cursor-default">
                 {card.cost} XP - {card.name}
               </span>
             </label>
           ))}
-        </div>
+        </fieldset>
       )}
     </div>
   )

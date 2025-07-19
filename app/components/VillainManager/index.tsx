@@ -125,7 +125,7 @@ const VillainManager = ({ imperialPlayer, allVillains, formAction }: Props) => {
           <div className="flex justify-between items-end flex-1">
             <div className="join">
               <select
-                className="join-item select select-bordered"
+                className="join-item select"
                 value={villain}
                 onChange={(e) => setVillain(parseInt(e.target.value, 10))}
               >
@@ -141,7 +141,7 @@ const VillainManager = ({ imperialPlayer, allVillains, formAction }: Props) => {
                 ))}
               </select>
               <button
-                className="join-item btn btn-outline"
+                className="join-item btn btn-outline border-l-2"
                 type="button"
                 onClick={() => add()}
                 disabled={villain === -1}
