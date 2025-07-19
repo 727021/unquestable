@@ -1,45 +1,33 @@
 import { MissionStage } from '@prisma/client'
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
-import { json, redirect } from '@vercel/remix'
-import { useLoaderData, useOutletContext } from '@remix-run/react'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
+import { useLoaderData, useOutletContext } from 'react-router'
 import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
-import { ValidatedForm, validationError } from 'remix-validated-form'
-import { withZod } from '@remix-validated-form/with-zod'
-import { zfd } from 'zod-form-data'
+import { parseFormData, useForm, validationError } from '@rvf/react-router'
 import BuyClassCard from '~/components/BuyClassCard'
-import { Fragment } from 'react'
+import { Fragment, useId } from 'react'
 import SubmitButton from '~/components/SubmitButton'
 import { z } from 'zod'
 import BuyItemCard from '~/components/BuyItemCard'
 import { getSellPrice } from '~/utils/sellPrice'
 import { requireAuth } from '~/utils/requireAuth.server'
 
-const validator = withZod(
-  zfd.formData({
-    rebels: zfd.repeatable(
-      z.array(
-        z.object({
-          id: zfd.numeric(z.number().positive()),
-          cards: zfd.repeatable(z.array(zfd.numeric(z.number().positive())))
-        })
-      )
-    ),
-    items: z
-      .object({
-        bought: zfd
-          .repeatableOfType(zfd.numeric(z.number().positive()))
-          .optional()
-          .default([]),
-        sold: zfd
-          .repeatableOfType(zfd.numeric(z.number().positive()))
-          .optional()
-          .default([])
-      })
-      .optional()
-      .default({})
-  })
-)
+const schema = z.object({
+  rebels: z.array(
+    z.object({
+      id: z.coerce.number().positive(),
+      cards: z.array(z.coerce.number().positive()).optional().default([])
+    })
+  ),
+  items: z
+    .object({
+      bought: z.array(z.coerce.number().positive()).optional().default([]),
+      sold: z.array(z.coerce.number().positive()).optional().default([])
+    })
+    .optional()
+    .default({ bought: [], sold: [] })
+})
 
 export const loader = async (args: LoaderFunctionArgs) => {
   const { userId } = await requireAuth(args)
@@ -123,11 +111,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }
   })
 
-  return json({ mission, items })
+  return { mission, items }
 }
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { data, error } = await validator.validate(await request.formData())
+  const { data, error } = await parseFormData(await request.formData(), schema)
 
   if (error) {
     return validationError(error)
@@ -214,27 +202,43 @@ const BuyStage = () => {
   const data = useLoaderData<typeof loader>()
   const ctx = useOutletContext<GameLoaderData>()
 
+  const formId = useId()
+  const form = useForm({
+    submitSource: 'state',
+    id: formId,
+    schema,
+    method: 'POST',
+    defaultValues: {
+      rebels: ctx.game.rebelPlayers.map((rebel) => ({
+        id: rebel.id,
+        cards: []
+      })),
+      items: {
+        bought: [],
+        sold: []
+      }
+    }
+  })
+
   return (
     <>
       <h2 className="m-0">
         Rebel Buy for <em>{data.mission.mission.name}</em>
       </h2>
-      <ValidatedForm
-        validator={validator}
-        method="POST"
-        className="flex flex-col gap-3 w-fit"
-      >
+      <form {...form.getFormProps()} className="flex flex-col gap-3 w-fit">
+        {form.renderFormIdInput()}
         <div className="flex flex-wrap gap-3">
           {ctx.game.rebelPlayers.map((rebel, i) => (
             <Fragment key={rebel.id}>
               <BuyClassCard
+                formApi={form}
                 xp={rebel.xp}
                 cards={rebel.hero.class!.cards}
                 label={rebel.hero.name}
                 name={`rebels[${i}].cards`}
                 owned={rebel.classCards}
               />
-              <input type="hidden" name={`rebels[${i}].id`} value={rebel.id} />
+              <input {...form.getHiddenInputProps(`rebels[${i}].id`)} />
             </Fragment>
           ))}
         </div>
@@ -245,9 +249,12 @@ const BuyStage = () => {
           credits={ctx.game.credits}
           owned={ctx.game.items}
           cards={data.items}
+          formApi={form}
         />
-        <SubmitButton className="w-fit">Buy</SubmitButton>
-      </ValidatedForm>
+        <SubmitButton formApi={form} className="w-fit">
+          Buy
+        </SubmitButton>
+      </form>
     </>
   )
 }

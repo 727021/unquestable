@@ -1,11 +1,12 @@
-import { json, redirect, type LoaderFunctionArgs } from '@vercel/remix'
+import type { LoaderFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
 import {
   Link,
   Outlet,
   useLoaderData,
   useLocation,
   useParams
-} from '@remix-run/react'
+} from 'react-router'
 import { prisma } from '~/services/db.server'
 import { ArrowUturnLeftIcon } from '@heroicons/react/24/outline'
 import { requireAuth } from '~/utils/requireAuth.server'
@@ -184,7 +185,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     return redirect('/games')
   }
 
-  return json({ game })
+  return { game }
 }
 
 export type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>

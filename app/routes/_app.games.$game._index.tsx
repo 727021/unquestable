@@ -1,4 +1,4 @@
-import { Link, redirect, useOutletContext, useParams } from '@remix-run/react'
+import { Link, redirect, useOutletContext, useParams } from 'react-router'
 import clsx from 'clsx'
 import type { LoaderData } from './_app.games.$game'
 import {
@@ -7,23 +7,19 @@ import {
   MissionType,
   Side
 } from '@prisma/client'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import Modal from '~/components/Modal'
-import { ValidatedForm, validationError } from 'remix-validated-form'
+import { parseFormData, useForm, validationError } from '@rvf/react-router'
 import SubmitButton from '~/components/SubmitButton'
-import { zfd } from 'zod-form-data'
 import { z } from 'zod'
-import { withZod } from '@remix-validated-form/with-zod'
 import SelectInput from '~/components/SelectInput'
-import type { ActionFunctionArgs } from '@vercel/remix'
+import type { ActionFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
 
-const validator = withZod(
-  zfd.formData({
-    mission: zfd.numeric(z.number().int().positive()),
-    slot: zfd.numeric(z.number().int().positive())
-  })
-)
+const schema = z.object({
+  mission: z.coerce.number().int().positive('Required'),
+  slot: z.coerce.number().int().positive()
+})
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const game = await prisma.game.findUnique({
@@ -58,7 +54,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return redirect('/games')
   }
 
-  const { data, error } = await validator.validate(await request.formData())
+  const { data, error } = await parseFormData(await request.formData(), schema)
 
   if (error) {
     return validationError(error)
@@ -112,8 +108,6 @@ const Game = () => {
   const params = useParams()
   const data = useOutletContext<LoaderData>()
 
-  const [choosing, setChoosing] = useState<number | null>(null)
-
   const activeSideMissions = data.game.missions.filter(
     (m) => !m.forced && !m.stage && m.mission.type !== MissionType.STORY
   )
@@ -125,12 +119,33 @@ const Game = () => {
     .toSorted((a, b) => +!!b.stage - +!!a.stage)
   const hasActiveForcedMission = forcedMissions.some((m) => !m.stage)
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema,
+    method: 'POST',
+    defaultValues: {
+      slot: -1,
+      mission: -1
+    }
+  })
+
+  const [choosing, setChoosing] = useState(false)
+  const openChoosing = (slotId: number) => {
+    form.setValue('slot', slotId)
+    setChoosing(true)
+  }
+  const closeChoosing = () => {
+    form.resetForm()
+    setChoosing(false)
+  }
+
   return (
     <>
       <div className="flex gap-2 flex-wrap">
         <div className="flex flex-col flex-1">
           <h2 className="m-0">Campaign Log</h2>
-          <table className="table m-0">
+          <table className="table m-0 not-prose">
             <thead>
               <tr>
                 <td></td>
@@ -148,7 +163,7 @@ const Game = () => {
                       arr[i - 1]?.gameMissions?.[0]?.stage !==
                         MissionStage.RESOLVED
                       ? 'bg-base-300'
-                      : 'hover'
+                      : 'hover:bg-base-200'
                   )}
                 >
                   <td>
@@ -175,36 +190,26 @@ const Game = () => {
                             <button
                               type="button"
                               className="btn btn-sm"
-                              onClick={() => setChoosing(slot.id)}
+                              onClick={() => openChoosing(slot.id)}
                               disabled={hasActiveForcedMission}
                             >
                               Choose Mission
                             </button>
                             <Modal
-                              open={choosing !== null}
-                              onClose={() => setChoosing(null)}
+                              open={choosing}
+                              onClose={() => closeChoosing()}
                             >
                               <h2 className="m-0">Choose Side Mission</h2>
-                              <ValidatedForm
-                                validator={validator}
-                                method="POST"
-                              >
-                                <input
-                                  type="hidden"
-                                  name="action"
-                                  value="choose"
-                                />
-                                <input
-                                  type="hidden"
-                                  name="slot"
-                                  value={slot.id}
-                                />
+                              <form {...form.getFormProps()}>
+                                {form.renderFormIdInput()}
+                                <input {...form.getHiddenInputProps('slot')} />
                                 <SelectInput
+                                  formApi={form}
                                   name="mission"
                                   label="Mission"
                                   required
                                 >
-                                  <option selected disabled></option>
+                                  <option value={-1}></option>
                                   {activeSideMissions.map((m) => (
                                     <option key={m.id} value={m.id}>
                                       {m.mission.name}
@@ -215,16 +220,18 @@ const Game = () => {
                                   ))}
                                 </SelectInput>
                                 <div className="flex gap-2">
-                                  <SubmitButton>Start Mission</SubmitButton>
+                                  <SubmitButton formApi={form}>
+                                    Start Mission
+                                  </SubmitButton>
                                   <button
                                     type="button"
                                     className="btn"
-                                    onClick={() => setChoosing(null)}
+                                    onClick={() => closeChoosing()}
                                   >
                                     Cancel
                                   </button>
                                 </div>
-                              </ValidatedForm>
+                              </form>
                             </Modal>
                           </>
                         )}
@@ -325,7 +332,7 @@ const Game = () => {
                 </thead>
                 <tbody>
                   {forcedMissions.map((m) => (
-                    <tr key={m.id} className="hover">
+                    <tr key={m.id} className="hover:bg-base-200">
                       <td>{m.mission.name}</td>
                       <td className="text-center">{m.threat}</td>
                       <td className="text-center">
@@ -354,7 +361,7 @@ const Game = () => {
         <div className="flex flex-col gap-2 flex-1">
           <Link
             to={`/games/${params.game}/empire`}
-            className="w-full no-underline border rounded p-2"
+            className="w-full no-underline border rounded-xs p-2"
           >
             <div className="flex gap-5 items-baseline">
               <h2 className="m-0">Empire</h2>
@@ -370,7 +377,7 @@ const Game = () => {
           </Link>
           <Link
             to={`/games/${params.game}/rebels`}
-            className="w-full no-underline border rounded p-2"
+            className="w-full no-underline border rounded-xs p-2"
           >
             <h2 className="m-0">Rebels</h2>
             <p className="m-0">Credits: {data.game.credits}</p>

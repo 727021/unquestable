@@ -6,7 +6,7 @@ import type {
   ReactNode
 } from 'react'
 import { forwardRef } from 'react'
-import { useField } from 'remix-validated-form'
+import type { FormApi } from '@rvf/react-router'
 import RequiredIndicator from '../RequiredIndicator'
 
 type Props = PropsWithChildren<{
@@ -20,6 +20,7 @@ type Props = PropsWithChildren<{
   onChange?: ChangeEventHandler<HTMLSelectElement>
   multiple?: boolean
   disabled?: boolean
+  formApi: FormApi<any>
 }>
 
 const SelectInput = forwardRef(
@@ -35,50 +36,51 @@ const SelectInput = forwardRef(
       onChange,
       multiple,
       disabled,
-      labelRight
+      labelRight,
+      formApi
     }: Props,
     ref: ForwardedRef<HTMLSelectElement>
   ) => {
-    const { getInputProps, error } = useField(name)
+    const error = formApi.error(name)
 
     return (
-      <label className="form-control max-w-full w-96">
-        <div className="label">
-          <span className="label-text">
+      <div className="fieldset max-w-full w-96">
+        <label className="label flex justify-between">
+          <span className="text-base-content">
             {required && <RequiredIndicator />}
             {label}
           </span>
-          <span className="label-text-alt">{labelRight}</span>
-        </div>
+          <span>{labelRight}</span>
+        </label>
         <select
           className={clsx(
-            'select select-bordered grow',
+            'select w-full',
             error && 'select-error'
           )}
-          {...getInputProps({
+          {...formApi.getInputProps(name, {
             id: name,
             value,
             onChange,
             multiple,
-            disabled
+            disabled,
+            ref
           })}
-          ref={ref}
         >
           {children}
         </select>
-        <div className="label">
+        <label className="label flex justify-between">
           {error ? (
             <>
-              <span className="label-text-alt text-error">{error}</span>
+              <span className="text-error">{error}</span>
             </>
           ) : (
             <>
-              <span className="label-text-alt">{hintLeft}</span>
-              <span className="label-text-alt">{hintRight}</span>
+              <span>{hintLeft}</span>
+              <span>{hintRight}</span>
             </>
           )}
-        </div>
-      </label>
+        </label>
+      </div>
     )
   }
 )

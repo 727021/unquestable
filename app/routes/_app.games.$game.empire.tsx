@@ -1,16 +1,9 @@
-import {
-  json,
-  useFetcher,
-  useFormAction,
-  useLoaderData,
-  useOutletContext
-} from '@remix-run/react'
+import { useFormAction, useLoaderData, useOutletContext } from 'react-router'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
-import type { ActionData } from './_app.games.$game.empire.agendas'
 import AgendaManager from '~/components/AgendaManager'
 import ImperialClassManager from '~/components/ImperialClassManager'
 import ImperialSummaryManager from '~/components/ImperialSummaryManager'
-import type { LoaderFunctionArgs } from '@vercel/remix'
+import type { LoaderFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
 import { Side } from '@prisma/client'
 import ImperialRewardManager from '~/components/ImperialRewardManager'
@@ -49,11 +42,6 @@ export const loader = async (args: LoaderFunctionArgs) => {
       side: {
         in: [Side.ALL, Side.IMPERIAL]
       }
-    },
-    select: {
-      id: true,
-      name: true,
-      tagline: true
     }
   })
 
@@ -74,7 +62,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }
   })
 
-  return json({ rewards, troops })
+  return { rewards, troops }
 }
 
 export type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>
@@ -85,19 +73,10 @@ const Empire = () => {
 
   const loaderData = useLoaderData<LoaderData>()
 
-  const summaryFetcher = useFetcher<ActionData>()
   const summaryFormAction = useFormAction('summary')
-
-  const classFetcher = useFetcher<ActionData>()
   const classFormAction = useFormAction('class')
-
-  const agendaFetcher = useFetcher<ActionData>()
   const agendasFormAction = useFormAction('agendas')
-
-  const rewardsFetcher = useFetcher<ActionData>()
   const rewardsFormAction = useFormAction('rewards')
-
-  const villainsFetcher = useFetcher<ActionData>()
   const villainsFormAction = useFormAction('villains')
 
   return (
@@ -108,18 +87,15 @@ const Empire = () => {
         </div>
         <ImperialSummaryManager
           imperialPlayer={imperialPlayer}
-          fetcher={summaryFetcher}
           formAction={summaryFormAction}
         />
         <div className="flex flex-wrap gap-2">
           <ImperialClassManager
             imperialPlayer={imperialPlayer}
-            fetcher={classFetcher}
             formAction={classFormAction}
           />
           <AgendaManager
             imperialPlayer={imperialPlayer}
-            fetcher={agendaFetcher}
             formAction={agendasFormAction}
           />
         </div>
@@ -127,13 +103,11 @@ const Empire = () => {
           <ImperialRewardManager
             imperialPlayer={imperialPlayer}
             allRewards={loaderData.rewards}
-            fetcher={rewardsFetcher}
             formAction={rewardsFormAction}
           />
           <VillainManager
             imperialPlayer={imperialPlayer}
             allVillains={loaderData.troops}
-            fetcher={villainsFetcher}
             formAction={villainsFormAction}
           />
         </div>

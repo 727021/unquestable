@@ -1,160 +1,123 @@
-import type { FetcherWithComponents } from '@remix-run/react'
-import type { Reducer } from 'react'
-import { useCallback, useEffect, useReducer } from 'react'
+import { useFetcher } from 'react-router'
+import { useEffect, useId, useState } from 'react'
 import type { LoaderData as GameLoaderData } from '~/routes/_app.games.$game'
 import type { LoaderData } from '~/routes/_app.games.$game.empire'
 import EditButton from '../EditButton'
-import { ValidatedForm } from 'remix-validated-form'
-import { rewardValidator } from '~/routes/_app.games.$game.empire.rewards'
+import { useForm } from '@rvf/react-router'
+import {
+  ActionData,
+  rewardSchema
+} from '~/routes/_app.games.$game.empire.rewards'
 import SubmitButton from '../SubmitButton'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import { XCircleIcon } from '@heroicons/react/24/outline'
-
-type RewardId = LoaderData['rewards'][0]['id']
-
-type State = {
-  editing: boolean
-  rewardsToAdd: RewardId[]
-  rewardsToRemove: RewardId[]
-  chosenReward: RewardId
-}
-
-type Action =
-  | { type: 'TOGGLE_EDITING' | 'STOP_EDITING' }
-  | {
-      type: 'ADD_REWARD' | 'REMOVE_REWARD' | 'CHOOSE_REWARD'
-      rewardId: RewardId
-    }
-
-const initialState: State = {
-  editing: false,
-  rewardsToAdd: [],
-  rewardsToRemove: [],
-  chosenReward: -1
-}
+import { Reward } from '@prisma/client'
 
 type Props = {
   imperialPlayer: NonNullable<GameLoaderData['game']['imperialPlayer']>
   allRewards: LoaderData['rewards']
-  fetcher?: FetcherWithComponents<any>
   formAction?: string
 }
 
 const ImperialRewardManager = ({
   imperialPlayer,
   allRewards,
-  fetcher,
   formAction
 }: Props) => {
-  const reducer: Reducer<State, Action> = useCallback(
-    (state, action) => {
-      switch (action.type) {
-        case 'TOGGLE_EDITING':
-          return { ...initialState, editing: !state.editing }
-        case 'STOP_EDITING':
-          return { ...initialState, editing: false }
-        case 'ADD_REWARD':
-          if (imperialPlayer.rewards.some((r) => r.id === action.rewardId)) {
-            return {
-              ...state,
-              rewardsToAdd: state.rewardsToAdd.filter(
-                (id) => id !== action.rewardId
-              ),
-              rewardsToRemove: state.rewardsToRemove.filter(
-                (id) => id !== action.rewardId
-              ),
-              chosenReward: initialState.chosenReward
-            }
-          }
-          return {
-            ...state,
-            rewardsToAdd: [...state.rewardsToAdd, action.rewardId],
-            rewardsToRemove: state.rewardsToRemove.filter(
-              (id) => id !== action.rewardId
-            ),
-            chosenReward: initialState.chosenReward
-          }
-        case 'REMOVE_REWARD':
-          if (!imperialPlayer.rewards.some((r) => r.id === action.rewardId)) {
-            return {
-              ...state,
-              rewardsToAdd: state.rewardsToAdd.filter(
-                (id) => id !== action.rewardId
-              ),
-              rewardsToRemove: state.rewardsToRemove.filter(
-                (id) => id !== action.rewardId
-              ),
-              chosenReward: action.rewardId
-            }
-          }
-          return {
-            ...state,
-            rewardsToAdd: state.rewardsToAdd.filter(
-              (id) => id !== action.rewardId
-            ),
-            rewardsToRemove: [...state.rewardsToRemove, action.rewardId],
-            chosenReward: action.rewardId
-          }
-        case 'CHOOSE_REWARD':
-          return { ...state, chosenReward: action.rewardId }
+  const fetcher = useFetcher<ActionData>()
+
+  const [editing, setEditing] = useState(false)
+
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema: rewardSchema,
+    method: 'POST',
+    fetcher,
+    action: formAction,
+    defaultValues: {
+      rewards: imperialPlayer.rewards.map((r) => r.id)
+    }
+  })
+
+  const cancel = () => {
+    setEditing(false)
+    form.resetForm({ rewards: imperialPlayer.rewards.map((r) => r.id) })
+  }
+
+  const toggle = () => {
+    setEditing((prev) => !prev)
+    if (!editing) {
+      form.resetForm({ rewards: imperialPlayer.rewards.map((r) => r.id) })
+    }
+  }
+
+  const [reward, setReward] = useState(-1)
+
+  const [availableRewards, ownedRewards] = allRewards.reduce<
+    [Reward[], Reward[]]
+  >(
+    ([available, owned], reward) => {
+      if (form.value('rewards')?.includes(reward.id)) {
+        owned.push(reward)
+      } else {
+        available.push(reward)
       }
+      return [available, owned]
     },
-    [imperialPlayer.rewards]
+    [[], []]
   )
 
-  const [rewardState, updateRewards] = useReducer(reducer, initialState)
+  const add = () => {
+    if (!availableRewards.some((r) => r.id === reward)) {
+      return
+    }
+    form.setValue('rewards', [...(form.value('rewards') ?? []), reward])
+    setReward(-1)
+  }
+
+  const remove = (rewardId: number) => {
+    form.setValue(
+      'rewards',
+      form.value('rewards')?.filter((id) => id !== rewardId)
+    )
+    setReward(rewardId)
+  }
 
   useEffect(() => {
     if (fetcher?.data?.success && fetcher.state === 'idle') {
-      updateRewards({ type: 'STOP_EDITING' })
+      cancel()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetcher?.state])
 
-  const rewardsToShow = [
-    ...imperialPlayer.rewards.filter(
-      (r) => !rewardState.rewardsToRemove.includes(r.id)
-    ),
-    ...allRewards.filter((r) => rewardState.rewardsToAdd.includes(r.id))
-  ]
-
   return (
-    <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded">
+    <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded-xs">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">Rewards</h2>
         <EditButton
-          active={rewardState.editing}
-          onClick={() => updateRewards({ type: 'TOGGLE_EDITING' })}
+          active={editing}
+          onClick={() => toggle()}
           disabled={
             fetcher?.state === 'loading' || fetcher?.state === 'submitting'
           }
         />
       </div>
-      {rewardState.editing ? (
-        <ValidatedForm
-          validator={rewardValidator}
-          method="POST"
-          className="flex flex-1 flex-col gap-2"
-          fetcher={fetcher}
-          action={formAction}
-        >
+      {editing ? (
+        <form {...form.getFormProps()} className="flex flex-1 flex-col gap-2">
+          {form.renderFormIdInput()}
           <div className="flex flex-col items-start w-fit py-2">
-            {rewardsToShow.length === 0 ? (
+            {ownedRewards.length === 0 ? (
               <p className="m-0">No Rewards</p>
             ) : (
-              rewardsToShow.map((reward) => (
+              ownedRewards.map((reward) => (
                 <div key={reward.id} className="flex gap-1 items-center">
                   <p className="m-0">{reward.name}</p>
                   <button
                     className="btn btn-xs btn-circle btn-ghost tooltip"
                     data-tip="Remove"
                     type="button"
-                    onClick={() =>
-                      updateRewards({
-                        type: 'REMOVE_REWARD',
-                        rewardId: reward.id
-                      })
-                    }
+                    onClick={() => remove(reward.id)}
                   >
                     <XCircleIcon className="w-5 h-5" />
                   </button>
@@ -165,39 +128,24 @@ const ImperialRewardManager = ({
           <div className="flex justify-between items-end flex-1">
             <div className="join">
               <select
-                className="join-item select select-bordered"
-                value={rewardState.chosenReward}
-                onChange={(e) =>
-                  updateRewards({
-                    type: 'CHOOSE_REWARD',
-                    rewardId: parseInt(e.target.value, 10)
-                  })
-                }
+                className="join-item select"
+                value={reward}
+                onChange={(e) => setReward(parseInt(e.target.value, 10))}
               >
                 <option value={-1} disabled>
                   Choose a Reward
                 </option>
-                {allRewards
-                  .filter(
-                    (reward) => !rewardsToShow.some((r) => r.id === reward.id)
-                  )
-                  .map((reward) => (
-                    <option key={reward.id} value={reward.id}>
-                      {reward.name}
-                    </option>
-                  ))}
+                {availableRewards.map((reward) => (
+                  <option key={reward.id} value={reward.id}>
+                    {reward.name}
+                  </option>
+                ))}
               </select>
               <button
-                className="join-item btn btn-outline"
+                className="join-item btn btn-outline border-l-2"
                 type="button"
-                onClick={() =>
-                  rewardState.chosenReward > -1 &&
-                  updateRewards({
-                    type: 'ADD_REWARD',
-                    rewardId: rewardState.chosenReward
-                  })
-                }
-                disabled={rewardState.chosenReward === -1}
+                onClick={() => add()}
+                disabled={reward === -1}
               >
                 <PlusIcon className="w-5 h-5" />
               </button>
@@ -205,27 +153,15 @@ const ImperialRewardManager = ({
             <SubmitButton
               className="btn btn-primary btn-outline"
               fetcher={fetcher}
+              formApi={form}
             >
               Save
             </SubmitButton>
-            {rewardState.rewardsToAdd.map((id, i) => (
-              <input
-                key={`rewardsToAdd-${id}`}
-                type="hidden"
-                name={`rewardsToAdd[${i}]`}
-                value={id}
-              />
-            ))}
-            {rewardState.rewardsToRemove.map((id, i) => (
-              <input
-                key={`rewardsToRemove-${id}`}
-                type="hidden"
-                name={`rewardsToRemove[${i}]`}
-                value={id}
-              />
+            {form.value('rewards')?.map((_, i) => (
+              <input {...form.getHiddenInputProps(`rewards[${i}]`)} />
             ))}
           </div>
-        </ValidatedForm>
+        </form>
       ) : !imperialPlayer.rewards.length ? (
         <p className="m-0 py-2">No Rewards</p>
       ) : (

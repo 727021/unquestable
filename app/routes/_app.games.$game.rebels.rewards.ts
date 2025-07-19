@@ -1,8 +1,7 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
-import { withZod } from '@remix-validated-form/with-zod'
+import { parseFormData } from '@rvf/react-router'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
 import { z } from 'zod'
-import { zfd } from 'zod-form-data'
 import { prisma } from '~/services/db.server'
 import { requireAuth } from '~/utils/requireAuth.server'
 
@@ -12,26 +11,22 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return redirect(`/games/${params.game}/empire`)
 }
 
-export const rewardValidator = withZod(
-  zfd.formData({
-    id: zfd.numeric(z.number().int().positive()),
-    rewardsToAdd: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    rewardsToRemove: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    )
-  })
-)
+export const rewardSchema = z.object({
+  id: z.coerce.number().int().positive(),
+  rewards: z.array(z.coerce.number().int().positive()).default([]),
+})
 
 export const action = async (args: ActionFunctionArgs) => {
-  const { data } = await rewardValidator.validate(await args.request.formData())
+  const { data } = await parseFormData(
+    await args.request.formData(),
+    rewardSchema
+  )
 
   const { userId } = await requireAuth(args)
   const gameId = parseInt(args.params.game!, 10)
 
   if (!data) {
-    return json({})
+    return {}
   }
 
   const player = await prisma.rebelPlayer.findFirst({
@@ -48,18 +43,17 @@ export const action = async (args: ActionFunctionArgs) => {
   })
 
   if (!player) {
-    return json({})
+    return {}
   }
 
   await prisma.rebelPlayer.update({
     where: { id: player.id },
     data: {
       rewards: {
-        connect: data.rewardsToAdd.map((id) => ({ id })),
-        disconnect: data.rewardsToRemove.map((id) => ({ id }))
+        set: data.rewards.map((id) => ({ id }))
       }
     }
   })
 
-  return json<ActionData>({ success: Date.now() })
+  return { success: Date.now() } satisfies ActionData
 }

@@ -1,9 +1,9 @@
-import { Link } from '@remix-run/react'
+import { Link } from 'react-router'
 
 const Footer = () => {
   return (
-    <footer className="footer footer-center p-10 bg-base-300 text-base-content mt-4">
-      <nav className="grid grid-flow-col gap-4">
+    <footer className="footer justify-center p-10 bg-base-300 text-base-content mt-4">
+      <nav className="grid grid-flow-col gap-4 justify-self-center">
         <Link to="#" className="link link-hover">
           About Us
         </Link>
@@ -14,7 +14,7 @@ const Footer = () => {
           Privacy Policy
         </Link>
       </nav>
-      <div className="text-left max-w-screen-lg">
+      <div className="text-left max-w-(--breakpoint-lg)">
         {/* Disclaimer copied from https://cards.boardwars.eu/ */}
         This website is not produced, endorsed, supported, or affiliated with
         Fantasy Flight Games. The copyrightable portions of Star Wars: Imperial

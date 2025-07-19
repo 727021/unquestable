@@ -1,15 +1,10 @@
-import {
-  json,
-  useFormAction,
-  useLoaderData,
-  useOutletContext
-} from '@remix-run/react'
+import { useFormAction, useLoaderData, useOutletContext } from 'react-router'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
 import RebelSummaryManager from '~/components/RebelSummaryManager'
 import RebelClassManager from '~/components/RebelClassManager'
 import RebelRewardManager from '~/components/RebelRewardManager'
 import AllyManager from '~/components/AllyManager'
-import type { LoaderFunctionArgs } from '@remix-run/node'
+import type { LoaderFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
 import { Side } from '@prisma/client'
 import ItemManager from '~/components/ItemManager'
@@ -90,7 +85,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }
   })
 
-  return json({ rewards, troops, items })
+  return { rewards, troops, items }
 }
 
 export type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>
@@ -115,15 +110,15 @@ const Rebels = () => {
           {data.game.rebelPlayers.map((rebel) => (
             <div
               key={rebel.id}
-              className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded"
+              className="flex flex-col flex-1 px-2 py-1 gap-2 border border-gray-400 rounded-xs"
             >
               <RebelSummaryManager
                 rebel={rebel}
                 formAction={summaryFormAction}
               />
-              <hr className="border-gray-400 my-0" />
+              <hr className="border-gray-400 my-0 not-prose" />
               <RebelClassManager rebel={rebel} formAction={classFormAction} />
-              <hr className="border-gray-400 my-0" />
+              <hr className="border-gray-400 my-0 not-prose" />
               <RebelRewardManager
                 rebel={rebel}
                 formAction={rewardFormAction}

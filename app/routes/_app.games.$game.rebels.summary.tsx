@@ -1,8 +1,7 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
-import { withZod } from '@remix-validated-form/with-zod'
+import { parseFormData } from '@rvf/react-router'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
 import { z } from 'zod'
-import { zfd } from 'zod-form-data'
 import { prisma } from '~/services/db.server'
 import { requireAuth } from '~/utils/requireAuth.server'
 
@@ -12,28 +11,24 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return redirect(`/games/${params.game}/rebels`)
 }
 
-export const summaryValidator = withZod(
-  zfd.formData({
-    id: zfd.numeric(z.number().int().positive()),
-    name: zfd
-      .text(z.ostring())
-      .optional()
-      .default('')
-      .transform((input) => input?.trim() || null),
-    xp: zfd
-      .numeric(z.optional(z.number().int().nonnegative()))
-      .optional()
-      .default(0)
-  })
-)
+export const summarySchema = z.object({
+  id: z.coerce.number().int().positive(),
+  name: z
+    .string()
+    .optional()
+    .default('')
+    .transform((input) => input?.trim() || null),
+  xp: z.coerce.number().int().nonnegative().optional().default(0)
+})
 
 export const action = async (args: ActionFunctionArgs) => {
-  const { data } = await summaryValidator.validate(
-    await args.request.formData()
+  const { data } = await parseFormData(
+    await args.request.formData(),
+    summarySchema
   )
 
   if (!data) {
-    return json({})
+    return {}
   }
 
   const { userId } = await requireAuth(args)
@@ -53,7 +48,7 @@ export const action = async (args: ActionFunctionArgs) => {
   })
 
   if (!player) {
-    return json({})
+    return {}
   }
 
   await prisma.rebelPlayer.update({
@@ -64,5 +59,5 @@ export const action = async (args: ActionFunctionArgs) => {
     }
   })
 
-  return json<ActionData>({ success: Date.now() })
+  return { success: Date.now() } satisfies ActionData
 }

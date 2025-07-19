@@ -1,27 +1,20 @@
 import { MissionStage, MissionType } from '@prisma/client'
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { json, redirect } from '@remix-run/node'
-import { useLoaderData } from '@remix-run/react'
-import { withZod } from '@remix-validated-form/with-zod'
-import { ValidatedForm, validationError } from 'remix-validated-form'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
+import { useLoaderData } from 'react-router'
+import { parseFormData, useForm, validationError } from '@rvf/react-router'
 import { z } from 'zod'
-import { zfd } from 'zod-form-data'
 import SideMissionsInput from '~/components/SideMissionsInput'
 import SubmitButton from '~/components/SubmitButton'
 import { prisma } from '~/services/db.server'
 import { randomIndex } from '~/utils/randomIndex'
+import { useId } from 'react'
 
-const validator = withZod(
-  zfd.formData({
-    missions: zfd
-      .text(z.literal('RANDOM'))
-      .or(
-        zfd.repeatable(
-          z.array(zfd.numeric(z.number().int().positive())).min(1).max(2)
-        )
-      )
-  })
-)
+const schema = z.object({
+  missions: z
+    .literal('RANDOM')
+    .or(z.array(z.coerce.number().int().positive()).min(1).max(2))
+})
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const mission = await prisma.gameMission.findUnique({
@@ -91,7 +84,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return redirect(`/games/${params.game}/resolve/${mission.id}/buy/rebel`)
   }
 
-  const { data, error } = await validator.validate(await request.formData())
+  const { data, error } = await parseFormData(await request.formData(), schema)
 
   if (error) {
     return validationError(error)
@@ -198,11 +191,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     return redirect(`/games/${params.game}/resolve/${mission.id}/buy/rebel`)
   }
 
-  return json({
+  return {
     activeSideMissions,
     sideMissionDeck: game.sideMissionDeck,
     missionsNeeded
-  })
+  }
 }
 
 type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>
@@ -210,22 +203,37 @@ type LoaderData = ReturnType<typeof useLoaderData<typeof loader>>
 const ChooseStage = () => {
   const data = useLoaderData<LoaderData>()
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema,
+    method: 'POST',
+    defaultValues: {
+      missions: 'RANDOM'
+    }
+  })
+
   return (
     <>
       <h2 className="m-0">Draw Side Missions</h2>
-      <ValidatedForm validator={validator} method="POST">
-        <SideMissionsInput name="missions" count={data.missionsNeeded}>
+      <form {...form.getFormProps()}>
+        {form.renderFormIdInput()}
+        <SideMissionsInput
+          formApi={form}
+          name="missions"
+          count={data.missionsNeeded}
+        >
           {data.sideMissionDeck.map((mission) => (
             <option key={mission.id} value={mission.id}>
               {mission.name}
             </option>
           ))}
         </SideMissionsInput>
-        <SubmitButton>
+        <SubmitButton formApi={form}>
           Draw Mission
           {data.missionsNeeded > 1 && 's'}
         </SubmitButton>
-      </ValidatedForm>
+      </form>
     </>
   )
 }

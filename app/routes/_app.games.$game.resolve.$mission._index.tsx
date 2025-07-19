@@ -1,25 +1,18 @@
-import {
-  json,
-  redirect,
-  useLoaderData,
-  useOutletContext
-} from '@remix-run/react'
+import { redirect, useLoaderData, useOutletContext } from 'react-router'
 import type { LoaderData } from './_app.games.$game'
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
 import type { ChangeEvent, ElementRef } from 'react'
-import { useEffect, useReducer, useState } from 'react'
+import { useEffect, useId, useReducer, useState } from 'react'
 import {
   MissionRewardType,
   MissionStage,
   MissionType,
   Side
 } from '@prisma/client'
-import { withZod } from '@remix-validated-form/with-zod'
-import { zfd } from 'zod-form-data'
 import { z } from 'zod'
-import type { FieldErrors } from 'remix-validated-form'
-import { validationError, ValidatedForm } from 'remix-validated-form'
+import type { FieldErrors } from '@rvf/react-router'
+import { validationError, parseFormData, useForm } from '@rvf/react-router'
 import TextInput from '~/components/TextInput'
 import ButtonBar from '~/components/ButtonBar'
 import { calculateRewards } from '~/utils/missionRewards'
@@ -28,24 +21,20 @@ import SubmitButton from '~/components/SubmitButton'
 import SelectInput from '~/components/SelectInput'
 import { requireAuth } from '~/utils/requireAuth.server'
 
-const validator = withZod(
-  zfd.formData({
-    win: zfd.text(z.enum([Side.IMPERIAL, Side.REBEL])),
-    crates: zfd.numeric(z.number().int().nonnegative()),
-    placeholders: zfd
-      .repeatable(
-        z.array(
-          z.object({
-            id: zfd.numeric(z.number().int().positive()),
-            name: zfd.text(z.string().min(1)),
-            value: zfd.text(z.string().min(1))
-          })
-        )
-      )
-      .optional(),
-    rewardedRebel: zfd.numeric(z.number().int().positive()).optional()
-  })
-)
+const schema = z.object({
+  win: z.enum([Side.IMPERIAL, Side.REBEL]),
+  crates: z.coerce.number().int().nonnegative(),
+  placeholders: z
+    .array(
+      z.object({
+        id: z.coerce.number().int().positive(),
+        name: z.string().min(1),
+        value: z.string().min(1)
+      })
+    )
+    .optional(),
+  rewardedRebel: z.coerce.number().int().positive().optional()
+})
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const mission = await prisma.gameMission.findUnique({
@@ -149,7 +138,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     return redirect(`/games/${params.game}`)
   }
 
-  return json(mission)
+  return mission
 }
 
 export const action = async (args: ActionFunctionArgs) => {
@@ -157,7 +146,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
   const { params, request } = args
 
-  const { data, error } = await validator.validate(await request.formData())
+  const { data, error } = await parseFormData(await request.formData(), schema)
 
   if (error) {
     return validationError(error)
@@ -753,18 +742,26 @@ const Resolve = () => {
     !!data.missionSlot?.index &&
     data.missionSlot.index === data.game.campaign.missionSlots[0].index
 
+  const formId = useId()
+  const form = useForm({
+    id: formId,
+    schema,
+    method: 'POST',
+    defaultValues: {
+      crates: 0,
+      win: Side.REBEL
+    }
+  })
+
   return (
     <>
       <h2 className="m-0">
         Resolving <em>{data.mission.name}</em>
       </h2>
       <div className="flex w-full flex-wrap max-w-full">
-        <ValidatedForm
-          validator={validator}
-          method="POST"
-          className="flex-1 whitespace-nowrap"
-        >
+        <form {...form.getFormProps()} className="flex-1 whitespace-nowrap">
           <ButtonBar
+            formApi={form}
             name="win"
             label="Winner"
             required
@@ -782,6 +779,7 @@ const Resolve = () => {
           />
           {!isFinale && (
             <TextInput
+              formApi={form}
               name="crates"
               label="Crates Collected"
               type="number"
@@ -801,6 +799,7 @@ const Resolve = () => {
             <>
               {rewards.rebelReward && !data.mission.hero && (
                 <SelectInput
+                  formApi={form}
                   name="rewardedRebel"
                   label={
                     <>
@@ -824,6 +823,7 @@ const Resolve = () => {
               )}
               {placeholders.map((placeholder, i) => (
                 <PlaceholderInput
+                  formApi={form}
                   key={placeholder.id}
                   index={i}
                   placeholder={placeholder}
@@ -838,8 +838,8 @@ const Resolve = () => {
               ))}
             </>
           )}
-          <SubmitButton>Resolve Mission</SubmitButton>
-        </ValidatedForm>
+          <SubmitButton formApi={form}>Resolve Mission</SubmitButton>
+        </form>
         <div className="flex flex-col gap-2 flex-1 whitespace-nowrap">
           {!!winner &&
             (isFinale ? (

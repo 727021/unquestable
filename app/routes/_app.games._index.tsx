@@ -1,5 +1,5 @@
-import { json, type LoaderFunctionArgs } from '@vercel/remix'
-import { Link, useLoaderData } from '@remix-run/react'
+import type { LoaderFunctionArgs } from 'react-router'
+import { Link, useLoaderData } from 'react-router'
 import { prisma } from '~/services/db.server'
 import { requireAuth } from '~/utils/requireAuth.server'
 
@@ -23,7 +23,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
     }
   })
 
-  return json({ games })
+  return { games }
 }
 
 const Games = () => {
@@ -42,7 +42,7 @@ const Games = () => {
               <Link
                 key={game.id}
                 to={`/games/${game.id}`}
-                className="card card-compact card-bordered no-underline shadow-md hover:shadow-lg w-64 max-w-full"
+                className="card card-sm card-border no-underline shadow-md hover:shadow-lg w-64 max-w-full"
               >
                 <div className="card-body w-full">
                   <h2 className="card-title m-0">{game.name}</h2>

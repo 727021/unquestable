@@ -1,26 +1,20 @@
 import { MissionStage } from '@prisma/client'
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
-import { json, redirect } from '@vercel/remix'
-import { useLoaderData, useOutletContext } from '@remix-run/react'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
+import { redirect } from 'react-router'
+import { useLoaderData, useOutletContext } from 'react-router'
 import { prisma } from '~/services/db.server'
 import type { LoaderData as GameLoaderData } from './_app.games.$game'
-import { withZod } from '@remix-validated-form/with-zod'
-import { zfd } from 'zod-form-data'
 import { z } from 'zod'
-import { ValidatedForm, validationError } from 'remix-validated-form'
+import { parseFormData, useForm, validationError } from '@rvf/react-router'
 import SubmitButton from '~/components/SubmitButton'
 import BuyClassCard from '~/components/BuyClassCard'
 import BuyAgendaCard from '~/components/BuyAgendaCard'
+import { useId } from 'react'
 
-const validator = withZod(
-  zfd.formData({
-    classCards: zfd.repeatable(z.array(zfd.numeric(z.number().positive()))),
-    agendas: zfd
-      .repeatable(z.array(zfd.numeric(z.number().positive())))
-      .optional()
-      .default([])
-  })
-)
+const schema = z.object({
+  classCards: z.array(z.coerce.number().positive()).optional().default([]),
+  agendas: z.array(z.coerce.number().positive()).optional().default([])
+})
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const forcedMission = await prisma.gameMission.findFirst({
@@ -65,11 +59,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     return redirect(`/games/${params.game}`)
   }
 
-  return json(mission)
+  return mission
 }
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const { data, error } = await validator.validate(await request.formData())
+  const { data, error } = await parseFormData(await request.formData(), schema)
 
   if (error) {
     return validationError(error)
@@ -177,18 +171,28 @@ const BuyStage = () => {
     .flat()
     .filter((a) => !imperialPlayer.agendas.some((o) => o.agendaId === a.id))
 
+  const formId = useId()
+  const form = useForm({
+    submitSource: 'state',
+    id: formId,
+    schema,
+    method: 'POST',
+    defaultValues: {
+      classCards: [],
+      agendas: []
+    }
+  })
+
   return (
     <>
       <h2 className="m-0">
         Imperial Buy for <em>{data.mission.name}</em>
       </h2>
-      <ValidatedForm
-        validator={validator}
-        method="POST"
-        className="flex flex-col gap-3 w-fit"
-      >
+      <form {...form.getFormProps()} className="flex flex-col gap-3 w-fit">
+        {form.renderFormIdInput()}
         <div className="flex flex-wrap gap-3">
           <BuyClassCard
+            formApi={form}
             xp={imperialPlayer.xp}
             cards={imperialPlayer.class.cards}
             label={imperialPlayer.class.name}
@@ -196,14 +200,17 @@ const BuyStage = () => {
             name="classCards"
           />
           <BuyAgendaCard
+            formApi={form}
             influence={imperialPlayer.influence}
             cards={unownedAgendas}
             name="agendas"
             label="Agenda Cards"
           />
         </div>
-        <SubmitButton className="w-fit">Buy</SubmitButton>
-      </ValidatedForm>
+        <SubmitButton formApi={form} className="w-fit">
+          Buy
+        </SubmitButton>
+      </form>
     </>
   )
 }

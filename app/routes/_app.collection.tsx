@@ -1,8 +1,6 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
-import { json } from '@vercel/remix'
-import { useLoaderData } from '@remix-run/react'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
+import { useLoaderData } from 'react-router'
 import { z } from 'zod'
-import { zfd } from 'zod-form-data'
 import CollectionItem from '~/components/CollectionItem'
 import { prisma } from '~/services/db.server'
 import { requireAuth } from '~/utils/requireAuth.server'
@@ -28,12 +26,12 @@ export const loader = async (args: LoaderFunctionArgs) => {
     })
   ).map(({ id }) => id)
 
-  return json({ allExpansions, owned })
+  return { allExpansions, owned }
 }
 
-const addRemoveSchema = zfd.formData({
-  expansionId: zfd.numeric(z.number().int().positive()),
-  action: zfd.text(z.enum(['add', 'remove']))
+const addRemoveSchema = z.object({
+  expansionId: z.coerce.number().int().positive(),
+  action: z.enum(['add', 'remove'])
 })
 
 export const action = async (args: ActionFunctionArgs) => {
@@ -70,9 +68,9 @@ export const action = async (args: ActionFunctionArgs) => {
     }
   })
 
-  return json({
+  return {
     owned: action === 'add'
-  })
+  }
 }
 
 const Collection = () => {

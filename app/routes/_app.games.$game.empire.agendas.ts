@@ -1,10 +1,9 @@
-import { json, redirect } from '@vercel/remix'
-import type { LoaderFunctionArgs, ActionFunctionArgs } from '@vercel/remix'
+import { redirect } from 'react-router'
+import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
-import { withZod } from '@remix-validated-form/with-zod'
-import { zfd } from 'zod-form-data'
 import { z } from 'zod'
 import { requireAuth } from '~/utils/requireAuth.server'
+import { parseFormData } from '@rvf/react-router'
 
 export type ActionData = { success?: number }
 
@@ -12,25 +11,25 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return redirect(`/games/${params.game}/empire`)
 }
 
-export const agendaValidator = withZod(
-  zfd.formData({
-    agendasToAdd: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    agendasToDiscard: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    agendasToRestore: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    agendasToReshuffle: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
+export const agendaSchema = z.object({
+  agendas: z
+    .array(
+      z.object({
+        id: z.coerce.number().int().positive(),
+        discarded: z.preprocess(
+          (val) => val === 'true' || val === true,
+          z.boolean()
+        )
+      })
     )
-  })
-)
+    .default([])
+})
 
 export const action = async (args: ActionFunctionArgs) => {
-  const { data } = await agendaValidator.validate(await args.request.formData())
+  const { data, submittedData, error } = await parseFormData(
+    await args.request.formData(),
+    agendaSchema
+  )
 
   const { userId } = await requireAuth(args)
   const gameId = parseInt(args.params.game!, 10)
@@ -59,7 +58,7 @@ export const action = async (args: ActionFunctionArgs) => {
   })
 
   if (!player || !data) {
-    return json({})
+    return {}
   }
 
   await prisma.imperialPlayer.update({
@@ -68,64 +67,31 @@ export const action = async (args: ActionFunctionArgs) => {
     },
     data: {
       agendas: {
-        create: [
-          ...data.agendasToAdd.map((agendaId) => ({
-            agenda: {
-              connect: {
-                id: agendaId
-              }
-            }
-          })),
-          ...data.agendasToDiscard
-            .filter(
-              (agendaId) =>
-                !player.agendas.some((a) => a.agenda.id === agendaId)
-            )
-            .map((agendaId) => ({
-              agenda: {
-                connect: {
-                  id: agendaId
-                }
-              },
-              discarded: true
-            }))
-        ],
-        update: [
-          ...data.agendasToDiscard
-            .filter((agendaId) =>
-              player.agendas.some((a) => a.agenda.id === agendaId)
-            )
-            .map((agendaId) => ({
-              where: {
-                imperialId_agendaId: {
-                  imperialId: player.id,
-                  agendaId
-                }
-              },
-              data: {
-                discarded: true
-              }
-            })),
-          ...data.agendasToRestore.map((agendaId) => ({
-            where: {
-              imperialId_agendaId: {
-                imperialId: player.id,
-                agendaId
-              }
-            },
-            data: {
-              discarded: false
-            }
-          }))
-        ],
         deleteMany: {
           agendaId: {
-            in: data.agendasToReshuffle
+            in: player.agendas
+              .map((a) => a.agenda.id)
+              .filter((id) => !data.agendas.some((a) => a.id === id))
           }
-        }
+        },
+        upsert: data.agendas.map((agenda) => ({
+          create: {
+            agendaId: agenda.id,
+            discarded: agenda.discarded
+          },
+          update: {
+            discarded: agenda.discarded
+          },
+          where: {
+            imperialId_agendaId: {
+              agendaId: agenda.id,
+              imperialId: player.id
+            }
+          }
+        }))
       }
     }
   })
 
-  return json<ActionData>({ success: Date.now() })
+  return { success: Date.now() } satisfies ActionData
 }

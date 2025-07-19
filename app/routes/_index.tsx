@@ -1,7 +1,7 @@
-import type { LoaderFunction, MetaFunction } from '@vercel/remix'
-import { Link, redirect } from '@remix-run/react'
+import type { LoaderFunction, MetaFunction } from 'react-router'
+import { Link, redirect } from 'react-router'
 import AppNav from '~/components/AppNav'
-import { getAuth } from '@clerk/remix/ssr.server'
+import { getAuth } from '@clerk/react-router/ssr.server'
 
 export const meta: MetaFunction = () => {
   return [{ title: 'Unquestable' }]

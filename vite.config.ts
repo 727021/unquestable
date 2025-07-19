@@ -1,12 +1,10 @@
-import { vitePlugin as remix } from '@remix-run/dev'
-import { installGlobals } from '@remix-run/node'
+import { reactRouter } from '@react-router/dev/vite'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
-import { vercelPreset } from '@vercel/remix/vite'
+import devtoolsJson from 'vite-plugin-devtools-json'
+import tailwindcss from '@tailwindcss/vite'
 import { createRequire } from 'node:module'
 import path from 'node:path'
-
-installGlobals()
 
 const { resolve } = createRequire(import.meta.url)
 const prismaClient = `prisma${path.sep}client`
@@ -18,13 +16,7 @@ export default defineConfig({
   server: {
     port: 3000
   },
-  plugins: [
-    remix({
-      presets: [vercelPreset()],
-      ignoredRouteFiles: ['**/.*']
-    }),
-    tsconfigPaths()
-  ],
+  plugins: [reactRouter(), tsconfigPaths(), devtoolsJson(), tailwindcss()],
   resolve: {
     alias: {
       '.prisma/client/index-browser': path.relative(

@@ -1,8 +1,7 @@
-import { json, redirect } from '@vercel/remix'
-import type { ActionFunctionArgs, LoaderFunctionArgs } from '@vercel/remix'
-import { withZod } from '@remix-validated-form/with-zod'
+import { parseFormData } from '@rvf/react-router'
+import { redirect } from 'react-router'
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { z } from 'zod'
-import { zfd } from 'zod-form-data'
 import { prisma } from '~/services/db.server'
 import { requireAuth } from '~/utils/requireAuth.server'
 
@@ -12,20 +11,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return redirect(`/games/${params.game}/empire`)
 }
 
-export const villainValidator = withZod(
-  zfd.formData({
-    villainsToAdd: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    ),
-    villainsToRemove: zfd.repeatable(
-      z.array(zfd.numeric(z.number().int().positive()))
-    )
-  })
-)
+export const villainSchema = z.object({
+  villains: z.array(z.coerce.number().int().positive()).default([])
+})
 
 export const action = async (args: ActionFunctionArgs) => {
-  const { data } = await villainValidator.validate(
-    await args.request.formData()
+  const { data } = await parseFormData(
+    await args.request.formData(),
+    villainSchema
   )
 
   const { userId } = await requireAuth(args)
@@ -44,18 +37,17 @@ export const action = async (args: ActionFunctionArgs) => {
   })
 
   if (!player || !data) {
-    return json({})
+    return {}
   }
 
   await prisma.imperialPlayer.update({
     where: { id: player.id },
     data: {
       villains: {
-        connect: data.villainsToAdd.map((id) => ({ id })),
-        disconnect: data.villainsToRemove.map((id) => ({ id }))
+        set: data.villains.map((id) => ({ id }))
       }
     }
   })
 
-  return json<ActionData>({ success: Date.now() })
+  return { success: Date.now() } satisfies ActionData
 }

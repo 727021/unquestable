@@ -1,4 +1,4 @@
-import { UserProfile } from '@clerk/remix'
+import { UserProfile } from '@clerk/react-router'
 
 export default function Page() {
   return (

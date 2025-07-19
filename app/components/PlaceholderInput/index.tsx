@@ -1,9 +1,9 @@
-import { useField } from 'remix-validated-form'
+import type { FormApi } from '@rvf/react-router'
 import RequiredIndicator from '~/components/RequiredIndicator'
 import clsx from 'clsx'
 import { useState, type ChangeEventHandler, type ElementRef } from 'react'
 import type { loader as resolveLoader } from '~/routes/_app.games.$game.resolve.$mission._index'
-import type { useLoaderData } from '@remix-run/react'
+import type { useLoaderData } from 'react-router'
 import type { JsonObject } from '@prisma/client/runtime/library'
 
 type Placeholder = ReturnType<
@@ -14,16 +14,20 @@ type Props = {
   index: number
   placeholder: Placeholder
   onChange?: ChangeEventHandler<ElementRef<'input'>>
+  formApi: FormApi<any>
 }
 
-const PlaceholderInput = ({ index, placeholder, onChange }: Props) => {
-  const { getInputProps, error } = useField(`placeholders[${index}].value`)
+const PlaceholderInput = ({ index, placeholder, onChange, formApi }: Props) => {
+  const name = `placeholders[${index}].value`
+
+  const error = formApi.error(name)
+
   const [value, setValue] = useState(false)
 
   if (placeholder.type === 'boolean') {
     return (
-      <label className="form-control max-w-full w-96">
-        <div className="label justify-start gap-1">
+      <fieldset className="fieldset max-w-full w-96">
+        <label className="label justify-start gap-1">
           <input
             className={clsx('checkbox', error && 'checkbox-error')}
             type="checkbox"
@@ -33,13 +37,13 @@ const PlaceholderInput = ({ index, placeholder, onChange }: Props) => {
               onChange?.(e)
             }}
           />
-          <span className="label-text">
+          <span className="text-base-content">
             <RequiredIndicator />
             {placeholder.label}
           </span>
-        </div>
+        </label>
         <input
-          {...getInputProps({
+          {...formApi.getInputProps(name, {
             type: 'hidden',
             value: value ? 'true' : 'false'
           })}
@@ -54,21 +58,21 @@ const PlaceholderInput = ({ index, placeholder, onChange }: Props) => {
           name={`placeholders[${index}].name`}
           value={placeholder.name}
         />
-      </label>
+      </fieldset>
     )
   }
 
   return (
-    <label className="form-control max-w-full w-96">
-      <div className="label">
-        <span className="label-text">
+    <fieldset className="fieldset max-w-full w-96">
+      <label className="label">
+        <span className="text-base-content">
           <RequiredIndicator />
           {placeholder.label}
         </span>
-      </div>
+      </label>
       <input
-        className={clsx('input input-bordered w-full', error && 'input-error')}
-        {...getInputProps({
+        className={clsx('input w-full', error && 'input-error')}
+        {...formApi.getInputProps(name, {
           onChange,
           type: placeholder.type,
           ...((placeholder.validation as JsonObject) ?? {})
@@ -84,10 +88,10 @@ const PlaceholderInput = ({ index, placeholder, onChange }: Props) => {
         name={`placeholders[${index}].name`}
         value={placeholder.name}
       />
-      <div className="label">
+      <label className="label">
         {error && <span className="label-text-alt text-error">{error}</span>}
-      </div>
-    </label>
+      </label>
+    </fieldset>
   )
 }
 

@@ -1,46 +1,54 @@
 import clsx from 'clsx'
-import type { ChangeEvent, PropsWithChildren } from 'react'
-import { useState } from 'react'
-import { useField } from 'remix-validated-form'
+import { useId, type ChangeEvent, type PropsWithChildren } from 'react'
+import type { FormApi } from '@rvf/react-router'
 import RequiredIndicator from '../RequiredIndicator'
 
-const GrayMissionsInput = ({ children }: PropsWithChildren) => {
-  const { getInputProps, error, clearError } = useField('grayMissions')
+type Props = PropsWithChildren<{
+  formApi: FormApi<any>
+}>
 
-  const [random, setRandom] = useState(true)
+const GrayMissionsInput = ({ children, formApi }: Props) => {
+  const name = 'grayMissions'
+  const field = formApi.field(name)
+  const error = field.error()
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setRandom(e.target.checked)
-    clearError()
+    field.setValue(e.target.checked ? 'RANDOM' : [])
+    field.clearError()
   }
 
+  const id = useId()
+
   return (
-    <label className="form-control w-full max-w-xs">
-      <div className="label">
-        <span className="label-text">
+    <div className="fieldset max-w-full w-96">
+      <label
+        className="label flex justify-between"
+        htmlFor={`${id}-grayMissions`}
+      >
+        <span className="text-base-content">
           <RequiredIndicator />
           Gray Side Missions
         </span>
-        <span className="label-text-alt">
-          <div className="form-control">
-            <label className="label cursor-pointer p-0 gap-1">
-              <span className="label-text">Random?</span>
-              <input
-                type="checkbox"
-                className="checkbox checkbox-sm"
-                checked={random}
-                onChange={onChange}
-              />
-            </label>
-          </div>
-        </span>
-      </div>
+        <label
+          className="label cursor-pointer p-0 gap-1"
+          htmlFor={`${id}-random`}
+        >
+          <span className="text-base-content">Random?</span>
+          <input
+            type="checkbox"
+            className="checkbox checkbox-sm"
+            checked={field.value() === 'RANDOM'}
+            onChange={onChange}
+            id={`${id}-random`}
+          />
+        </label>
+      </label>
       <select
-        className={clsx('select select-bordered', error && 'select-error')}
-        {...getInputProps({
-          id: 'grayMissions',
+        className={clsx('select w-full', error && 'select-error')}
+        {...formApi.getInputProps(name, {
+          id: `${id}-grayMissions`,
           multiple: true,
-          disabled: random
+          disabled: field.value() === 'RANDOM'
         })}
       >
         {children}
@@ -52,8 +60,8 @@ const GrayMissionsInput = ({ children }: PropsWithChildren) => {
           </>
         )}
       </div>
-      {random && <input type="hidden" value="RANDOM" {...getInputProps()} />}
-    </label>
+      {field.value() === 'RANDOM' && <input {...field.getHiddenInputProps()} />}
+    </div>
   )
 }
 
