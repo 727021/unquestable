@@ -11,7 +11,6 @@ import { rootAuthLoader } from '@clerk/react-router/ssr.server'
 import stylesheet from '~/tailwind.css?url'
 import { useTheme } from './context/theme-context'
 import { ClerkProvider } from '@clerk/react-router'
-import { Analytics } from '@vercel/analytics/react'
 
 export const loader: LoaderFunction = (args) => rootAuthLoader(args)
 
@@ -34,7 +33,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <ScrollRestoration />
         <Scripts />
-        <Analytics />
       </body>
     </html>
   )
