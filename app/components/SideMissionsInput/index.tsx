@@ -1,9 +1,9 @@
-import {
-  type ChangeEvent,
-  type ElementRef,
-  type ComponentProps,
-  type PropsWithChildren,
-  useId
+import { useId } from 'react'
+import type {
+  ChangeEvent,
+  ComponentRef,
+  ComponentProps,
+  PropsWithChildren
 } from 'react'
 import RequiredIndicator from '../RequiredIndicator'
 import type { FormApi } from '@rvf/react-router'
@@ -22,7 +22,7 @@ const SideMissionsInput = ({ name, count = 1, children, formApi }: Props) => {
   const error = field.error()
   const random = field.value() === 'RANDOM'
 
-  const onChange = (e: ChangeEvent<ElementRef<'input'>>) => {
+  const onChange = (e: ChangeEvent<ComponentRef<'input'>>) => {
     field.setValue(e.target.checked ? 'RANDOM' : [])
     field.clearError()
   }

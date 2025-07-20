@@ -70,7 +70,10 @@ const BuyItemCard = ({
   const balance =
     credits -
     boughtItems.reduce((acc, cur) => acc + cur.cost, 0) +
-    soldItems.reduce((acc, cur) => acc + (cur.cost ? getSellPrice(cur.cost) : 50), 0)
+    soldItems.reduce(
+      (acc, cur) => acc + (cur.cost ? getSellPrice(cur.cost) : 50),
+      0
+    )
 
   return (
     <div className="flex flex-col">

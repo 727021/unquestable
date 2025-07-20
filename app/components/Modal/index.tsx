@@ -1,22 +1,21 @@
 import clsx from 'clsx'
-import {
-  useRef,
-  type ElementRef,
-  type HTMLProps,
-  type PropsWithChildren,
-  type ReactEventHandler,
-  useEffect
+import type {
+  PropsWithChildren,
+  HTMLProps,
+  ComponentRef,
+  ReactEventHandler
 } from 'react'
+import { useRef, useEffect } from 'react'
 
 type Props = PropsWithChildren<
   {
     open?: boolean
-    onClose?: ReactEventHandler<ElementRef<'dialog'>>
-  } & HTMLProps<ElementRef<'dialog'>>
+    onClose?: ReactEventHandler<ComponentRef<'dialog'>>
+  } & HTMLProps<ComponentRef<'dialog'>>
 >
 
 const Modal = ({ children, open, onClose, ...props }: Props) => {
-  const ref = useRef<ElementRef<'dialog'>>(null)
+  const ref = useRef<ComponentRef<'dialog'>>(null)
 
   useEffect(() => {
     if (open) {

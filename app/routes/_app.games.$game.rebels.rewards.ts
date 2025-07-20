@@ -13,7 +13,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 export const rewardSchema = z.object({
   id: z.coerce.number().int().positive(),
-  rewards: z.array(z.coerce.number().int().positive()).default([]),
+  rewards: z.array(z.coerce.number().int().positive()).default([])
 })
 
 export const action = async (args: ActionFunctionArgs) => {
