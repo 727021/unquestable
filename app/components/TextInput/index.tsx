@@ -49,9 +49,12 @@ const TextInput = forwardRef(
           type === 'number' && 'sm:w-fit'
         )}
       >
-        <label className={clsx('label text-base-content', inline && 'py-0')} htmlFor={id}>
-            {required && <RequiredIndicator />}
-            {label}
+        <label
+          className={clsx('label text-base-content', inline && 'py-0')}
+          htmlFor={id}
+        >
+          {required && <RequiredIndicator />}
+          {label}
         </label>
         <input
           className={clsx(

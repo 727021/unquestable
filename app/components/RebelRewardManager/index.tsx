@@ -157,11 +157,9 @@ const RebelRewardManager = ({ rebel, allRewards, formAction }: Props) => {
             </button>
           </div>
           <input {...form.getHiddenInputProps('id')} />
-          {form
-            .value('rewards')
-            ?.map((_, i) => (
-              <input {...form.getHiddenInputProps(`rewards[${i}]`)} />
-            ))}
+          {form.value('rewards')?.map((_, i) => (
+            <input {...form.getHiddenInputProps(`rewards[${i}]`)} />
+          ))}
         </form>
       ) : !rebel.rewards.length ? (
         <p className="m-0">No Rewards</p>

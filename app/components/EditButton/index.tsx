@@ -1,9 +1,9 @@
-import type { ElementRef, MouseEventHandler } from 'react'
+import type { ComponentRef, MouseEventHandler } from 'react'
 import clsx from 'clsx'
 import { PencilIcon, XMarkIcon } from '@heroicons/react/24/solid'
 
 type EditButtonProps = {
-  onClick: MouseEventHandler<ElementRef<'button'>>
+  onClick: MouseEventHandler<ComponentRef<'button'>>
   active: boolean
   hideLabel?: boolean
   disabled?: boolean

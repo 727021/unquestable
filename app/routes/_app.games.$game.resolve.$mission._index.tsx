@@ -2,7 +2,7 @@ import { redirect, useLoaderData, useOutletContext } from 'react-router'
 import type { LoaderData } from './_app.games.$game'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
 import { prisma } from '~/services/db.server'
-import type { ChangeEvent, ElementRef } from 'react'
+import type { ChangeEvent, ComponentRef } from 'react'
 import { useEffect, useId, useReducer, useState } from 'react'
 import {
   MissionRewardType,
@@ -698,7 +698,7 @@ const Resolve = () => {
       action: {
         name: string
         type: string
-        event: ChangeEvent<ElementRef<'input'>>
+        event: ChangeEvent<ComponentRef<'input'>>
       }
     ) => ({
       ...state,

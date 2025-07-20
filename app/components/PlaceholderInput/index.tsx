@@ -1,7 +1,8 @@
 import type { FormApi } from '@rvf/react-router'
 import RequiredIndicator from '~/components/RequiredIndicator'
 import clsx from 'clsx'
-import { useState, type ChangeEventHandler, type ElementRef } from 'react'
+import { useState } from 'react'
+import type { ChangeEventHandler, ComponentRef } from 'react'
 import type { loader as resolveLoader } from '~/routes/_app.games.$game.resolve.$mission._index'
 import type { useLoaderData } from 'react-router'
 import type { JsonObject } from '@prisma/client/runtime/library'
@@ -13,7 +14,7 @@ type Placeholder = ReturnType<
 type Props = {
   index: number
   placeholder: Placeholder
-  onChange?: ChangeEventHandler<ElementRef<'input'>>
+  onChange?: ChangeEventHandler<ComponentRef<'input'>>
   formApi: FormApi<any>
 }
 

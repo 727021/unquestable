@@ -125,8 +125,8 @@ const Game = () => {
     schema,
     method: 'POST',
     defaultValues: {
-      slot: -1,
-      mission: -1
+      slot: -1 as number,
+      mission: -1 as number
     }
   })
 
@@ -401,12 +401,18 @@ const Game = () => {
               </tbody>
             </table>
           </Link>
-          <div className="flex flex-col px-2">
+          <div className="flex flex-col px-2 h-full">
             <Link
               to={`/games/${params.game}/missions`}
               className="no-underline hover:underline"
             >
               Side Mission Deck
+            </Link>
+            <Link
+              to={`/games/${params.game}/settings`}
+              className="no-underline hover:underline"
+            >
+              Settings
             </Link>
           </div>
         </div>

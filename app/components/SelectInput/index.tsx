@@ -53,10 +53,7 @@ const SelectInput = forwardRef(
           <span>{labelRight}</span>
         </label>
         <select
-          className={clsx(
-            'select w-full',
-            error && 'select-error'
-          )}
+          className={clsx('select w-full', error && 'select-error')}
           {...formApi.getInputProps(name, {
             id: name,
             value,

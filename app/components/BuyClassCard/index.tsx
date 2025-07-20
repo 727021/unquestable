@@ -51,32 +51,35 @@ const BuyClassCard = ({ cards, xp, name, label, owned, formApi }: Props) => {
       ))}
       <div className="divider m-0"></div>
       {buyable.map((card) => {
-        const disabled = !field.value().some((v: string) => +v === card.id) && card.cost > balance
+        const disabled =
+          !field.value().some((v: string) => +v === card.id) &&
+          card.cost > balance
         return (
-        <label
-          className={clsx(
-            // card.tagline && 'tooltip before:whitespace-break-spaces',
-            'label gap-1 flex py-1',
-            disabled ? 'cursor-not-allowed!' : 'cursor-pointer'
-          )}
-          key={card.id}
-          data-tip={card.tagline}
-        >
-          <input
-            {...field.getInputProps({
-              type: 'checkbox',
-              className:
-                'checkbox checkbox-sm checkbox-primary border-neutral hover:border-neutral',
-              value: card.id,
-              disabled
-            })}
-            data-cost={card.cost}
-          />
-          <span className={clsx(!disabled && 'text-base-content')}>
-            {card.cost} XP - {card.name}
-          </span>
-        </label>
-      )})}
+          <label
+            className={clsx(
+              // card.tagline && 'tooltip before:whitespace-break-spaces',
+              'label gap-1 flex py-1',
+              disabled ? 'cursor-not-allowed!' : 'cursor-pointer'
+            )}
+            key={card.id}
+            data-tip={card.tagline}
+          >
+            <input
+              {...field.getInputProps({
+                type: 'checkbox',
+                className:
+                  'checkbox checkbox-sm checkbox-primary border-neutral hover:border-neutral',
+                value: card.id,
+                disabled
+              })}
+              data-cost={card.cost}
+            />
+            <span className={clsx(!disabled && 'text-base-content')}>
+              {card.cost} XP - {card.name}
+            </span>
+          </label>
+        )
+      })}
       <div className="label">
         {error && <span className="text-error">{error}</span>}
       </div>

@@ -741,8 +741,9 @@ const NewGame = () => {
               label="Imperial Class"
               required
               hintRight={
-                imperialClasses.find((c) => c.id === +form.value('imperialClass'))?.cards?.[0]
-                  ?.name
+                imperialClasses.find(
+                  (c) => c.id === +form.value('imperialClass')
+                )?.cards?.[0]?.name
               }
             >
               <option value={-1}>Choose a Class</option>
