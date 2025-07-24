@@ -100,7 +100,7 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
           {form.renderFormIdInput()}
           <fieldset className="fieldset items-start w-fit py-2 self-start">
             {rebel.hero.class?.cards.map((card) => (
-              <label key={card.id} className="label gap-2 flex py-1">
+              <label key={card.id} className="label gap-2 flex py-0.5">
                 <input
                   type="checkbox"
                   className="checkbox checkbox-sm checkbox-primary"
@@ -125,7 +125,7 @@ const RebelClassManager = ({ rebel, formAction }: Props) => {
           {rebel.hero.class?.cards.map((card) => (
             <label
               key={card.id}
-              className="label cursor-default! gap-2 flex py-1"
+              className="label cursor-default! gap-2 flex py-0.5 text-base-content"
             >
               <input
                 type="checkbox"
