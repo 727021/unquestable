@@ -36,19 +36,21 @@ const ImperialRewardManager = ({
     fetcher,
     action: formAction,
     defaultValues: {
-      rewards: imperialPlayer.rewards.map((r) => r.id)
+      rewards: imperialPlayer.rewards.map((r) => r.id).toSorted((a, b) => a - b)
     }
   })
 
   const cancel = () => {
     setEditing(false)
     form.resetForm({ rewards: imperialPlayer.rewards.map((r) => r.id) })
+    setReward(-1)
   }
 
   const toggle = () => {
     setEditing((prev) => !prev)
     if (!editing) {
       form.resetForm({ rewards: imperialPlayer.rewards.map((r) => r.id) })
+      setReward(-1)
     }
   }
 
@@ -63,7 +65,10 @@ const ImperialRewardManager = ({
       } else {
         available.push(reward)
       }
-      return [available, owned]
+      return [
+        available.toSorted((a, b) => a.name.localeCompare(b.name)),
+        owned.toSorted((a, b) => a.name.localeCompare(b.name))
+      ]
     },
     [[], []]
   )
@@ -92,21 +97,34 @@ const ImperialRewardManager = ({
   }, [fetcher?.state])
 
   return (
-    <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded-xs">
+    <div className="flex flex-col flex-1 px-2 py-1 gap-1 border border-gray-400 rounded-xs">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">Rewards</h2>
-        <EditButton
-          active={editing}
-          onClick={() => toggle()}
-          disabled={
-            fetcher?.state === 'loading' || fetcher?.state === 'submitting'
-          }
-        />
+        <div className="flex gap-2">
+          {editing && (
+            <SubmitButton
+              className="btn btn-sm btn-primary btn-outline"
+              formApi={form}
+              fetcher={fetcher}
+              disabled={fetcher.state === 'loading' || fetcher.state === 'submitting'}
+            >
+              Save
+            </SubmitButton>
+          )}
+          <EditButton
+            active={editing}
+            onClick={() => toggle()}
+            disabled={
+              fetcher.state === 'loading' || fetcher.state === 'submitting'
+            }
+            hideLabel
+          />
+        </div>
       </div>
       {editing ? (
         <form {...form.getFormProps()} className="flex flex-1 flex-col gap-2">
           {form.renderFormIdInput()}
-          <div className="flex flex-col items-start w-fit py-2">
+          <div className="flex flex-col items-start w-fit">
             {ownedRewards.length === 0 ? (
               <p className="m-0">No Rewards</p>
             ) : (
@@ -125,14 +143,14 @@ const ImperialRewardManager = ({
               ))
             )}
           </div>
-          <div className="flex justify-between items-end flex-1">
+          {/* <div className="flex justify-between items-end flex-1"> */}
             <div className="join">
               <select
                 className="join-item select"
                 value={reward}
                 onChange={(e) => setReward(parseInt(e.target.value, 10))}
               >
-                <option value={-1} disabled>
+                <option value={-1}>
                   Choose a Reward
                 </option>
                 {availableRewards.map((reward) => (
@@ -150,23 +168,16 @@ const ImperialRewardManager = ({
                 <PlusIcon className="w-5 h-5" />
               </button>
             </div>
-            <SubmitButton
-              className="btn btn-primary btn-outline"
-              fetcher={fetcher}
-              formApi={form}
-            >
-              Save
-            </SubmitButton>
             {form.value('rewards')?.map((_, i) => (
               <input {...form.getHiddenInputProps(`rewards[${i}]`)} />
             ))}
-          </div>
+          {/* </div> */}
         </form>
-      ) : !imperialPlayer.rewards.length ? (
-        <p className="m-0 py-2">No Rewards</p>
+      ) : !ownedRewards.length ? (
+        <p className="m-0">No Rewards</p>
       ) : (
-        <div className="flex flex-col items-start w-fit py-2">
-          {imperialPlayer.rewards.map((reward) => (
+        <div className="flex flex-col items-start w-fit">
+          {ownedRewards.map((reward) => (
             <p className="m-0" key={reward.id}>
               {reward.name}
             </p>
