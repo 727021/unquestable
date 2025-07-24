@@ -145,7 +145,6 @@ const ImperialRewardManager = ({
               ))
             )}
           </div>
-          {/* <div className="flex justify-between items-end flex-1"> */}
           <div className="join">
             <select
               className="join-item select"
@@ -171,7 +170,6 @@ const ImperialRewardManager = ({
           {form.value('rewards')?.map((_, i) => (
             <input {...form.getHiddenInputProps(`rewards[${i}]`)} />
           ))}
-          {/* </div> */}
         </form>
       ) : !ownedRewards.length ? (
         <p className="m-0">No Rewards</p>
