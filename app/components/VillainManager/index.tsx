@@ -40,12 +40,14 @@ const VillainManager = ({ imperialPlayer, allVillains, formAction }: Props) => {
   const cancel = () => {
     setEditing(false)
     form.resetForm({ villains: imperialPlayer.villains.map((v) => v.id) })
+    setVillain(-1)
   }
 
   const toggle = () => {
     setEditing((prev) => !prev)
     if (!editing) {
       form.resetForm({ villains: imperialPlayer.villains.map((v) => v.id) })
+      setVillain(-1)
     }
   }
 
@@ -87,21 +89,34 @@ const VillainManager = ({ imperialPlayer, allVillains, formAction }: Props) => {
   }, [fetcher?.state])
 
   return (
-    <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded-xs">
+    <div className="flex flex-col flex-1 px-2 py-1 gap-1 border border-gray-400 rounded-xs">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">Villains</h2>
-        <EditButton
-          active={editing}
-          onClick={() => toggle()}
-          disabled={
-            fetcher?.state === 'loading' || fetcher?.state === 'submitting'
-          }
-        />
+        <div className="flex gap-2">
+          {editing && (
+            <SubmitButton
+              className="btn btn-sm btn-primary btn-outline"
+              formApi={form}
+              fetcher={fetcher}
+              disabled={fetcher.state === 'loading' || fetcher.state === 'submitting'}
+            >
+              Save
+            </SubmitButton>
+          )}
+          <EditButton
+            active={editing}
+            onClick={() => toggle()}
+            disabled={
+              fetcher?.state === 'loading' || fetcher?.state === 'submitting'
+            }
+            hideLabel
+          />
+        </div>
       </div>
       {editing ? (
         <form {...form.getFormProps()} className="flex flex-1 flex-col gap-2">
           {form.renderFormIdInput()}
-          <div className="flex flex-col items-start w-fit py-2">
+          <div className="flex flex-col items-start w-fit">
             {ownedVillains.length === 0 ? (
               <p className="m-0">No Villains</p>
             ) : (
@@ -122,49 +137,40 @@ const VillainManager = ({ imperialPlayer, allVillains, formAction }: Props) => {
               ))
             )}
           </div>
-          <div className="flex justify-between items-end flex-1">
-            <div className="join">
-              <select
-                className="join-item select"
-                value={villain}
-                onChange={(e) => setVillain(parseInt(e.target.value, 10))}
-              >
-                <option value="-1" disabled>
-                  Choose a Villain
-                </option>
-                {availableVillains.map((villain) => (
-                  <option key={villain.id} value={villain.id}>
-                    {villain.unique && '* '}
-                    {villain.name}
-                    {villain.elite && ' (Elite)'}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="join-item btn btn-outline border-l-2"
-                type="button"
-                onClick={() => add()}
-                disabled={villain === -1}
-              >
-                <PlusIcon className="h-5 w-5" />
-              </button>
-            </div>
-            <SubmitButton
-              className="btn btn-primary btn-outline"
-              fetcher={fetcher}
-              formApi={form}
+          <div className="join">
+            <select
+              className="join-item select"
+              value={villain}
+              onChange={(e) => setVillain(parseInt(e.target.value, 10))}
             >
-              Save
-            </SubmitButton>
-            {form.value('villains')?.map((_, i) => (
-              <input {...form.getHiddenInputProps(`villains[${i}]`)} />
-            ))}
+              <option value="-1" disabled>
+                Choose a Villain
+              </option>
+              {availableVillains.map((villain) => (
+                <option key={villain.id} value={villain.id}>
+                  {villain.unique && '* '}
+                  {villain.name}
+                  {villain.elite && ' (Elite)'}
+                </option>
+              ))}
+            </select>
+            <button
+              className="join-item btn btn-outline border-l-2"
+              type="button"
+              onClick={() => add()}
+              disabled={villain === -1}
+            >
+              <PlusIcon className="h-5 w-5" />
+            </button>
           </div>
+          {form.value('villains')?.map((_, i) => (
+            <input {...form.getHiddenInputProps(`villains[${i}]`)} />
+          ))}
         </form>
       ) : !imperialPlayer.villains.length ? (
-        <p className="m-0 py-2">No Villains</p>
+        <p className="m-0">No Villains</p>
       ) : (
-        <div className="flex flex-col items-start w-fit py-2">
+        <div className="flex flex-col items-start w-fit">
           {imperialPlayer.villains.map((villain) => (
             <p
               key={villain.id}
