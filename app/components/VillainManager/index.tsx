@@ -98,7 +98,9 @@ const VillainManager = ({ imperialPlayer, allVillains, formAction }: Props) => {
               className="btn btn-sm btn-primary btn-outline"
               formApi={form}
               fetcher={fetcher}
-              disabled={fetcher.state === 'loading' || fetcher.state === 'submitting'}
+              disabled={
+                fetcher.state === 'loading' || fetcher.state === 'submitting'
+              }
             >
               Save
             </SubmitButton>

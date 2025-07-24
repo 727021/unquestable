@@ -106,7 +106,9 @@ const ImperialRewardManager = ({
               className="btn btn-sm btn-primary btn-outline"
               formApi={form}
               fetcher={fetcher}
-              disabled={fetcher.state === 'loading' || fetcher.state === 'submitting'}
+              disabled={
+                fetcher.state === 'loading' || fetcher.state === 'submitting'
+              }
             >
               Save
             </SubmitButton>
@@ -144,33 +146,31 @@ const ImperialRewardManager = ({
             )}
           </div>
           {/* <div className="flex justify-between items-end flex-1"> */}
-            <div className="join">
-              <select
-                className="join-item select"
-                value={reward}
-                onChange={(e) => setReward(parseInt(e.target.value, 10))}
-              >
-                <option value={-1}>
-                  Choose a Reward
+          <div className="join">
+            <select
+              className="join-item select"
+              value={reward}
+              onChange={(e) => setReward(parseInt(e.target.value, 10))}
+            >
+              <option value={-1}>Choose a Reward</option>
+              {availableRewards.map((reward) => (
+                <option key={reward.id} value={reward.id}>
+                  {reward.name}
                 </option>
-                {availableRewards.map((reward) => (
-                  <option key={reward.id} value={reward.id}>
-                    {reward.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="join-item btn btn-outline border-l-2"
-                type="button"
-                onClick={() => add()}
-                disabled={reward === -1}
-              >
-                <PlusIcon className="w-5 h-5" />
-              </button>
-            </div>
-            {form.value('rewards')?.map((_, i) => (
-              <input {...form.getHiddenInputProps(`rewards[${i}]`)} />
-            ))}
+              ))}
+            </select>
+            <button
+              className="join-item btn btn-outline border-l-2"
+              type="button"
+              onClick={() => add()}
+              disabled={reward === -1}
+            >
+              <PlusIcon className="w-5 h-5" />
+            </button>
+          </div>
+          {form.value('rewards')?.map((_, i) => (
+            <input {...form.getHiddenInputProps(`rewards[${i}]`)} />
+          ))}
           {/* </div> */}
         </form>
       ) : !ownedRewards.length ? (
