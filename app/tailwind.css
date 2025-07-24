@@ -47,4 +47,8 @@
   .select.disabled {
     pointer-events: none;
   }
+
+  .fieldset {
+    padding-block: 0;
+  }
 }

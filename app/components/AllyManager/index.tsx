@@ -38,11 +38,13 @@ const AllyManager = ({ allies, allAllies, formAction }: Props) => {
   const cancel = () => {
     setEditing(false)
     form.resetForm({ allies: allies.map((ally) => ally.id) })
+    setAlly(-1)
   }
 
   const toggle = () => {
     setEditing((prev) => !prev)
     form.resetForm({ allies: allies.map((ally) => ally.id) })
+    setAlly(-1)
   }
 
   const [ally, setAlly] = useState(-1)

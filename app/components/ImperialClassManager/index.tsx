@@ -61,16 +61,31 @@ const ImperialClassManager = ({ imperialPlayer, formAction }: Props) => {
   }, [fetcher?.state])
 
   return (
-    <div className="flex flex-col flex-1 px-2 pb-1 border border-gray-400 rounded-xs">
+    <div className="flex flex-col flex-1 px-2 py-1 gap-1 pb-2 border border-gray-400 rounded-xs">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">{imperialPlayer.class.name}</h2>
-        <EditButton
-          active={editing}
-          onClick={() => toggle()}
-          disabled={
-            fetcher?.state === 'loading' || fetcher?.state === 'submitting'
-          }
-        />
+        <div className="flex gap-2">
+          {editing && (
+            <SubmitButton
+              className="btn btn-sm btn-primary btn-outline"
+              formApi={form}
+              fetcher={fetcher}
+              disabled={
+                fetcher?.state === 'loading' || fetcher?.state === 'submitting'
+              }
+            >
+              Save
+            </SubmitButton>
+          )}
+          <EditButton
+            active={editing}
+            onClick={() => toggle()}
+            disabled={
+              fetcher?.state === 'loading' || fetcher?.state === 'submitting'
+            }
+            hideLabel
+          />
+        </div>
       </div>
       {editing ? (
         <form
@@ -80,7 +95,7 @@ const ImperialClassManager = ({ imperialPlayer, formAction }: Props) => {
           {form.renderFormIdInput()}
           <fieldset className="fieldset items-start w-fit py-2 self-start">
             {imperialPlayer.class.cards.map((card) => (
-              <label key={card.id} className="label gap-2 flex py-1">
+              <label key={card.id} className="label gap-2 flex py-0.5">
                 <input
                   type="checkbox"
                   className="checkbox checkbox-sm checkbox-primary"
@@ -95,13 +110,6 @@ const ImperialClassManager = ({ imperialPlayer, formAction }: Props) => {
               </label>
             ))}
           </fieldset>
-          <SubmitButton
-            className="btn btn-primary btn-outline"
-            fetcher={fetcher}
-            formApi={form}
-          >
-            Save
-          </SubmitButton>
           {form.value('cards')?.map((_, i) => (
             <input {...form.getHiddenInputProps(`cards[${i}]`)} />
           ))}
@@ -111,7 +119,7 @@ const ImperialClassManager = ({ imperialPlayer, formAction }: Props) => {
           {imperialPlayer.class.cards.map((card) => (
             <label
               key={card.id}
-              className="label cursor-default gap-2 flex py-1"
+              className="label cursor-default! gap-2 flex py-0.5"
             >
               <input
                 type="checkbox"

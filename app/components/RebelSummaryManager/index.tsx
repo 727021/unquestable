@@ -50,7 +50,7 @@ const RebelSummaryManager = ({ rebel, formAction }: Props) => {
   }, [fetcher?.state])
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-0.5">
       <div className="flex gap-2 justify-between items-center">
         <h2 className="m-0">{rebel.hero.name}</h2>
         <div className="flex gap-2">

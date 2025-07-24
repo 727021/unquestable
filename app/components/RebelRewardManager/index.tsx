@@ -39,11 +39,13 @@ const RebelRewardManager = ({ rebel, allRewards, formAction }: Props) => {
   const cancel = () => {
     setEditing(false)
     form.resetForm({ id: rebel.id, rewards: rebel.rewards.map((r) => r.id) })
+    setReward(-1)
   }
 
   const toggle = () => {
     setEditing((prev) => !prev)
     form.resetForm({ id: rebel.id, rewards: rebel.rewards.map((r) => r.id) })
+    setReward(-1)
   }
 
   const [reward, setReward] = useState(-1)
