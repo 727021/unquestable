@@ -50,6 +50,7 @@ const AgendaManager = ({ imperialPlayer, formAction }: Props) => {
         discarded: agenda.discarded
       }))
     })
+    setAgenda(-1)
   }
 
   const toggle = () => {
@@ -60,6 +61,7 @@ const AgendaManager = ({ imperialPlayer, formAction }: Props) => {
         discarded: agenda.discarded
       }))
     })
+    setAgenda(-1)
   }
 
   const allAgendas = imperialPlayer.agendaDecks.flatMap((deck) => deck.agendas)
@@ -132,16 +134,31 @@ const AgendaManager = ({ imperialPlayer, formAction }: Props) => {
   }, [fetcher?.state])
 
   return (
-    <div className="flex flex-col flex-1 px-2 pb-1 border rounded-xs border-gray-400">
+    <div className="flex flex-col flex-1 px-2 py-1 gap-1 border rounded-xs border-gray-400">
       <div className="flex justify-between items-center w-full">
         <h2 className="m-0">Agendas</h2>
-        <EditButton
-          active={editing}
-          onClick={() => toggle()}
-          disabled={
-            fetcher?.state === 'loading' || fetcher?.state === 'submitting'
-          }
-        />
+        <div className="flex gap-2">
+          {editing && (
+            <SubmitButton
+              className="btn btn-sm btn-primary btn-outline"
+              formApi={form}
+              fetcher={fetcher}
+              disabled={
+                fetcher?.state === 'loading' || fetcher?.state === 'submitting'
+              }
+            >
+              Save
+            </SubmitButton>
+          )}
+          <EditButton
+            active={editing}
+            onClick={() => toggle()}
+            disabled={
+              fetcher?.state === 'loading' || fetcher?.state === 'submitting'
+            }
+            hideLabel
+          />
+        </div>
       </div>
       {editing ? (
         <form {...form.getFormProps()} className="flex flex-col flex-1">
@@ -206,43 +223,34 @@ const AgendaManager = ({ imperialPlayer, formAction }: Props) => {
                 ))}
             </div>
           </div>
-          <div className="flex flex-1 items-end justify-between">
-            <div className="flex flex-col gap-2">
-              <h3 className="m-0">Agenda Decks</h3>
-              <div className="join">
-                <select
-                  className="join-item select"
-                  value={agenda}
-                  onChange={(e) => setAgenda(parseInt(e.target.value, 10))}
-                >
-                  <option value={-1} disabled>
-                    Choose an Agenda
-                  </option>
-                  {availableAgendas
-                    .toSorted((a, b) => a.cost - b.cost)
-                    .map((agenda) => (
-                      <option key={agenda.id} value={agenda.id}>
-                        {agenda.cost} - {agenda.name}
-                      </option>
-                    ))}
-                </select>
-                <button
-                  className="btn join-item btn-outline border-l-2"
-                  type="button"
-                  onClick={() => add()}
-                  disabled={agenda === -1}
-                >
-                  <PlusIcon className="w-5 h-5" />
-                </button>
-              </div>
+          <div className="flex flex-col gap-2 mt-auto">
+            <h3 className="m-0">Agenda Decks</h3>
+            <div className="join">
+              <select
+                className="join-item select"
+                value={agenda}
+                onChange={(e) => setAgenda(parseInt(e.target.value, 10))}
+              >
+                <option value={-1} disabled>
+                  Choose an Agenda
+                </option>
+                {availableAgendas
+                  .toSorted((a, b) => a.cost - b.cost)
+                  .map((agenda) => (
+                    <option key={agenda.id} value={agenda.id}>
+                      {agenda.cost} - {agenda.name}
+                    </option>
+                  ))}
+              </select>
+              <button
+                className="btn join-item btn-outline border-l-2"
+                type="button"
+                onClick={() => add()}
+                disabled={agenda === -1}
+              >
+                <PlusIcon className="w-5 h-5" />
+              </button>
             </div>
-            <SubmitButton
-              className="btn btn-primary btn-outline"
-              fetcher={fetcher}
-              formApi={form}
-            >
-              Save
-            </SubmitButton>
           </div>
           {form.value('agendas')?.map((_, i) => (
             <>
