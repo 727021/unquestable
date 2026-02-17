@@ -12,7 +12,6 @@ type Props = {
     label: ReactNode
   }[]
   onChange?: (value: string | number) => any
-  defaultValue?: string | number
   formApi: FormApi<any>
 }
 
@@ -22,15 +21,14 @@ const ButtonBar = ({
   name,
   options,
   onChange,
-  defaultValue,
   formApi
 }: Props) => {
-  const [value, setValue] = useState<string | number | undefined>(defaultValue)
-
-  const error = formApi.error(name)
+  const field = formApi.field(name)
+  const value = field.value()
+  const error = field.error()
 
   const handleClick = (value: string | number) => {
-    setValue(value)
+    field.setValue(value)
     onChange?.(value)
   }
 
@@ -45,8 +43,7 @@ const ButtonBar = ({
       <input
         {...formApi.getInputProps(name, {
           id: name,
-          type: 'hidden',
-          value
+          type: 'hidden'
         })}
       />
       <div className="flex-nowrap join">
