@@ -16,7 +16,8 @@
     "db:seed": "node ./prisma/seed.js",
     "postinstall": "prisma generate",
     "format": "prettier . --write",
-    "env:dev": "vercel env pull .env --environment=development --yes"
+    "env:dev": "vercel env pull .env --environment=development --yes",
+    "env:prod": "vercel env pull .env --environment=production --yes"
   },
   "prisma": {
     "seed": "npm run db:seed"
