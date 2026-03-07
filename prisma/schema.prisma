@@ -1,0 +1,366 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+// #region User Data
+model User {
+  id            String @id
+  collection    Expansion[]
+  games         Game[]
+}
+
+// #endregion
+
+// #region Static Game Data
+enum SetType {
+  CAMPAIGN
+  HERO
+  VILLAIN
+}
+
+model Expansion {
+  id           Int          @id @default(autoincrement())
+  type         SetType
+  name         String
+  classes      Class[]
+  heroes       Hero[]
+  items        Item[]
+  agendas      AgendaDeck[]
+  missions     Mission[]
+  troops       Troop[]
+  campaigns    Campaign[]
+  rewards      Reward[]
+  defaultOwned Boolean      @default(false)
+
+  dependsOn  Expansion[] @relation(name: "depend")
+  dependedOn Expansion[] @relation(name: "depend")
+
+  owners User[]
+  boxArt BoxArt[]
+
+  @@unique([name, type])
+}
+
+model BoxArt {
+  id          Int       @id @default(autoincrement())
+  expansionId Int
+  expansion   Expansion @relation(fields: [expansionId], references: [id])
+  url         String
+  mime        String
+  alt         String?
+
+  @@unique([expansionId, mime])
+}
+
+model ClassCard {
+  id        Int              @id @default(autoincrement())
+  name      String
+  tagline   String?
+  cost      Int              @default(0)
+  decks     Class[]
+  rebels    RebelPlayer[]
+  imperials ImperialPlayer[]
+}
+
+enum Side {
+  REBEL
+  IMPERIAL
+  ALL
+}
+
+model Class {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  side        Side
+  cards       ClassCard[]
+  heroId      Int?             @unique
+  hero        Hero?            @relation(fields: [heroId], references: [id])
+  expansionId Int
+  expansion   Expansion        @relation(fields: [expansionId], references: [id])
+  imperials   ImperialPlayer[]
+}
+
+model Hero {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique
+  tagline     String
+  expansionId Int
+  expansion   Expansion     @relation(fields: [expansionId], references: [id])
+  mission     Mission       @relation(fields: [missionId], references: [id])
+  missionId   Int           @unique
+  class       Class?
+  players     RebelPlayer[]
+}
+
+model Reward {
+  id            Int              @id @default(autoincrement())
+  name          String
+  tagline       String?
+  side          Side
+  missionReward MissionReward[]
+  expansionId   Int
+  expansion     Expansion        @relation(fields: [expansionId], references: [id])
+  rebels        RebelPlayer[]
+  imperials     ImperialPlayer[]
+}
+
+model Item {
+  id          Int       @id @default(autoincrement())
+  name        String
+  tagline     String?
+  cost        Int
+  tier        Int // 1,2,3
+  expansionId Int
+  expansion   Expansion @relation(fields: [expansionId], references: [id])
+  games       Game[]
+
+  @@index([name, tier])
+}
+
+model Agenda {
+  id              Int           @id @default(autoincrement())
+  name            String
+  tagline         String?
+  cost            Int
+  deckId          Int
+  deck            AgendaDeck    @relation(fields: [deckId], references: [id])
+  missionId       Int?
+  mission         Mission?      @relation(fields: [missionId], references: [id], name: "agenda-mission")
+  forcedMissionId Int?
+  forecdMission   Mission?      @relation(fields: [forcedMissionId], references: [id], name: "agenda-forced-mission")
+  owners          OwnedAgenda[]
+}
+
+model AgendaDeck {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  agendas     Agenda[]
+  expansionId Int
+  expansion   Expansion        @relation(fields: [expansionId], references: [id])
+  imperials   ImperialPlayer[]
+}
+
+enum MissionType {
+  STORY
+  // side missions on agenda cards
+  IMPERIAL
+  // rebel side missions
+  RED
+  GREEN
+  GRAY
+}
+
+model Mission {
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  type               MissionType
+  // time range (some side missions)
+  start              Int?
+  end                Int?
+  crates             Int                 @default(0)
+  // hero missions (referenced in Hero model)
+  hero               Hero?
+  rewards            MissionReward[]
+  prevRewards        MissionReward[]     @relation(name: "prev-next-mission")
+  forcedBy           MissionReward[]     @relation(name: "forced-mission")
+  startsCampaign     Campaign[]
+  rewardPlaceholders RewardPlaceholder[]
+  expansionId        Int
+  expansion          Expansion           @relation(fields: [expansionId], references: [id])
+  gameMissions       GameMission[]
+  games              Game[]
+  agendas            Agenda[]            @relation(name: "agenda-mission")
+  forcedByAgendas    Agenda[]            @relation(name: "agenda-forced-mission")
+
+  @@unique([name, expansionId])
+}
+
+enum MissionRewardType {
+  WIN // rewards for a rebel win
+  LOSS // rewards for an imperial win
+  ALL // additional rewards
+}
+
+model RewardPlaceholder {
+  id         Int               @id @default(autoincrement())
+  name       String
+  label      String
+  // input type
+  type       String
+  // input validation options
+  validation Json              @default("{}")
+  missionId  Int
+  mission    Mission           @relation(fields: [missionId], references: [id])
+  campaignId Int
+  campaign   Campaign          @relation(fields: [campaignId], references: [id])
+  status     MissionRewardType
+}
+
+model MissionReward {
+  id              Int               @id @default(autoincrement())
+  type            MissionRewardType
+  side            Side
+  missionId       Int
+  mission         Mission           @relation(fields: [missionId], references: [id])
+  campaignId      Int
+  campaign        Campaign          @relation(fields: [campaignId], references: [id])
+  // JavaScript expression (with placeholders) that evaluates to a boolean
+  // Determines whether this reward should be given
+  condition       String?
+  // JavaScript expression (with placeholders) that evaluates to a number
+  // Multiplies all numeric rewards (xp, credits, influence)
+  multiplier      String?
+  xp              Int? // per player
+  credits         Int? // per hero
+  influence       Int?
+  rewardId        Int?
+  reward          Reward?           @relation(fields: [rewardId], references: [id])
+  troopId         Int?
+  troop           Troop?            @relation(fields: [troopId], references: [id])
+  // for story missions
+  nextMissionId   Int?
+  nextMission     Mission?          @relation(fields: [nextMissionId], references: [id], name: "prev-next-mission")
+  // for forced missions
+  forcedMissionId Int?
+  forcedMission   Mission?          @relation(fields: [forcedMissionId], references: [id], name: "forced-mission")
+
+  @@unique([missionId, type, side])
+}
+
+model Troop {
+  id              Int              @id @default(autoincrement())
+  name            String
+  unique          Boolean          @default(false)
+  elite           Boolean          @default(false)
+  deployment      Int
+  reinforcement   Int?
+  size            Int              @default(1)
+  traits          String[]
+  expansionId     Int
+  expansion       Expansion        @relation(fields: [expansionId], references: [id])
+  missionRewards  MissionReward[]
+  games           Game[]
+  imperialPlayers ImperialPlayer[]
+}
+
+model Campaign {
+  id                 Int                 @id @default(autoincrement())
+  name               String
+  period             Int
+  startId            Int                 @unique
+  startingMission    Mission             @relation(fields: [startId], references: [id])
+  expansionId        Int
+  expansion          Expansion           @relation(fields: [expansionId], references: [id])
+  missionSlots       MissionSlot[]
+  missionRewards     MissionReward[]
+  rewardPlaceholders RewardPlaceholder[]
+  games              Game[]
+}
+
+enum MissionSlotType {
+  STORY
+  SIDE
+}
+
+model MissionSlot {
+  id           Int             @id @default(autoincrement())
+  index        Int
+  type         MissionSlotType
+  threat       Int
+  itemTiers    Int[]
+  campaignId   Int
+  campaign     Campaign        @relation(fields: [campaignId], references: [id])
+  gameMissions GameMission[]
+}
+
+// #endregion
+
+// #region User Game Data
+model Game {
+  id              Int             @id @default(autoincrement())
+  owner           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  name            String
+  started         DateTime        @default(now())
+  rebelPlayers    RebelPlayer[]
+  campaign        Campaign        @relation(fields: [campaignId], references: [id])
+  campaignId      Int
+  missions        GameMission[]
+  imperialPlayer  ImperialPlayer?
+  sideMissionDeck Mission[]
+  // things shared by rebel players
+  credits         Int             @default(0)
+  items           Item[]
+  allies          Troop[]
+}
+
+enum MissionStage {
+  CHOOSE_MISSION
+  REBEL_BUY
+  IMPERIAL_BUY
+  RESOLVED
+}
+
+model GameMission {
+  id            Int           @id @default(autoincrement())
+  game          Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId        Int
+  missionSlot   MissionSlot?  @relation(fields: [missionSlotId], references: [id], onDelete: SetNull)
+  missionSlotId Int?
+  forced        Boolean       @default(false)
+  threat        Int? // threat level for forced missions
+  mission       Mission       @relation(fields: [missionId], references: [id])
+  missionId     Int
+  stage         MissionStage?
+  winner        Side?
+}
+
+model RebelPlayer {
+  id         Int         @id @default(autoincrement())
+  name       String?
+  game       Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId     Int
+  hero       Hero        @relation(fields: [heroId], references: [id])
+  heroId     Int
+  xp         Int         @default(0)
+  rewards    Reward[] // (owned)
+  classCards ClassCard[] // (owned)
+}
+
+model ImperialPlayer {
+  id          Int           @id @default(autoincrement())
+  name        String?
+  game        Game          @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId      Int           @unique
+  xp          Int           @default(0)
+  influence   Int           @default(0)
+  rewards     Reward[] // (owned)
+  agendaDecks AgendaDeck[]
+  agendas     OwnedAgenda[]
+  class       Class         @relation(fields: [classId], references: [id])
+  classId     Int
+  classCards  ClassCard[] // (bought)
+  villains    Troop[]
+}
+
+model OwnedAgenda {
+  imperialId       Int
+  imperial         ImperialPlayer @relation(fields: [imperialId], references: [id], onDelete: Cascade)
+  agendaId         Int
+  agenda           Agenda         @relation(fields: [agendaId], references: [id])
+  discarded        Boolean        @default(false)
+
+  @@id([imperialId, agendaId])
+}
+
+// #endregion

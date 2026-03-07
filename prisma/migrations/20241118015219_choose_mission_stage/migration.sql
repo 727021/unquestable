@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "MissionStage" ADD VALUE 'CHOOSE_MISSION';
