@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useRef } from 'react'
 import type {
   ChangeEvent,
   ComponentRef,
@@ -21,13 +21,29 @@ const SideMissionsInput = ({ name, count = 1, children, formApi }: Props) => {
   const field = formApi.field(name)
   const error = field.error()
   const random = field.value() === 'RANDOM'
+  const multiple = count > 1
 
-  const onChange = (e: ChangeEvent<ComponentRef<'input'>>) => {
-    field.setValue(e.target.checked ? 'RANDOM' : [])
+  const onRandomChange = (e: ChangeEvent<ComponentRef<'input'>>) => {
+    field.setValue(
+      e.target.checked
+        ? 'RANDOM'
+        : multiple
+          ? []
+          : [ref.current?.selectedOptions[0]?.value]
+    )
+    field.clearError()
+  }
+
+  const onMissionChange = (e: ChangeEvent<ComponentRef<'select'>>) => {
+    const missions = Array.from(e.target.selectedOptions).map(
+      (option) => option.value
+    )
+    field.setValue(missions)
     field.clearError()
   }
 
   const id = useId()
+  const ref = useRef<ComponentRef<'select'>>(null)
 
   return (
     <fieldset className="fieldset max-w-full w-96">
@@ -45,30 +61,40 @@ const SideMissionsInput = ({ name, count = 1, children, formApi }: Props) => {
             type="checkbox"
             className="checkbox checkbox-sm"
             checked={random}
-            onChange={onChange}
+            onChange={onRandomChange}
             id={`${id}-${name}-random`}
           />
         </label>
       </label>
       <select
         className={clsx('select w-full', error && 'select-error')}
-        {...(random
-          ? { multiple: count > 1, disabled: true }
-          : field.getInputProps({
-              id: `${id}-${name}`,
-              multiple: count > 1
-            }))}
+        multiple={multiple}
+        disabled={random}
+        id={`${id}-${name}`}
+        onChange={onMissionChange}
+        ref={ref}
       >
         {children}
       </select>
       <div className="label">
-        {(error || (field.value() !== 'RANDOM' && count > 1)) && (
+        {(error || (field.value() !== 'RANDOM' && multiple)) && (
           <span className={clsx('label-text-alt', error && 'text-error')}>
-            Choose exactly {count} mission{count > 1 ? 's' : ''}
+            Choose exactly {count} mission{multiple ? 's' : ''}
           </span>
         )}
       </div>
-      {random && <input {...field.getHiddenInputProps()} />}
+      {random ? (
+        <input {...field.getHiddenInputProps()} />
+      ) : (
+        field
+          .value()
+          .map((value: string, index: number) => (
+            <input
+              key={value}
+              {...formApi.getHiddenInputProps(`${name}[${index}]`)}
+            />
+          ))
+      )}
     </fieldset>
   )
 }
